@@ -9,6 +9,8 @@
   "scripts": {
     "pull": "drizzle-kit pull",
     "push": "drizzle-kit push",
+    "generate": "drizzle-kit generate",
+    "migrate": "bun src/migrate.ts",
     "studio": "drizzle-kit studio",
     "check-types": "tsc --noEmit"
   },

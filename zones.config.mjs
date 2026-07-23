@@ -21,6 +21,13 @@ export const zones = [
     port: 3001,
     envKey: "DOCS_URL",
   },
+  {
+    name: "hris",
+    basePath: "/hris",
+    assetPrefix: "/hris-static",
+    port: 3002,
+    envKey: "HRIS_URL",
+  },
 ];
 
 /**

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { auth } from "@repo/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import {
   HiOutlineArrowRight,
   HiOutlineBuildingOffice2,
@@ -31,13 +34,13 @@ const story = [
   {
     step: "01",
     t: "Who we are",
-    d: "Dalia is building ERP software for Philippine accounting firms—the people who already run MSME payrolls, filings, and books every month.",
+    d: "Dalia is building ERP software for Philippine accounting firms and teams—the people who already run MSME payrolls, filings, and books every month.",
     Icon: HiOutlineMap,
   },
   {
     step: "02",
     t: "Our goal",
-    d: "Become their system of record: one trusted stack for people, pay, statutory, then finance and ops—so firms stop stitching Excel, portals, and desktop tools.",
+    d: "Become their system of record: one trusted stack for people, pay, statutory, then finance and ops—so teams stop stitching Excel, portals, and desktop tools.",
     Icon: HiOutlineFlag,
   },
   {
@@ -54,7 +57,7 @@ const nextSteps = [
     d: "Flawless attendance → statutory math → portal-ready exports. No churn on compliance.",
   },
   {
-    t: "Widen the firm",
+    t: "Widen the team",
     d: "Multi-workspace pricing that fits retainers while employee profiles grow.",
   },
   {
@@ -116,7 +119,15 @@ const complianceRows = [
   },
 ] as const;
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session) {
+    redirect("/apps");
+  }
+
   return (
     <div className="min-h-dvh bg-background">
       <SiteHeader />
@@ -129,11 +140,11 @@ export default function Home() {
               Dalia
             </p>
             <h1 className="animate-rise-delay font-display mt-5 text-2xl leading-9 font-bold text-balance text-foreground md:text-4xl md:leading-[1.2]">
-              An ERP for accounting firms—starting with HRIS.
+              An ERP for accounting firms and teams—starting with HRIS.
             </h1>
             <p className="animate-rise-delay-2 mt-4 max-w-md text-base leading-6 text-muted-foreground md:text-lg md:leading-7">
               We are building the full Dalia ERP. Step one is Dalia HRIS:
-              timekeeping and Philippine statutory payroll firms can trust.
+              timekeeping and Philippine statutory payroll firms and teams can trust.
             </p>
             <div className="animate-rise-delay-2 mt-8 flex flex-wrap gap-3">
               <Link
@@ -225,7 +236,7 @@ export default function Home() {
         <div className="mx-auto max-w-360 px-4 py-16 md:px-8 md:py-24">
           <div className="max-w-xl">
             <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
-              Step one pricing · Dalia HRIS
+              Step one pricing &middot; For accounting firms and teams
             </p>
             <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary">
               Fixed costs firms can roll into retainers.
@@ -330,7 +341,7 @@ export default function Home() {
             </h2>
             <p className="mt-4 max-w-lg text-base leading-7 text-muted-foreground">
               Statutory filing is where trust is won or lost. Fix attendance →
-              brackets → portal exports, and the firm will already be inside
+              brackets → portal exports, and the team will already be inside
               Dalia when the wider ERP modules arrive.
             </p>
             <blockquote className="mochi-shadow mt-10 max-w-xl rounded-2xl border-2 border-primary/15 bg-card p-6 text-base leading-7 text-foreground md:p-8">
@@ -381,12 +392,10 @@ export default function Home() {
 
             <div className="border-t border-border/50 bg-primary/5 px-6 py-6 md:px-8 md:py-8">
               <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
-                Beta partner close
+                Founding partners &middot; lifetime 50% off workspace slots
               </p>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Lifetime 50% off HRIS workspace slots in exchange for edge-case
-                testing—13th-month exemptions, zero-rate days, chaotic
-                attendance CSVs.
+                Because your firm or team handles complex payroll structures, I want to bring you on as a Founding Partner. You will get 50% off your first 10 workspace slots for the lifetime of those accounts. In return, I just need your team to flag any edge cases they hit during the 2026 statutory updates.
               </p>
               <Link
                 href="/register"
@@ -395,7 +404,7 @@ export default function Home() {
                   "font-display mt-6 inline-flex w-full gap-2 sm:w-auto",
                 )}
               >
-                Claim beta partner status
+                Become a Founding Partner
                 <HiOutlineArrowRight className="size-4" aria-hidden />
               </Link>
             </div>

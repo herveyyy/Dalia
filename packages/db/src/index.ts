@@ -1,11 +1,10 @@
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import ws from "ws";
-import * as schema from "./schema";
+import * as schema from "./schema/index";
 
 neonConfig.webSocketConstructor = ws;
 
-/** Tables + relations — organized under `schema/<name>/`. */
 export const schemaWithRelations = schema;
 
 type Db = ReturnType<typeof createDb>;
@@ -22,7 +21,6 @@ function createDb() {
 
 let _db: Db | undefined;
 
-/** Lazy so Next can import the module at build time without DATABASE_URL. */
 export const db = new Proxy({} as Db, {
   get(_target, prop, receiver) {
     _db ??= createDb();

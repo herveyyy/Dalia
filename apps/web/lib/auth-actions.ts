@@ -29,7 +29,7 @@ export async function signInAction(formData: FormData) {
   } catch (error) {
     fail("/login", error);
   }
-  redirect("/");
+  redirect("/apps");
 }
 
 export async function signUpAction(formData: FormData) {
@@ -45,5 +45,5 @@ export async function signUpAction(formData: FormData) {
   } catch (error) {
     fail("/register", error);
   }
-  redirect("/");
+  redirect("/apps");
 }
