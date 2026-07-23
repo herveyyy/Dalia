@@ -13,9 +13,9 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      companyName: {
+      companyId: {
         type: "string",
-        required: true,
+        required: false,
         input: true,
       },
     },

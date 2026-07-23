@@ -17,9 +17,11 @@ const initialWorkspaces: Workspace[] = [
   { id: "3", name: "Greenfield Bakery", adminEmail: "manager@greenfield.ph" },
 ];
 
-export function useWorkspaceState() {
-  const [workspaces, setWorkspaces] = React.useState<Workspace[]>(initialWorkspaces);
-  const [activeWorkspaceId, setActiveWorkspaceId] = React.useState("1");
+import { createWorkspaceAction } from "../actions/workspace-actions";
+
+export function useWorkspaceState(initial: Workspace[] = initialWorkspaces) {
+  const [workspaces, setWorkspaces] = React.useState<Workspace[]>(initial);
+  const [activeWorkspaceId, setActiveWorkspaceId] = React.useState(initial[0]?.id ?? "1");
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
 
   const activeWorkspace = React.useMemo(
@@ -76,16 +78,16 @@ export function useWorkspaceState() {
   }, []);
 
   const handleCreateWorkspace = React.useCallback(
-    (data: { name: string; adminEmail: string }) => {
-      const newWorkspace: Workspace = {
-        id: String(workspaces.length + 1),
-        name: data.name,
-        adminEmail: data.adminEmail,
-      };
-      setWorkspaces((prev) => [...prev, newWorkspace]);
-      setActiveWorkspaceId(newWorkspace.id);
+    async (data: { name: string; adminEmail: string }) => {
+      try {
+        const dbWorkspace = await createWorkspaceAction(data);
+        setWorkspaces((prev) => [...prev, dbWorkspace]);
+        setActiveWorkspaceId(dbWorkspace.id);
+      } catch (error) {
+        console.error("Failed to create workspace:", error);
+      }
     },
-    [workspaces.length]
+    []
   );
 
   return {

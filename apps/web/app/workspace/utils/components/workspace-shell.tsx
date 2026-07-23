@@ -8,6 +8,8 @@ import { CreateWorkspaceDialog } from "@repo/ui/components/molecules/CreateWorks
 import { useWorkspaceState } from "../hooks/use-workspace-state";
 import { WorkspaceContext } from "../context/workspace-context";
 
+import { Workspace } from "../types/workspace.types";
+
 interface WorkspaceShellProps {
   children: React.ReactNode;
   user: {
@@ -15,9 +17,10 @@ interface WorkspaceShellProps {
     email: string;
     avatarUrl?: string;
   };
+  initialWorkspaces: Workspace[];
 }
 
-export function WorkspaceShell({ children, user }: WorkspaceShellProps) {
+export function WorkspaceShell({ children, user, initialWorkspaces }: WorkspaceShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const {
@@ -30,7 +33,7 @@ export function WorkspaceShell({ children, user }: WorkspaceShellProps) {
     navGroups,
     handleSelectWorkspace,
     handleCreateWorkspace,
-  } = useWorkspaceState();
+  } = useWorkspaceState(initialWorkspaces);
 
   // Inject isActive and custom click handlers based on current pathname
   const navGroupsWithActive = React.useMemo(

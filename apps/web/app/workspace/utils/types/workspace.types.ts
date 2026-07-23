@@ -1,3 +1,5 @@
+import { workspace } from "@repo/db";
+
 export interface Workspace {
   id: string;
   name: string;
@@ -13,3 +15,5 @@ export interface WorkspaceContextType {
   onSelectWorkspace: (id: string) => void;
   openCreateDialog: () => void;
 }
+export type WorkspaceInsert = typeof workspace.$inferInsert;
+export type WorkspaceSelect = typeof workspace.$inferSelect;
