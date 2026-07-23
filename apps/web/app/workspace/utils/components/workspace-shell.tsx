@@ -2,12 +2,22 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "@repo/auth/client";
 import { AppShell } from "@repo/ui/components/organisms/AppShell";
 import { CreateWorkspaceDialog } from "@repo/ui/components/molecules/CreateWorkspaceDialog";
 import { useWorkspaceState } from "../hooks/use-workspace-state";
 import { WorkspaceContext } from "../context/workspace-context";
 
-export function WorkspaceShell({ children }: { children: React.ReactNode }) {
+interface WorkspaceShellProps {
+  children: React.ReactNode;
+  user: {
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  };
+}
+
+export function WorkspaceShell({ children, user }: WorkspaceShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const {
@@ -42,9 +52,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
             onClick: isExitLink
               ? (e: React.MouseEvent) => {
                   e.preventDefault();
-                  // Switch to Firm workspace
                   handleSelectWorkspace("1");
-                  // Always push to main workspace route
                   router.push("/workspace");
                 }
               : undefined,
@@ -53,6 +61,11 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
       })),
     [navGroups, pathname, handleSelectWorkspace, router]
   );
+
+  const handleLogout = React.useCallback(async () => {
+    await signOut();
+    router.push("/login");
+  }, [router]);
 
   return (
     <WorkspaceContext.Provider
@@ -71,11 +84,8 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         onSelectWorkspace={handleSelectWorkspace}
         onCreateWorkspaceClick={() => setCreateDialogOpen(true)}
         navGroups={navGroupsWithActive}
-        user={{
-          name: "Hervey Mapa",
-          email: "hervey@dalia.ph",
-        }}
-        onLogoutClick={() => console.log("Logout triggered")}
+        user={user}
+        onLogoutClick={handleLogout}
       >
         {children}
 
