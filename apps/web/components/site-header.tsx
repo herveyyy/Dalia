@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buttonVariants } from "@repo/ui/components/button";
+import { buttonVariants } from "@repo/ui/components/atoms/Button";
 import { cn } from "@repo/ui/lib/utils";
 
 export function SiteHeader() {

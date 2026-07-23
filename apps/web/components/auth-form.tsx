@@ -7,9 +7,9 @@ import {
   HiOutlineLockClosed,
   HiOutlineUser,
 } from "react-icons/hi2";
-import { Button } from "@repo/ui/components/button";
-import { Input } from "@repo/ui/components/input";
-import { Label } from "@repo/ui/components/label";
+import { Button } from "@repo/ui/components/atoms/Button";
+import { Input } from "@repo/ui/components/atoms/Input";
+import { Label } from "@repo/ui/components/atoms/Label";
 import { signInAction, signUpAction } from "../lib/auth-actions";
 
 type Mode = "login" | "register";

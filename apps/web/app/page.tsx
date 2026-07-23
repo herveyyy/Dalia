@@ -21,8 +21,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/card";
-import { buttonVariants } from "@repo/ui/components/button";
+} from "@repo/ui/components/molecules/Card";
+import { buttonVariants } from "@repo/ui/components/atoms/Button";
 import { cn } from "@repo/ui/lib/utils";
 import {
   HeroBackdrop,

@@ -9,6 +9,7 @@
  *   assetPrefix: string,
  *   port: number,
  *   envKey: string,
+ *   access: "public" | "private",
  * }} Zone
  */
 
@@ -20,6 +21,7 @@ export const zones = [
     assetPrefix: "/docs-static",
     port: 3001,
     envKey: "DOCS_URL",
+    access: "public",
   },
   {
     name: "hris",
@@ -27,6 +29,7 @@ export const zones = [
     assetPrefix: "/hris-static",
     port: 3002,
     envKey: "HRIS_URL",
+    access: "private",
   },
 ];
 

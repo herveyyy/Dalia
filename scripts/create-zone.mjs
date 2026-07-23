@@ -77,6 +77,7 @@ function serializeZones(zones) {
     assetPrefix: ${JSON.stringify(z.assetPrefix)},
     port: ${z.port},
     envKey: ${JSON.stringify(z.envKey)},
+    access: ${JSON.stringify(z.access ?? "public")},
   }`,
     )
     .join(",\n");
@@ -92,6 +93,7 @@ function serializeZones(zones) {
  *   assetPrefix: string,
  *   port: number,
  *   envKey: string,
+ *   access: "public" | "private",
  * }} Zone
  */
 
@@ -452,7 +454,7 @@ export default function RootLayout({
   );
 }
 
-async function scaffoldChild({ name, basePath, assetPrefix, port }) {
+async function scaffoldChild({ name, basePath, assetPrefix, port, access = "public" }) {
   const appRoot = path.join(appsDir, name);
   if (await exists(appRoot)) {
     console.error(`Error: apps/${name} already exists.`);
@@ -461,8 +463,21 @@ async function scaffoldChild({ name, basePath, assetPrefix, port }) {
 
   const routeSegment = basePath.slice(1);
   const title = titleCase(name);
+  const isPrivate = access === "private";
 
   await ensureDir(appsDir);
+
+  const dependencies = {
+    "@repo/ui": "*",
+    next: "16.2.0",
+    react: "^19.2.0",
+    "react-dom": "^19.2.0",
+  };
+
+  if (isPrivate) {
+    dependencies["@repo/auth"] = "*";
+    dependencies["@repo/db"] = "*";
+  }
 
   await write(
     path.join(appRoot, "package.json"),
@@ -479,12 +494,7 @@ async function scaffoldChild({ name, basePath, assetPrefix, port }) {
           lint: "eslint --max-warnings 0",
           "check-types": "next typegen && tsc --noEmit",
         },
-        dependencies: {
-          "@repo/ui": "*",
-          next: "16.2.0",
-          react: "^19.2.0",
-          "react-dom": "^19.2.0",
-        },
+        dependencies,
         devDependencies: {
           "@repo/eslint-config": "*",
           "@repo/typescript-config": "*",
@@ -516,6 +526,17 @@ export default nextConfig;
   );
 
   await writeSharedAppFiles(appRoot);
+
+  if (isPrivate) {
+    const webEnvLocalPath = path.join(webDir, ".env.local");
+    let envContent = "";
+    if (await exists(webEnvLocalPath)) {
+      envContent = await readFile(webEnvLocalPath, "utf8");
+    } else {
+      envContent = `# Database & Better Auth configuration\nDATABASE_URL=postgresql://user:pass@host/db\nBETTER_AUTH_SECRET=secret\nBETTER_AUTH_URL=http://localhost:3000\nNEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000\n`;
+    }
+    await write(path.join(appRoot, ".env.local"), envContent);
+  }
 
   await write(
     path.join(appRoot, "app/layout.tsx"),
@@ -558,13 +579,54 @@ export default function RootLayout({
 `,
   );
 
-  await write(
-    path.join(appRoot, `app/${routeSegment}/page.tsx`),
-    `export default function Page() {
+  const pageContent = isPrivate
+    ? `import { auth } from "@repo/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
+export default async function Page() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const { user } = session;
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-4 px-6 py-16">
       <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
-        Multi-Zone
+        Private Multi-Zone (Authenticated)
+      </p>
+      <h1 className="font-display text-3xl font-bold text-primary">
+        ${title}
+      </h1>
+      <p className="max-w-md text-base leading-7 text-muted-foreground">
+        Welcome back, <span className="font-bold text-foreground">{user.name}</span>!
+      </p>
+      <p className="max-w-md text-base leading-7 text-muted-foreground">
+        Served at <code className="text-foreground">${basePath}</code> through{" "}
+        <code className="text-foreground">web</code>. Use{" "}
+        <code className="text-foreground">&lt;a&gt;</code> for cross-zone links,
+        not <code className="text-foreground">next/link</code>.
+      </p>
+      <a
+        href="/"
+        className="font-display w-fit text-sm font-bold text-primary hover:underline"
+      >
+        ← Back to main app
+      </a>
+    </main>
+  );
+}
+`
+    : `export default function Page() {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-4 px-6 py-16">
+      <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
+        Public Multi-Zone
       </p>
       <h1 className="font-display text-3xl font-bold text-primary">
         ${title}
@@ -584,8 +646,9 @@ export default function RootLayout({
     </main>
   );
 }
-`,
-  );
+`;
+
+  await write(path.join(appRoot, `app/${routeSegment}/page.tsx`), pageContent);
 }
 
 async function upsertEnvExample(envKey, port) {
@@ -657,6 +720,15 @@ async function promptChildZone(rl, zones) {
     }
   }
 
+  const accessChoice = (
+    await ask(
+      rl,
+      "Is this a private zone (requires auth)? [Y/n]",
+      "Y",
+    )
+  ).toLowerCase();
+  const access = accessChoice === "n" || accessChoice === "no" ? "public" : "private";
+
   const suggestedPort = String(await nextPort(zones));
   let port;
   while (port === undefined) {
@@ -677,6 +749,7 @@ async function promptChildZone(rl, zones) {
     name,
     basePath,
     port,
+    access,
     assetPrefix: assetPrefixFor(basePath),
     envKey: envKeyFor(name),
   };
@@ -756,6 +829,7 @@ Next steps:
     console.log(`
 Summary
   apps/${child.name}   child Next.js zone
+  type             ${child.access === "private" ? "Private (requires auth)" : "Public (no-auth)"}
   path             ${child.basePath}
   assets           ${child.assetPrefix}
   port             ${child.port}

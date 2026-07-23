@@ -11,10 +11,13 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@repo/auth": "*",
+    "@repo/db": "*",
     "@repo/ui": "*",
     "next": "16.2.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-icons": "^5.7.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

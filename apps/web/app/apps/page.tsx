@@ -1,7 +1,6 @@
 import { auth } from "@repo/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import {
   HiOutlineArrowRight,
   HiOutlineBuildingOffice2,
@@ -14,8 +13,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@repo/ui/components/card";
-import { Button, buttonVariants } from "@repo/ui/components/button";
+} from "@repo/ui/components/molecules/Card";
+import { Button, buttonVariants } from "@repo/ui/components/atoms/Button";
 import { cn } from "@repo/ui/lib/utils";
 import { AppsHeader } from "../../components/apps-header";
 
@@ -114,7 +113,7 @@ export default async function AppsPage() {
                 </CardHeader>
                 <CardFooter className="p-4 mt-6 pt-0 border-t-0 bg-transparent">
                   {isActive ? (
-                    <Link
+                    <a
                       href={app.href}
                       className={cn(
                         buttonVariants({ variant: "default" }),
@@ -123,7 +122,7 @@ export default async function AppsPage() {
                     >
                       {app.statusLabel}
                       <HiOutlineArrowRight className="size-4" />
-                    </Link>
+                    </a>
                   ) : (
                     <Button
                       disabled
