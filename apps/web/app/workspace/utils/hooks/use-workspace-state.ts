@@ -11,7 +11,7 @@ import {
 } from "react-icons/hi2";
 
 const initialWorkspaces: Workspace[] = [
-  { id: "1", name: "Dalia Firm (Internal)", adminEmail: "partner@dalia.ph" },
+  { id: "1", name: "Dalia Firm (Internal)", adminEmail: "partner@dalia.ph", isFirm: true },
   { id: "2", name: "Acme Logistics Inc.", adminEmail: "ceo@acmelogistics.com" },
   { id: "3", name: "Greenfield Bakery", adminEmail: "manager@greenfield.ph" },
 ];
@@ -69,10 +69,13 @@ export function useWorkspaceState() {
     [workspaces, activeWorkspaceId]
   );
 
+  const isFirmWorkspace = Boolean(activeWorkspace?.isFirm);
+
   return {
     workspaces,
     activeWorkspaceId,
     activeWorkspace,
+    isFirmWorkspace,
     createDialogOpen,
     setCreateDialogOpen,
     navGroups,

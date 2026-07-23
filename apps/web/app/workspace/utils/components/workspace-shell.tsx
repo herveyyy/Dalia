@@ -13,6 +13,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
     workspaces,
     activeWorkspaceId,
     activeWorkspace,
+    isFirmWorkspace,
     createDialogOpen,
     setCreateDialogOpen,
     navGroups,
@@ -43,6 +44,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         workspaces,
         activeWorkspaceId,
         activeWorkspace,
+        isFirmWorkspace,
         onSelectWorkspace: handleSelectWorkspace,
         openCreateDialog: () => setCreateDialogOpen(true),
       }}

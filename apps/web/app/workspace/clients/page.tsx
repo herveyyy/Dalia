@@ -6,7 +6,7 @@ import { Button } from "@repo/ui/components/atoms/Button";
 import { useWorkspace } from "../utils/context/workspace-context";
 
 export default function ClientsPage() {
-  const { activeWorkspace } = useWorkspace();
+  const { activeWorkspace, isFirmWorkspace } = useWorkspace();
 
   return (
     <div className="space-y-8">
@@ -16,8 +16,17 @@ export default function ClientsPage() {
             Client Database
           </h1>
           <p className="mt-1.5 text-base text-muted-foreground">
-            All clients under{" "}
-            <span className="font-semibold text-foreground">{activeWorkspace?.name}</span>
+            {isFirmWorkspace ? (
+              <>
+                Managed client companies under{" "}
+                <span className="font-semibold text-foreground">{activeWorkspace?.name}</span>
+              </>
+            ) : (
+              <>
+                Company overview & compliance records for{" "}
+                <span className="font-semibold text-foreground">{activeWorkspace?.name}</span>
+              </>
+            )}
           </p>
         </div>
         <Button className="gap-2 self-start">
@@ -41,9 +50,13 @@ export default function ClientsPage() {
         <div className="flex size-14 items-center justify-center rounded-xl bg-muted text-muted-foreground mb-4">
           <HiOutlineFolderOpen className="size-7" />
         </div>
-        <h3 className="text-base font-bold text-foreground">No clients yet</h3>
+        <h3 className="text-base font-bold text-foreground">
+          {isFirmWorkspace ? "No client companies added yet" : "No client details configured"}
+        </h3>
         <p className="mt-1.5 text-sm text-muted-foreground max-w-xs">
-          Add your first client to start managing their compliance and filings.
+          {isFirmWorkspace
+            ? "Add your first client company to start managing their compliance and filings."
+            : "Configure client settings and permissions for this workspace."}
         </p>
         <Button className="mt-6 gap-2" variant="outline">
           <HiOutlinePlus className="size-4" />
