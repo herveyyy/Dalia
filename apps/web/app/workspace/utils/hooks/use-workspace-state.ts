@@ -26,21 +26,21 @@ export function useWorkspaceState() {
       {
         title: "Navigation",
         items: [
-          { label: "Dashboard", href: "/workspace", Icon: HiOutlineHome, isActive: true },
-          { label: "Client Database", href: "#", Icon: HiOutlineFolderOpen },
+          { label: "Dashboard", href: "/workspace", Icon: HiOutlineHome },
+          { label: "Client Database", href: "/workspace/clients", Icon: HiOutlineFolderOpen },
         ],
       },
       {
         title: "Statutory Tools",
         items: [
-          { label: "BIR Filing Alphalist", href: "#", Icon: HiOutlineShieldCheck },
-          { label: "SSS/HDMF Contributions", href: "#", Icon: HiOutlineClock },
+          { label: "BIR Filing Alphalist", href: "/workspace/bir-filing", Icon: HiOutlineShieldCheck },
+          { label: "SSS/HDMF Contributions", href: "/workspace/sss-hdmf", Icon: HiOutlineClock },
         ],
       },
       {
         title: "Team & Staff",
         items: [
-          { label: "Manage Partners", href: "#", Icon: HiOutlineUserGroup },
+          { label: "Manage Partners", href: "/workspace/partners", Icon: HiOutlineUserGroup },
         ],
       },
     ],

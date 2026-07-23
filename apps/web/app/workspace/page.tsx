@@ -8,7 +8,7 @@ import {
   HiOutlineEnvelopeOpen,
   HiPlus,
 } from "react-icons/hi2";
-import { useWorkspace } from "./context/workspace-context";
+import { useWorkspace } from "./utils/context/workspace-context";
 
 export default function WorkspacePage() {
   const { activeWorkspace, openCreateDialog } = useWorkspace();

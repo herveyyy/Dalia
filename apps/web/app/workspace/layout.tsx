@@ -1,5 +1,5 @@
 import * as React from "react";
-import { WorkspaceShell } from "./components/workspace-shell";
+import { WorkspaceShell } from "./utils/components/workspace-shell";
 
 export default function WorkspaceLayout({
   children,
