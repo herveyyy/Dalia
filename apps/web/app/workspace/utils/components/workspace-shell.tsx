@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AppShell } from "@repo/ui/components/organisms/AppShell";
 import { CreateWorkspaceDialog } from "@repo/ui/components/molecules/CreateWorkspaceDialog";
 import { useWorkspaceState } from "../hooks/use-workspace-state";
@@ -9,6 +9,7 @@ import { WorkspaceContext } from "../context/workspace-context";
 
 export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const {
     workspaces,
     activeWorkspaceId,
@@ -21,21 +22,36 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
     handleCreateWorkspace,
   } = useWorkspaceState();
 
-  // Inject isActive based on current pathname
+  // Inject isActive and custom click handlers based on current pathname
   const navGroupsWithActive = React.useMemo(
     () =>
       navGroups.map((group) => ({
         ...group,
-        items: group.items.map((item) => ({
-          ...item,
-          // Dashboard matches exactly; others match prefix
-          isActive:
-            item.href === "/workspace"
-              ? pathname === "/workspace"
-              : pathname.startsWith(item.href),
-        })),
+        items: group.items.map((item) => {
+          const isExitLink = item.href === "EXIT_TO_FIRM";
+          
+          return {
+            ...item,
+            // Override href for Javascript actions so they don't perform page navigations
+            href: isExitLink ? "#" : item.href,
+            isActive: isExitLink
+              ? false
+              : item.href === "/workspace"
+                ? pathname === "/workspace"
+                : pathname.startsWith(item.href),
+            onClick: isExitLink
+              ? (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  // Switch to Firm workspace
+                  handleSelectWorkspace("1");
+                  // Always push to main workspace route
+                  router.push("/workspace");
+                }
+              : undefined,
+          };
+        }),
       })),
-    [navGroups, pathname]
+    [navGroups, pathname, handleSelectWorkspace, router]
   );
 
   return (

@@ -11,6 +11,7 @@ export interface SidebarNavGroup {
     Icon?: React.ComponentType<{ className?: string }>;
     isActive?: boolean;
     badge?: string | number;
+    onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   }[];
 }
 
@@ -74,6 +75,7 @@ export function AppSidebar({
                   Icon={item.Icon}
                   isActive={item.isActive}
                   badge={item.badge}
+                  onClick={item.onClick}
                 />
               ))}
             </div>
