@@ -53,7 +53,7 @@ export function CreateWorkspaceDialog({
         <DialogContent>
           <div className="flex items-center justify-between mb-4">
             <DialogTitle>Create Company Workspace</DialogTitle>
-            <DialogClose className="rounded-full p-1.5 text-muted-foreground hover:bg-muted transition-colors cursor-pointer outline-none">
+            <DialogClose className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors cursor-pointer outline-none">
               <X className="size-5" />
             </DialogClose>
           </div>
@@ -84,7 +84,7 @@ export function CreateWorkspaceDialog({
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <DialogClose className="inline-flex items-center justify-center rounded-full border border-border bg-card px-5 h-10 text-sm font-bold text-foreground hover:bg-muted transition-all cursor-pointer">
+              <DialogClose className="inline-flex items-center justify-center rounded-lg border border-border bg-card px-5 h-10 text-sm font-bold text-foreground hover:bg-muted transition-all cursor-pointer">
                 Cancel
               </DialogClose>
               <Button type="submit">Create Workspace</Button>

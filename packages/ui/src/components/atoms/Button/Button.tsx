@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@repo/ui/lib/utils";
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent text-sm font-bold whitespace-nowrap transition-all outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/40 active:translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent text-sm font-bold whitespace-nowrap transition-all outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/40 active:translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -20,14 +20,14 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 gap-1.5 px-5",
-        xs: "h-7 gap-1 px-3 text-xs",
-        sm: "h-9 gap-1 px-4 text-[0.8rem]",
-        lg: "h-12 gap-2 px-7 text-base",
+        default: "h-10 gap-1.5 px-4",
+        xs: "h-7 gap-1 px-2.5 text-xs",
+        sm: "h-9 gap-1 px-3 text-[0.8rem]",
+        lg: "h-11 gap-2 px-6 text-base",
         icon: "size-10",
         "icon-xs": "size-7",
         "icon-sm": "size-9",
-        "icon-lg": "size-12",
+        "icon-lg": "size-11",
       },
     },
     defaultVariants: {

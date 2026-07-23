@@ -22,7 +22,7 @@ export function DialogContent({ className, children, ...props }: React.Component
   return (
     <BaseDialog.Popup
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-border bg-card p-8 shadow-2xl transition-all duration-300 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-6 shadow-2xl transition-all duration-300 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         className
       )}
       {...props}
@@ -35,7 +35,7 @@ export function DialogContent({ className, children, ...props }: React.Component
 export function DialogTitle({ className, ...props }: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
     <BaseDialog.Title
-      className={cn("text-2xl font-bold text-foreground font-display", className)}
+      className={cn("text-xl font-bold text-foreground font-display", className)}
       {...props}
     />
   );
@@ -44,7 +44,7 @@ export function DialogTitle({ className, ...props }: React.ComponentProps<typeof
 export function DialogDescription({ className, ...props }: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
     <BaseDialog.Description
-      className={cn("mt-2 text-sm text-muted-foreground", className)}
+      className={cn("mt-1.5 text-sm text-muted-foreground", className)}
       {...props}
     />
   );

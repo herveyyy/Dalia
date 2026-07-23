@@ -19,9 +19,9 @@ export function SidebarItem({
   return (
     <a
       className={cn(
-        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 select-none cursor-pointer",
+        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 select-none cursor-pointer",
         isActive
-          ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+          ? "bg-primary text-primary-foreground shadow-sm"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
         className
       )}
@@ -32,7 +32,7 @@ export function SidebarItem({
       {badge !== undefined && (
         <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-xs font-bold leading-none tracking-wide",
+            "rounded-md px-1.5 py-0.5 text-xs font-bold leading-none tracking-wide",
             isActive
               ? "bg-primary-foreground text-primary"
               : "bg-muted-foreground/15 text-muted-foreground"

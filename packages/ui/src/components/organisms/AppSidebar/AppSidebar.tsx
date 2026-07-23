@@ -43,7 +43,7 @@ export function AppSidebar({
         <span className="font-display text-2xl font-bold tracking-tight text-primary">
           Dalia
         </span>
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-display text-[10px] font-bold tracking-[0.5px] text-primary uppercase">
+        <span className="rounded-md bg-primary/10 px-2 py-0.5 font-display text-[10px] font-bold tracking-[0.5px] text-primary uppercase">
           Firm
         </span>
       </div>
@@ -82,16 +82,16 @@ export function AppSidebar({
       </nav>
 
       <div className="border-t border-border pt-4 mt-auto px-1">
-        <div className="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors">
+        <div className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-3 min-w-0">
             {user.avatarUrl ? (
               <img
                 src={user.avatarUrl}
                 alt={user.name}
-                className="size-9 rounded-full object-cover border border-border"
+                className="size-8 rounded-lg object-cover border border-border"
               />
             ) : (
-              <div className="flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm shrink-0">
                 {user.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -99,7 +99,7 @@ export function AppSidebar({
               <div className="truncate text-sm font-bold text-foreground">
                 {user.name}
               </div>
-              <div className="truncate text-xs font-semibold text-muted-foreground">
+              <div className="truncate text-xs font-medium text-muted-foreground">
                 {user.email}
               </div>
             </div>
@@ -107,10 +107,10 @@ export function AppSidebar({
           {onLogoutClick && (
             <button
               onClick={onLogoutClick}
-              className="rounded-full p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer outline-none"
+              className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer outline-none"
               title="Log out"
             >
-              <LogOut className="size-5" />
+              <LogOut className="size-4" />
             </button>
           )}
         </div>
