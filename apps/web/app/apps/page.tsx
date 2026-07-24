@@ -1,4 +1,5 @@
 import { auth } from "@repo/auth";
+import { db, company, eq } from "@repo/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -28,6 +29,15 @@ export default async function AppsPage() {
   }
 
   const { user } = session;
+
+  const companyRecord = user.companyId
+    ? await db
+        .select()
+        .from(company)
+        .where(eq(company.id, user.companyId))
+        .then((res) => res[0])
+    : null;
+  const companyName = companyRecord?.name || null;
 
   const apps = [
     {
@@ -61,7 +71,7 @@ export default async function AppsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppsHeader companyName={user.companyName} userName={user.name} />
+      <AppsHeader companyName={companyName} userName={user.name} />
       
       <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
