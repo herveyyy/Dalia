@@ -13,12 +13,24 @@ export function SiteHeader() {
           Dalia{" "}
           <span className="text-sm font-bold text-muted-foreground">ERP</span>
         </Link>
-        <nav className="flex items-center gap-2 sm:gap-3">
+        <nav className="flex items-center gap-3 sm:gap-5">
+          <a
+            href="#modules"
+            className="font-display hidden text-sm font-bold text-muted-foreground hover:text-primary sm:inline transition-colors"
+          >
+            Modules
+          </a>
           <a
             href="#pricing"
-            className="font-display hidden text-sm font-bold text-muted-foreground hover:text-primary sm:inline"
+            className="font-display hidden text-sm font-bold text-muted-foreground hover:text-primary sm:inline transition-colors"
           >
             Pricing
+          </a>
+          <a
+            href="#founding-partners"
+            className="font-display hidden text-sm font-bold text-muted-foreground hover:text-primary md:inline transition-colors"
+          >
+            Founding Partners
           </a>
           <Link
             href="/login"

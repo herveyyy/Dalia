@@ -5,11 +5,9 @@ import { redirect } from "next/navigation";
 import {
   HiOutlineArrowRight,
   HiOutlineBuildingOffice2,
-  HiOutlineClock,
+  HiOutlineCheckCircle,
   HiOutlineDocumentText,
-  HiOutlineFlag,
-  HiOutlineHeart,
-  HiOutlineMap,
+  HiOutlineHome,
   HiOutlineRocketLaunch,
   HiOutlineShieldCheck,
   HiOutlineUsers,
@@ -24,56 +22,76 @@ import {
 } from "@repo/ui/components/molecules/Card";
 import { buttonVariants } from "@repo/ui/components/atoms/Button";
 import { cn } from "@repo/ui/lib/utils";
-import {
-  HeroBackdrop,
-  HeroStatutoryPanel,
-} from "../components/hero-visual";
+import { HeroBackdrop, HeroErpPanel } from "../components/hero-visual";
 import { SiteHeader } from "../components/site-header";
+import { ScrollReveal } from "../components/scroll-reveal";
 
-const story = [
+const erpModulesList = [
   {
-    step: "01",
-    t: "Who we are",
-    d: "Dalia is building ERP software for Philippine accounting firms and teams—the people who already run MSME payrolls, filings, and books every month.",
-    Icon: HiOutlineMap,
+    id: "firm-hub",
+    title: "Firm & Multi-Workspace Hub",
+    badge: "Core OS",
+    description:
+      "Manage all client workspaces, firm user permissions, partner access, and company roles from one centralized control center.",
+    features: [
+      "Multi-tenant client workspace switching",
+      "Firm partner & staff RBAC permission controls",
+      "Centralized client directory & admin management",
+      "Company compliance & audit trails",
+    ],
+    Icon: HiOutlineHome,
   },
   {
-    step: "02",
-    t: "Our goal",
-    d: "Become their system of record: one trusted stack for people, pay, statutory, then finance and ops—so teams stop stitching Excel, portals, and desktop tools.",
-    Icon: HiOutlineFlag,
-  },
-  {
-    step: "03",
-    t: "First step · Dalia HRIS",
-    d: "Ship HRIS, timekeeping, and statutory payroll first—BIR 1601-C, SSS, PhilHealth, Pag-IBIG, Alphalist. Nail compliance, earn trust, then expand the ERP.",
+    id: "hris-payroll",
+    title: "HRIS & Statutory Payroll",
+    badge: "Live Module",
+    description:
+      "Full Philippine HRIS with automated timekeeping, biometric log processing, and 2026 statutory compliance built right in.",
+    features: [
+      "SSS 15% Monthly Salary Credit math",
+      "PhilHealth 5% contribution calculation",
+      "BIR 1601-C & 2316 Alphalist portal export ready",
+      "Automated attendance, leaves, & shift logs",
+    ],
     Icon: HiOutlineShieldCheck,
   },
-] as const;
-
-const nextSteps = [
   {
-    t: "Prove HRIS",
-    d: "Flawless attendance → statutory math → portal-ready exports. No churn on compliance.",
+    id: "finance-billing",
+    title: "Finance & Invoicing Engine",
+    badge: "Coming Soon",
+    description:
+      "Automated client invoicing, recurring retainer billing, bookkeeping, and Philippine tax filings tailored for MSMEs.",
+    features: [
+      "Automated retainer billing & client invoicing",
+      "Real-time ledger & automated bookkeeping",
+      "BIR tax filing preparation & reports",
+      "Multi-entity cash flow monitoring",
+    ],
+    Icon: HiOutlineBuildingOffice2,
   },
   {
-    t: "Widen the team",
-    d: "Multi-workspace pricing that fits retainers while employee profiles grow.",
-  },
-  {
-    t: "Grow into ERP",
-    d: "Add finance, ops, and the rest once firms already live inside Dalia every payroll cycle.",
+    id: "operations-crm",
+    title: "Operations & Task CRM",
+    badge: "Coming Soon",
+    description:
+      "Streamline firm client retainers, job pipelines, task assignments, and document sharing in one unified workspace.",
+    features: [
+      "Client retainer pipeline & status tracking",
+      "Task assignment & deadline management",
+      "Secure client document vault & sharing",
+      "Firm productivity analytics & reporting",
+    ],
+    Icon: HiOutlineRocketLaunch,
   },
 ] as const;
 
 const tiers = [
   {
     name: "Micro",
-    range: "1–10 employees",
+    range: "Best for 1–10 employees",
     price: "350",
     badge: "1 Free Workspace",
-    target:
-      "Small coffee shops, retail kiosks, & family-owned logistics.",
+    target: "Small coffee shops, retail kiosks, & family-owned logistics.",
     value:
       "Easily absorbed by the accountant’s standard ₱5,000 monthly retainer. First workspace is 100% free.",
     featured: false,
@@ -81,7 +99,7 @@ const tiers = [
   },
   {
     name: "SME",
-    range: "11–50 employees",
+    range: "Best for 11–50 employees",
     price: "1,200",
     badge: "Sweet spot",
     target:
@@ -93,7 +111,7 @@ const tiers = [
   },
   {
     name: "Enterprise",
-    range: "51–150 employees",
+    range: "Best for 51–150 employees",
     price: "3,500",
     badge: null,
     target: "Multi-branch retail chains and large local manufacturing plants.",
@@ -101,24 +119,6 @@ const tiers = [
       "Handles complex, multi-shift attendance logs and high-volume data arrays that crash desktop software.",
     featured: false,
     Icon: HiOutlineBuildingOffice2,
-  },
-] as const;
-
-const complianceRows = [
-  {
-    k: "SSS",
-    v: "15% of Monthly Salary Credit (Employer 10%, Employee 5%).",
-    Icon: HiOutlineShieldCheck,
-  },
-  {
-    k: "PhilHealth",
-    v: "5% of basic salary (2.5% each). Floor ₱500 / cap ₱5,000.",
-    Icon: HiOutlineHeart,
-  },
-  {
-    k: "BIR",
-    v: "1601-C encoding and Alphalist export ready for portal upload.",
-    Icon: HiOutlineDocumentText,
   },
 ] as const;
 
@@ -135,303 +135,304 @@ export default async function Home() {
     <div className="min-h-dvh bg-background">
       <SiteHeader />
 
+      {/* Hero Section */}
       <section className="relative min-h-dvh overflow-hidden">
         <HeroBackdrop />
         <div className="relative z-10 mx-auto grid min-h-dvh max-w-360 items-center gap-10 px-4 pt-28 pb-16 md:px-8 lg:grid-cols-2 lg:gap-16 lg:pt-20 lg:pb-24">
           <div className="max-w-xl">
             <p className="animate-rise font-display text-4xl font-bold tracking-tight text-primary md:text-5xl">
-              Dalia
+              Dalia ERP
             </p>
             <h1 className="animate-rise-delay font-display mt-5 text-2xl leading-9 font-bold text-balance text-foreground md:text-4xl md:leading-[1.2]">
-              An ERP for accounting firms and teams—starting with HRIS.
+              The Complete ERP Operating System for Accounting Firms and Teams.
             </h1>
-            <p className="animate-rise-delay-2 mt-4 max-w-md text-base leading-6 text-muted-foreground md:text-lg md:leading-7">
-              We are building the full Dalia ERP. Step one is Dalia HRIS:
-              timekeeping and Philippine statutory payroll firms and teams can trust.
+            <p className="animate-rise-delay-2 mt-4 max-w-lg text-base leading-6 text-muted-foreground md:text-lg md:leading-7">
+              Unify client workspaces, Philippine statutory payroll, billing, and firm operations into one seamless cloud platform.
             </p>
             <div className="animate-rise-delay-2 mt-8 flex flex-wrap gap-3">
               <Link
                 href="/register"
                 className={cn(
                   buttonVariants({ variant: "default", size: "lg" }),
-                  "font-display gap-2",
+                  "font-display gap-2"
                 )}
               >
-                Start with Dalia HRIS
+                Start Dalia ERP Workspace
                 <HiOutlineArrowRight className="size-4" aria-hidden />
               </Link>
               <a
-                href="#plan"
+                href="#modules"
                 className={cn(
                   buttonVariants({ variant: "outline", size: "lg" }),
-                  "font-display gap-2",
+                  "font-display gap-2"
                 )}
               >
-                See the plan
+                Explore ERP Platform
               </a>
             </div>
           </div>
           <div className="flex justify-center lg:justify-end">
-            <HeroStatutoryPanel />
+            <HeroErpPanel />
           </div>
         </div>
       </section>
 
-      <section id="plan" className="scroll-mt-16 bg-card/60">
-        <div className="mx-auto max-w-360 px-4 py-16 md:px-8 md:py-24">
-          <div className="max-w-2xl">
-            <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
-              The plan
-            </p>
-            <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary md:text-3xl md:leading-10">
-              What we are, where we’re going, what we ship first.
-            </h2>
-          </div>
+      {/* ERP Modules Section */}
+      <section id="modules" className="scroll-mt-16 bg-card/60 py-20 md:py-28">
+        <div className="mx-auto max-w-360 px-4 md:px-8">
+          <ScrollReveal>
+            <div className="max-w-2xl">
+              <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
+                The Dalia ERP Ecosystem
+              </p>
+              <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary md:text-3xl md:leading-10">
+                Built specifically for accounting firms & Philippine businesses.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-muted-foreground">
+                Stop stitching together spreadsheets, desktop tools, and portal encoders. Dalia ERP brings people, pay, billing, and ops together.
+              </p>
+            </div>
+          </ScrollReveal>
 
-          <ol className="mt-12 grid gap-6 lg:grid-cols-3">
-            {story.map(({ step, t, d, Icon }) => (
-              <li
-                key={step}
-                className="mochi-shadow flex flex-col rounded-2xl border border-border/70 bg-card p-6 md:p-8"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-display text-xs font-bold tracking-[0.5px] text-muted-foreground uppercase">
-                    {step}
-                  </span>
-                  <span
-                    className="flex size-10 items-center justify-center rounded-full bg-primary/12 text-primary"
-                    aria-hidden
-                  >
-                    <Icon className="size-5" />
-                  </span>
-                </div>
-                <h3 className="font-display mt-6 text-lg font-bold text-foreground">
-                  {t}
-                </h3>
-                <p className="mt-3 flex-1 text-sm leading-6 text-muted-foreground md:text-base md:leading-7">
-                  {d}
-                </p>
-              </li>
-            ))}
-          </ol>
+          <div className="mt-14 grid gap-8 md:grid-cols-2">
+            {erpModulesList.map((mod, index) => {
+              const Icon = mod.Icon;
+              return (
+                <ScrollReveal key={mod.id} delayMs={index * 120}>
+                  <Card className="mochi-shadow h-full flex flex-col justify-between rounded-2xl border border-border/70 bg-card p-6 md:p-8 transition-all hover:border-primary/40 hover:shadow-md">
+                    <div>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex size-12 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                          <Icon className="size-6" />
+                        </div>
+                        <span
+                          className={cn(
+                            "rounded-full px-3 py-1 font-display text-xs font-bold tracking-[0.5px] uppercase",
+                            mod.badge === "Live Module" || mod.badge === "Core OS"
+                              ? "bg-emerald-500/12 text-emerald-600"
+                              : "bg-secondary/15 text-secondary"
+                          )}
+                        >
+                          {mod.badge}
+                        </span>
+                      </div>
 
-          <div className="mt-12 border-t border-border/50 pt-12">
-            <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
-              After the first step
-            </p>
-            <ul className="mt-6 grid gap-6 md:grid-cols-3">
-              {nextSteps.map(({ t, d }) => (
-                <li key={t}>
-                  <p className="font-display text-base font-bold text-foreground">
-                    {t}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {d}
-                  </p>
-                </li>
-              ))}
-            </ul>
+                      <h3 className="font-display mt-6 text-xl font-bold text-foreground">
+                        {mod.title}
+                      </h3>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground md:text-base md:leading-7">
+                        {mod.description}
+                      </p>
+
+                      <ul className="mt-6 space-y-2.5">
+                        {mod.features.map((feat) => (
+                          <li key={feat} className="flex items-start gap-2.5 text-sm text-foreground/90">
+                            <HiOutlineCheckCircle className="mt-0.5 size-4 shrink-0 text-primary" />
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="mt-8 border-t border-border/50 pt-4">
+                      <Link
+                        href="/register"
+                        className="font-display inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+                      >
+                        Launch in Workspace
+                        <HiOutlineArrowRight className="size-4" />
+                      </Link>
+                    </div>
+                  </Card>
+                </ScrollReveal>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <section id="pricing" className="scroll-mt-16 bg-background">
-        <div className="mx-auto max-w-360 px-4 py-16 md:px-8 md:py-24">
-          <div className="max-w-xl">
-            <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
-              ERP Pricing &middot; Per Workspace
-            </p>
-            <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary">
-              Flat rates per workspace. 1 free Micro workspace.
-            </h2>
-            <p className="mt-3 text-base leading-7 text-muted-foreground">
-              Price per workspace—not per seat—so fees roll cleanly into accountant retainers.
-            </p>
-          </div>
+      {/* Pricing Section */}
+      <section id="pricing" className="scroll-mt-16 bg-background py-20 md:py-28">
+        <div className="mx-auto max-w-360 px-4 md:px-8">
+          <ScrollReveal>
+            <div className="max-w-xl">
+              <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
+                ERP Pricing &middot; Per Workspace
+              </p>
+              <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary">
+                Flat rates per workspace. 1 free Micro workspace.
+              </h2>
+              <p className="mt-3 text-base leading-7 text-muted-foreground">
+                Flat monthly rates per workspace—designed to fit neatly into client retainers.
+              </p>
+            </div>
+          </ScrollReveal>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {tiers.map((tier) => (
-              <Card
-                key={tier.name}
-                className={cn(
-                  "mochi-shadow flex flex-col gap-0 rounded-2xl border-2 border-border/60 bg-card py-8 ring-0 [--card-spacing:--spacing(8)]",
-                  tier.featured && "mochi-shadow-lg border-primary/30",
-                )}
-              >
-                <CardHeader className="gap-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "flex size-10 shrink-0 items-center justify-center rounded-full",
-                          tier.featured
-                            ? "bg-secondary/15 text-secondary"
-                            : "bg-primary/12 text-primary",
-                        )}
-                        aria-hidden
-                      >
-                        <tier.Icon className="size-5" />
+            {tiers.map((tier, index) => (
+              <ScrollReveal key={tier.name} delayMs={index * 150}>
+                <Card
+                  className={cn(
+                    "mochi-shadow flex flex-col gap-0 rounded-2xl border-2 border-border/60 bg-card py-8 ring-0 [--card-spacing:--spacing(8)] h-full",
+                    tier.featured && "mochi-shadow-lg border-primary/30"
+                  )}
+                >
+                  <CardHeader className="gap-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={cn(
+                            "flex size-10 shrink-0 items-center justify-center rounded-full",
+                            tier.featured
+                              ? "bg-secondary/15 text-secondary"
+                              : "bg-primary/12 text-primary"
+                          )}
+                          aria-hidden
+                        >
+                          <tier.Icon className="size-5" />
+                        </span>
+                        <CardTitle className="font-display text-lg font-bold">
+                          {tier.name}
+                        </CardTitle>
+                      </div>
+                      {tier.badge ? (
+                        <span
+                          className={cn(
+                            "rounded-full px-3 py-1.5 font-display text-xs font-bold tracking-[0.5px] uppercase",
+                            tier.name === "Micro"
+                              ? "bg-primary/15 text-primary"
+                              : "bg-secondary/15 text-secondary"
+                          )}
+                        >
+                          {tier.badge}
+                        </span>
+                      ) : null}
+                    </div>
+                    <CardDescription className="font-display font-medium">
+                      {tier.range}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-1 flex-col gap-8 pt-6">
+                    <p className="tabular font-display text-3xl font-bold tracking-tight text-foreground">
+                      <span className="text-xl font-bold">₱</span>
+                      {tier.price}
+                      <span className="ml-1 text-sm font-medium text-muted-foreground">
+                        / mo per workspace
                       </span>
-                      <CardTitle className="font-display text-lg font-bold">
-                        {tier.name}
-                      </CardTitle>
+                    </p>
+                    <div className="flex flex-col gap-6">
+                      <div>
+                        <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
+                          Best For
+                        </p>
+                        <p className="mt-2.5 text-sm leading-6 text-foreground">
+                          {tier.target}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
+                          Value
+                        </p>
+                        <p className="mt-2.5 text-sm leading-6 text-foreground">
+                          {tier.value}
+                        </p>
+                      </div>
                     </div>
-                    {tier.badge ? (
-                      <span
-                        className={cn(
-                          "rounded-full px-3 py-1.5 font-display text-xs font-bold tracking-[0.5px] uppercase",
-                          tier.name === "Micro"
-                            ? "bg-primary/15 text-primary"
-                            : "bg-secondary/15 text-secondary",
-                        )}
-                      >
-                        {tier.badge}
-                      </span>
-                    ) : null}
-                  </div>
-                  <CardDescription className="font-display font-medium">
-                    {tier.range}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-1 flex-col gap-8 pt-6">
-                  <p className="tabular font-display text-3xl font-bold tracking-tight text-foreground">
-                    <span className="text-xl font-bold">₱</span>
-                    {tier.price}
-                    <span className="ml-1 text-sm font-medium text-muted-foreground">
-                      / mo per workspace
-                    </span>
-                  </p>
-                  <div className="flex flex-col gap-6">
-                    <div>
-                      <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
-                        Target
-                      </p>
-                      <p className="mt-2.5 text-sm leading-6 text-foreground">
-                        {tier.target}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
-                        Value
-                      </p>
-                      <p className="mt-2.5 text-sm leading-6 text-foreground">
-                        {tier.value}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="mt-8 border-t-0 bg-transparent pt-0 pb-8">
-                  <Link
-                    href="/register"
-                    className={cn(
-                      buttonVariants({
-                        variant: tier.featured ? "default" : "outline",
-                      }),
-                      "font-display w-full",
-                    )}
-                  >
-                    Choose {tier.name}
-                  </Link>
-                </CardFooter>
-              </Card>
+                  </CardContent>
+                  <CardFooter className="mt-8 border-t-0 bg-transparent pt-0 pb-8">
+                    <Link
+                      href="/register"
+                      className={cn(
+                        buttonVariants({
+                          variant: tier.featured ? "default" : "outline",
+                        }),
+                        "font-display w-full"
+                      )}
+                    >
+                      Choose {tier.name}
+                    </Link>
+                  </CardFooter>
+                </Card>
+              </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-primary/5">
-        <div className="mx-auto grid max-w-360 items-start gap-12 px-4 py-16 md:grid-cols-2 md:gap-16 md:px-8 md:py-24">
-          <div>
-            <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
-              Why HRIS first
-            </p>
-            <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary md:text-3xl md:leading-10">
-              Their most painful monthly bottleneck.
-            </h2>
-            <p className="mt-4 max-w-lg text-base leading-7 text-muted-foreground">
-              Statutory filing is where trust is won or lost. Fix attendance →
-              brackets → portal exports, and the team will already be inside
-              Dalia when the wider ERP modules arrive.
-            </p>
-            <blockquote className="mochi-shadow mt-10 max-w-xl rounded-2xl border-2 border-primary/15 bg-card p-6 text-base leading-7 text-foreground md:p-8">
-              <p>
-                “You upload the raw attendance logs, and the system
-                automatically cross-references the 2026 statutory brackets and
-                exports the exact structures required for government portals.”
-              </p>
-              <p className="font-display mt-4 font-bold text-primary">
-                What takes your team three days now takes five minutes.
-              </p>
-            </blockquote>
-          </div>
-
-          <div className="mochi-shadow overflow-hidden rounded-2xl border-2 border-border/60 bg-card">
-            <div className="border-b border-border/50 px-6 py-5 md:px-8 md:py-6">
-              <div className="flex items-center gap-2">
-                <HiOutlineClock className="size-4 text-primary" aria-hidden />
-                <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
-                  Inside Dalia HRIS · 2026 math
+      {/* Founding Partner Program Section */}
+      <section id="founding-partners" className="scroll-mt-16 bg-primary/5 py-20 md:py-28">
+        <div className="mx-auto max-w-360 px-4 md:px-8">
+          <ScrollReveal>
+            <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 lg:items-center">
+              <div>
+                <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
+                  Founding Partners Program
                 </p>
+                <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary md:text-3xl md:leading-10">
+                  Build the future of Philippine ERP together.
+                </h2>
+                <p className="mt-4 text-base leading-7 text-muted-foreground">
+                  We are working closely with accounting firms and internal accounting teams to shape Dalia ERP into the most efficient system of record for businesses in the Philippines.
+                </p>
+                <div className="mt-8 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <HiOutlineCheckCircle className="mt-1 size-5 shrink-0 text-primary" />
+                    <div>
+                      <p className="font-display font-bold text-foreground">Lifetime 50% Off Workspaces</p>
+                      <p className="text-sm text-muted-foreground">Get 50% off your first 10 workspace slots for the lifetime of those accounts.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <HiOutlineCheckCircle className="mt-1 size-5 shrink-0 text-primary" />
+                    <div>
+                      <p className="font-display font-bold text-foreground">Direct Product Input & Support</p>
+                      <p className="text-sm text-muted-foreground">Direct communication channel with engineering for custom statutory edge cases & features.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mochi-shadow rounded-2xl border-2 border-primary/15 bg-card p-8 md:p-10">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 items-center justify-center rounded-full bg-primary/12 text-primary">
+                    <HiOutlineDocumentText className="size-5" />
+                  </span>
+                  <div>
+                    <p className="font-display text-lg font-bold text-foreground">Become a Founding Partner</p>
+                    <p className="text-xs text-muted-foreground">Limited founding slots for accounting firms</p>
+                  </div>
+                </div>
+                <p className="mt-6 text-sm leading-6 text-muted-foreground">
+                  Join early partner accounting firms who are digitizing client payroll, statutory compliance, and financial workflows on Dalia ERP.
+                </p>
+                <Link
+                  href="/register"
+                  className={cn(
+                    buttonVariants({ variant: "default", size: "lg" }),
+                    "font-display mt-8 w-full justify-center gap-2"
+                  )}
+                >
+                  Claim Founding Partner Access
+                  <HiOutlineArrowRight className="size-4" aria-hidden />
+                </Link>
               </div>
             </div>
-
-            <ul className="divide-y divide-border/40 px-2 py-2 md:px-3">
-              {complianceRows.map(({ k, v, Icon }) => (
-                <li
-                  key={k}
-                  className="flex gap-4 px-4 py-5 md:px-5 md:py-6"
-                >
-                  <span
-                    className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/12 text-primary"
-                    aria-hidden
-                  >
-                    <Icon className="size-5" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-display text-base font-bold text-foreground">
-                      {k}
-                    </p>
-                    <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                      {v}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <div className="border-t border-border/50 bg-primary/5 px-6 py-6 md:px-8 md:py-8">
-              <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
-                Founding partners &middot; lifetime 50% off workspace slots
-              </p>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Because your firm or team handles complex payroll structures, I want to bring you on as a Founding Partner. You will get 50% off your first 10 workspace slots for the lifetime of those accounts. In return, I just need your team to flag any edge cases they hit during the 2026 statutory updates.
-              </p>
-              <Link
-                href="/register"
-                className={cn(
-                  buttonVariants({ variant: "secondary", size: "lg" }),
-                  "font-display mt-6 inline-flex w-full gap-2 sm:w-auto",
-                )}
-              >
-                Become a Founding Partner
-                <HiOutlineArrowRight className="size-4" aria-hidden />
-              </Link>
-            </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
+      {/* Footer */}
       <footer className="border-t border-border/60 bg-card">
         <div className="mx-auto flex max-w-360 flex-col gap-4 px-4 py-10 md:flex-row md:items-center md:justify-between md:px-8">
-          <p className="font-display text-sm font-bold text-primary">Dalia</p>
+          <p className="font-display text-sm font-bold text-primary">Dalia ERP</p>
           <p className="text-sm text-muted-foreground">
-            Building the ERP · shipping Dalia HRIS first
+            The Complete Operating System for Accounting Firms and Teams
           </p>
           <div className="font-display flex gap-4 text-sm font-bold text-muted-foreground">
-            <Link href="/login" className="hover:text-primary">
+            <Link href="/login" className="hover:text-primary transition-colors">
               Log in
             </Link>
-            <Link href="/register" className="hover:text-primary">
+            <Link href="/register" className="hover:text-primary transition-colors">
               Register
             </Link>
           </div>

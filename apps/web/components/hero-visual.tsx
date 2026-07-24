@@ -1,8 +1,7 @@
 import {
-  HiOutlineBuildingLibrary,
-  HiOutlineDocumentArrowUp,
-  HiOutlineDocumentText,
-  HiOutlineHeart,
+  HiOutlineBuildingOffice2,
+  HiOutlineHome,
+  HiOutlineRocketLaunch,
   HiOutlineShieldCheck,
 } from "react-icons/hi2";
 
@@ -22,33 +21,44 @@ export function HeroBackdrop() {
   );
 }
 
-const runs = [
-  { label: "BIR 1601-C", Icon: HiOutlineDocumentText },
-  { label: "SSS 15% MSC", Icon: HiOutlineShieldCheck },
-  { label: "PhilHealth 5%", Icon: HiOutlineHeart },
-  { label: "Pag-IBIG", Icon: HiOutlineBuildingLibrary },
-  { label: "Alphalist export", Icon: HiOutlineDocumentArrowUp },
+const erpModules = [
+  { label: "Firm Workspace Hub", sub: "Multi-client compliance control", Icon: HiOutlineHome, status: "Live" },
+  { label: "HRIS & Statutory Payroll", sub: "2026 BIR 1601-C, SSS, PhilHealth", Icon: HiOutlineShieldCheck, status: "Live" },
+  { label: "Finance & Invoicing", sub: "Client billing & BIR filings", Icon: HiOutlineBuildingOffice2, status: "Coming Soon" },
+  { label: "Operations CRM", sub: "Client retainers & task pipelines", Icon: HiOutlineRocketLaunch, status: "Coming Soon" },
 ] as const;
 
-export function HeroStatutoryPanel() {
+export function HeroErpPanel() {
   return (
     <div
       className="animate-pop mochi-shadow-lg relative hidden w-full max-w-md rounded-2xl border-2 border-primary/15 bg-card p-8 lg:block"
       aria-hidden
     >
-      <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
-        2026 Statutory Run
-      </p>
-      <ul className="mt-8 flex flex-col gap-5">
-        {runs.map(({ label, Icon }) => (
-          <li key={label} className="flex items-center gap-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/12 text-primary">
-              <Icon className="size-4" />
+      <div className="flex items-center justify-between">
+        <p className="font-display text-xs font-bold tracking-[0.5px] text-primary uppercase">
+          Dalia ERP Platform Stack
+        </p>
+        <span className="rounded-full bg-primary/12 px-2.5 py-0.5 font-display text-[10px] font-bold text-primary">
+          Unified System
+        </span>
+      </div>
+      <ul className="mt-6 flex flex-col gap-4">
+        {erpModules.map(({ label, sub, Icon, status }) => (
+          <li key={label} className="flex items-center gap-3.5 rounded-xl border border-border/50 bg-background/60 p-3.5 transition-colors">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
+              <Icon className="size-5" />
             </span>
-            <span className="font-display shrink-0 text-base font-bold text-foreground">
-              {label}
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-sm font-bold text-foreground leading-snug">
+                {label}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {sub}
+              </p>
+            </div>
+            <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${status === "Live" ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+              {status}
             </span>
-            <span className="animate-draw-bar h-2 min-w-0 flex-1 rounded-full bg-primary-container" />
           </li>
         ))}
       </ul>

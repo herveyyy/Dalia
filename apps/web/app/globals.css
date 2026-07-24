@@ -1,5 +1,9 @@
 @import "@repo/ui/globals.css";
 
+html {
+  scroll-behavior: smooth;
+}
+
 @source ".";
 @source "../components";
 
