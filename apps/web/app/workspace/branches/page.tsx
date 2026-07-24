@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { OrgEmployeesPanel } from "../utils/components/org-employees-panel";
+import { OrgBranchesPanel } from "../utils/components/org-branches-panel";
 import { resolveTenantCompanyId } from "../utils/lib/resolve-tenant-company";
 import { getCompanyRecord } from "../utils/queries/get/get-company-record.query";
-import { getBranches, getDepartments, getEmployees, getRoles } from "../utils/queries/get/get-org.query";
+import { getBranchesWithEmployees } from "../utils/queries/get/get-org.query";
 
-export default async function EmployeesPage({
+export default async function BranchesPage({
   searchParams,
 }: {
   searchParams: Promise<{ company_id?: string }>;
@@ -13,25 +13,18 @@ export default async function EmployeesPage({
   const { companyId, error } = await resolveTenantCompanyId(selectorId);
 
   if (error === "unauthorized") redirect("/login");
-  if (error === "forbidden") redirect("/workspace");
-  if (!companyId) redirect("/workspace");
+  if (error === "forbidden" || !companyId) redirect("/workspace");
 
-  const [companyRecord, employees, departments, branches, roles] = await Promise.all([
+  const [companyRecord, branches] = await Promise.all([
     getCompanyRecord(companyId),
-    getEmployees(companyId),
-    getDepartments(companyId),
-    getBranches(companyId),
-    getRoles(companyId),
+    getBranchesWithEmployees(companyId),
   ]);
 
   return (
-    <OrgEmployeesPanel
+    <OrgBranchesPanel
       companyId={companyId}
       companyName={companyRecord?.name || "Client company"}
-      employees={employees}
-      departments={departments}
       branches={branches}
-      roles={roles}
     />
   );
 }

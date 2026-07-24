@@ -12,6 +12,7 @@ import {
   HiOutlineBuildingOffice2,
   HiOutlineIdentification,
   HiOutlineUsers,
+  HiOutlineMapPin,
   HiOutlineSquares2X2,
 } from "react-icons/hi2";
 import { Workspace } from "../types/workspace.types";
@@ -148,6 +149,11 @@ export function useWorkspaceState(
             label: "Departments",
             href: href("/workspace/departments"),
             Icon: HiOutlineBuildingOffice2,
+          },
+          {
+            label: "Branches",
+            href: href("/workspace/branches"),
+            Icon: HiOutlineMapPin,
           },
           {
             label: "Roles",

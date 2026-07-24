@@ -12,6 +12,7 @@ import {
   taxType,
   jobPosting,
   department,
+  branch,
 } from "./tables";
 
 export const employeeRelations = relations(employee, ({ one, many }) => ({
@@ -41,6 +42,10 @@ export const employeeRelations = relations(employee, ({ one, many }) => ({
   department: one(department, {
     fields: [employee.departmentId],
     references: [department.id],
+  }),
+  branch: one(branch, {
+    fields: [employee.branchId],
+    references: [branch.id],
   }),
   role: one(role, {
     fields: [employee.roleId],
@@ -122,4 +127,12 @@ export const departmentRelations = relations(department, ({ one, many }) => ({
   }),
   employees: many(employee),
   jobPostings: many(jobPosting),
+}));
+
+export const branchRelations = relations(branch, ({ one, many }) => ({
+  company: one(company, {
+    fields: [branch.companyId],
+    references: [company.id],
+  }),
+  employees: many(employee),
 }));

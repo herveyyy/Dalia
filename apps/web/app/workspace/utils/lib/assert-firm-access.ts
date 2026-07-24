@@ -4,7 +4,7 @@ import { getSessionTenant } from "./session-tenant";
 export async function assertFirmAccess(companyId: string) {
   const tenant = await getSessionTenant();
 
-  if (!tenant.session || tenant.error === "unauthorized") {
+  if (!tenant.session) {
     throw new Error("Unauthorized");
   }
 

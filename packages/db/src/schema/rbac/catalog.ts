@@ -24,6 +24,7 @@ export const APP_ACCESS_CATALOG: AppModuleSeed[] = [
       { key: "partners.manage", name: "Manage partners" },
       { key: "employees.manage", name: "Manage employees" },
       { key: "departments.manage", name: "Manage departments" },
+      { key: "branches.manage", name: "Manage branches & locations" },
       { key: "roles.manage", name: "Manage roles & access" },
       { key: "bir.view", name: "BIR filing tools" },
       { key: "sss_hdmf.view", name: "SSS/HDMF tools" },

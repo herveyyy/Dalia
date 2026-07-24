@@ -32,6 +32,7 @@ import {
   revokeEmployeeLoginAction,
 } from "../actions/employee-login-actions";
 import type {
+  WorkspaceBranch,
   WorkspaceDepartment,
   WorkspaceEmployee,
   WorkspaceRole,
@@ -42,6 +43,7 @@ interface OrgEmployeesPanelProps {
   companyName: string;
   employees: WorkspaceEmployee[];
   departments: WorkspaceDepartment[];
+  branches: WorkspaceBranch[];
   roles: WorkspaceRole[];
 }
 
@@ -52,6 +54,7 @@ export function OrgEmployeesPanel({
   companyName,
   employees,
   departments,
+  branches,
   roles,
 }: OrgEmployeesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -94,6 +97,7 @@ export function OrgEmployeesPanel({
         lastName: String(formData.get("lastName") || ""),
         workEmail: String(formData.get("workEmail") || "") || null,
         departmentId: String(formData.get("departmentId") || "") || null,
+        branchId: String(formData.get("branchId") || "") || null,
         roleId: String(formData.get("roleId") || "") || null,
         jobTitle: String(formData.get("jobTitle") || "") || null,
         employmentStatus: String(formData.get("employmentStatus") || "Active"),
@@ -102,7 +106,11 @@ export function OrgEmployeesPanel({
     });
   };
 
-  const handleAssign = (employeeId: string, field: "departmentId" | "roleId", value: string) => {
+  const handleAssign = (
+    employeeId: string,
+    field: "departmentId" | "branchId" | "roleId",
+    value: string
+  ) => {
     const employee = employees.find((e) => e.id === employeeId);
     if (!employee) return;
     startTransition(async () => {
@@ -351,7 +359,7 @@ export function OrgEmployeesPanel({
                     placeholder="Required to create a login"
                   />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="departmentId">Department</Label>
                     <select
@@ -364,6 +372,22 @@ export function OrgEmployeesPanel({
                       {departments.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="branchId">Branch / Location</Label>
+                    <select
+                      id="branchId"
+                      name="branchId"
+                      defaultValue={selected?.branchId || ""}
+                      className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                    >
+                      <option value="">Main Location</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
                         </option>
                       ))}
                     </select>

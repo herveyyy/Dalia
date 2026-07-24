@@ -36,6 +36,7 @@ export const employee = pgTable(
     companyId: uuid("company_id").notNull(),
     userId: text("user_id"),
     departmentId: uuid("department_id"),
+    branchId: uuid("branch_id"),
     roleId: uuid("role_id"),
     jobTitle: text("job_title"),
     responsibilityCenter: text("responsibility_center"),
@@ -75,6 +76,11 @@ export const employee = pgTable(
       columns: [table.departmentId],
       foreignColumns: [department.id],
       name: "employee_department_id_department_id_fk",
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [table.branchId],
+      foreignColumns: [branch.id],
+      name: "employee_branch_id_branch_id_fk",
     }).onDelete("set null"),
     foreignKey({
       columns: [table.roleId],
@@ -241,6 +247,28 @@ export const department = pgTable(
       columns: [table.companyId],
       foreignColumns: [company.id],
       name: "department_company_id_company_id_fk",
+    }).onDelete("cascade"),
+  ]
+);
+
+export const branch = pgTable(
+  "branch",
+  {
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    companyId: uuid("company_id").notNull(),
+    name: text("name").notNull(),
+    code: text("code"),
+    address: text("address"),
+    description: text("description"),
+    isArchived: boolean("is_archived").default(false).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.companyId],
+      foreignColumns: [company.id],
+      name: "branch_company_id_company_id_fk",
     }).onDelete("cascade"),
   ]
 );
