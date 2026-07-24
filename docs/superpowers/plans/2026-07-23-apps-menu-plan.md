@@ -20,15 +20,18 @@
 ### Task 1: Redirection Integration & Route Logic
 
 **Files:**
+
 - Modify: `apps/web/app/page.tsx`
 - Modify: `apps/web/lib/auth-actions.ts`
 
 **Interfaces:**
+
 - Consumes: `auth.api.getSession`
 - Produces: Server-side redirection on `/` and successful sign-in/sign-up redirection to `/apps`.
 
 - [ ] **Step 1: Update apps/web/app/page.tsx to redirect authenticated users**
-  Modify [apps/web/app/page.tsx](file:///c:/Users/hmapa/Documents/PROJECTS/dalia/apps/web/app/page.tsx) to check for a session and redirect if found.
+      Modify [apps/web/app/page.tsx](file:///c:/Users/hmapa/Documents/PROJECTS/dalia/apps/web/app/page.tsx) to check for a session and redirect if found.
+
   ```typescript
   import { auth } from "@repo/auth";
   import { headers } from "next/headers";
@@ -43,19 +46,20 @@
     if (session) {
       redirect("/apps");
     }
-    
+
     // ... rest of the landing page code remains identical
   ```
 
 - [ ] **Step 2: Update apps/web/lib/auth-actions.ts redirect targets**
-  Modify [apps/web/lib/auth-actions.ts](file:///c:/Users/hmapa/Documents/PROJECTS/dalia/apps/web/lib/auth-actions.ts) to redirect to `/apps` instead of `/` on success.
+      Modify [apps/web/lib/auth-actions.ts](file:///c:/Users/hmapa/Documents/PROJECTS/dalia/apps/web/lib/auth-actions.ts) to redirect to `/apps` instead of `/` on success.
+
   ```typescript
   // In signInAction and signUpAction, replace redirect("/") with redirect("/apps")
   ```
 
 - [ ] **Step 3: Run local dev compiler to verify no syntax errors**
-  Run: `bun run lint`
-  Expected: Command executes with no syntax errors in these files (placeholder warnings in `apps/page.tsx` can remain for now).
+      Run: `bun run lint`
+      Expected: Command executes with no syntax errors in these files (placeholder warnings in `apps/page.tsx` can remain for now).
 
 - [ ] **Step 4: Commit changes**
   ```bash
@@ -68,14 +72,17 @@
 ### Task 2: Navigation Header Component
 
 **Files:**
+
 - Create: `apps/web/components/apps-header.tsx`
 
 **Interfaces:**
+
 - Consumes: `companyName` (string) and `userName` (string)
 - Produces: `AppsHeader` (React Component)
 
 - [ ] **Step 1: Create the AppsHeader component**
-  Create the file `apps/web/components/apps-header.tsx` containing:
+      Create the file `apps/web/components/apps-header.tsx` containing:
+
   ```typescript
   "use client";
 
@@ -136,14 +143,17 @@
 ### Task 3: Apps Menu Page Implementation
 
 **Files:**
+
 - Modify: `apps/web/app/apps/page.tsx`
 
 **Interfaces:**
+
 - Consumes: `auth.api.getSession`, `AppsHeader`
 - Produces: Authenticated `/apps` page layout.
 
 - [ ] **Step 1: Rewrite apps/web/app/apps/page.tsx**
-  Update the page with the complete layout, fetching the session and displaying the cards for Dalia HRIS, Finance & Sales, and Operations CRM.
+      Update the page with the complete layout, fetching the session and displaying the cards for Dalia HRIS, Finance & Sales, and Operations CRM.
+
   ```typescript
   import { auth } from "@repo/auth";
   import { headers } from "next/headers";
@@ -182,7 +192,7 @@
       {
         id: "hris",
         name: "Dalia HRIS",
-        description: "Philippine statutory payroll, automated timekeeping, and employee files.",
+        description: "the Philippines statutory payroll, automated timekeeping, and employee files.",
         icon: HiOutlineShieldCheck,
         href: "/hris",
         status: "active",
@@ -211,7 +221,7 @@
     return (
       <div className="min-h-screen bg-background">
         <AppsHeader companyName={user.companyName} userName={user.name} />
-        
+
         <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -232,8 +242,8 @@
                   key={app.id}
                   className={cn(
                     "flex flex-col justify-between border border-border/60 bg-card p-6 transition-all duration-200",
-                    isActive 
-                      ? "hover:border-primary/40 hover:shadow-md" 
+                    isActive
+                      ? "hover:border-primary/40 hover:shadow-md"
                       : "opacity-80 bg-card/40 border-dashed backdrop-blur-[2px]"
                   )}
                 >
@@ -305,14 +315,17 @@
 ### Task 4: Dalia HRIS Placeholder Route
 
 **Files:**
+
 - Create: `apps/web/app/hris/page.tsx`
 
 **Interfaces:**
+
 - Consumes: `auth.api.getSession`, `AppsHeader`
 - Produces: `/hris` route landing placeholder.
 
 - [ ] **Step 1: Create apps/web/app/hris/page.tsx**
-  Create a basic authenticated placeholder dashboard for `/hris`:
+      Create a basic authenticated placeholder dashboard for `/hris`:
+
   ```typescript
   import { auth } from "@repo/auth";
   import { headers } from "next/headers";
@@ -335,7 +348,7 @@
     return (
       <div className="min-h-screen bg-background">
         <AppsHeader companyName={user.companyName} userName={user.name} />
-        
+
         <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="flex flex-col items-start gap-4">
             <Link
@@ -345,7 +358,7 @@
               <HiOutlineArrowLeft className="size-4" />
               Back to apps
             </Link>
-            
+
             <div className="mt-8 flex items-center gap-3">
               <span className="flex size-12 items-center justify-center rounded-full bg-primary/12 text-primary">
                 <HiOutlineShieldCheck className="size-6" />
@@ -354,9 +367,9 @@
                 Dalia HRIS Dashboard
               </h1>
             </div>
-            
+
             <p className="mt-4 text-base text-muted-foreground max-w-xl">
-              This is the workspace for managing your company or client's Philippine statutory payroll, automated timekeeping, and employee files.
+              This is the workspace for managing your company or client's the Philippines statutory payroll, automated timekeeping, and employee files.
             </p>
 
             <div className="mt-8 p-12 border-2 border-dashed border-border/60 rounded-2xl bg-card/30 text-center w-full max-w-2xl">

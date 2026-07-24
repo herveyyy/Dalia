@@ -46,7 +46,7 @@ const erpModulesList = [
     title: "HRIS & Statutory Payroll",
     badge: "Live Module",
     description:
-      "Full Philippine HRIS with automated timekeeping, biometric log processing, and 2026 statutory compliance built right in.",
+      "Full the Philippines HRIS with automated timekeeping, biometric log processing, and 2026 statutory compliance built right in.",
     features: [
       "SSS 15% Monthly Salary Credit math",
       "PhilHealth 5% contribution calculation",
@@ -60,7 +60,7 @@ const erpModulesList = [
     title: "Finance & Invoicing Engine",
     badge: "Coming Soon",
     description:
-      "Automated client invoicing, recurring retainer billing, bookkeeping, and Philippine tax filings tailored for MSMEs.",
+      "Automated client invoicing, recurring retainer billing, bookkeeping, and the Philippines tax filings tailored for MSMEs.",
     features: [
       "Automated retainer billing & client invoicing",
       "Real-time ledger & automated bookkeeping",
@@ -147,7 +147,7 @@ export default async function Home() {
               The Complete ERP Operating System for Accounting Firms and Teams.
             </h1>
             <p className="animate-rise-delay-2 mt-4 max-w-lg text-base leading-6 text-muted-foreground md:text-lg md:leading-7">
-              Unify client workspaces, Philippine statutory payroll, billing, and firm operations into one seamless cloud platform.
+              Unify client workspaces, the Philippines statutory payroll, billing, and firm operations into one seamless cloud platform.
             </p>
             <div className="animate-rise-delay-2 mt-8 flex flex-wrap gap-3">
               <Link
@@ -186,7 +186,7 @@ export default async function Home() {
                 The Dalia ERP Ecosystem
               </p>
               <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary md:text-3xl md:leading-10">
-                Built specifically for accounting firms & Philippine businesses.
+                Built specifically for accounting firms & the Philippines businesses.
               </h2>
               <p className="mt-4 text-base leading-7 text-muted-foreground">
                 Stop stitching together spreadsheets, desktop tools, and portal encoders. Dalia ERP brings people, pay, billing, and ops together.
@@ -369,10 +369,10 @@ export default async function Home() {
                   Founding Partners Program
                 </p>
                 <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary md:text-3xl md:leading-10">
-                  Build the future of Philippine ERP together.
+                  Build the future of the Philippines ERP together.
                 </h2>
                 <p className="mt-4 text-base leading-7 text-muted-foreground">
-                  We are working closely with accounting firms and internal accounting teams to shape Dalia ERP into the most efficient system of record for businesses in the Philippines.
+                  We are working closely with accounting firms and internal accounting teams to shape Dalia ERP into the most efficient system of record for businesses in the the Philippiness.
                 </p>
                 <div className="mt-8 space-y-4">
                   <div className="flex items-start gap-3">

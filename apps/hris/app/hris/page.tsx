@@ -35,7 +35,7 @@ export default async function Page() {
           Dalia HRIS
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage your team, approve time logs, and process Philippine statutory payroll.
+          Manage your team, approve time logs, and process the Philippines statutory payroll.
         </p>
       </div>
 

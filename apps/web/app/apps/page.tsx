@@ -77,7 +77,7 @@ export default async function AppsPage() {
     {
       id: "hris",
       name: "Dalia ERP",
-      description: "Philippine statutory payroll, automated timekeeping, and employee files.",
+      description: "the Philippines statutory payroll, automated timekeeping, and employee files.",
       icon: HiOutlineShieldCheck,
       href: "/hris",
       status: "active",

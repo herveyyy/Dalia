@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s · Dalia",
   },
   description:
-    "Dalia is building an ERP for Philippine accounting firms. We start with Dalia HRIS: timekeeping and statutory payroll for MSMEs.",
+    "Dalia is building an ERP for the Philippines accounting firms. We start with Dalia HRIS: timekeeping and statutory payroll for MSMEs.",
 };
 
 export default function RootLayout({
