@@ -1,0 +1,23 @@
+import { auth } from "@repo/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { getJobPostings } from "../utils/queries/job-queries";
+import { JobPostingsList } from "../utils/components/job-postings-list";
+
+export default async function Page() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const { user } = session;
+
+  const jobPostingsList = user.companyId ? await getJobPostings(user.companyId) : [];
+
+  return (
+    <JobPostingsList jobPostings={jobPostingsList} companyId={user.companyId || ""} />
+  );
+}

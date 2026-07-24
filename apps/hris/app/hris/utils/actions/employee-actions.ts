@@ -18,7 +18,6 @@ export async function saveEmployee(data: any) {
     const employeeId = data.id || `emp_${Math.random().toString(36).substring(2, 11)}`;
 
     await db.transaction(async (tx) => {
-      // 1. Prepare employee record
       const employeeValues = {
         id: employeeId,
         employeeNo: data.employeeNo || null,
@@ -55,6 +54,7 @@ export async function saveEmployee(data: any) {
         overtimeHours: data.overtimeHours || "0.00",
         leaveBalanceDays: data.leaveBalanceDays || "0.00",
         taxBracketCode: data.taxBracketCode || null,
+        taxTypeId: data.taxTypeId || null,
       };
 
       if (isUpdate) {
@@ -63,7 +63,6 @@ export async function saveEmployee(data: any) {
         await tx.insert(employee).values(employeeValues);
       }
 
-      // 2. Save emergency contact
       await tx.delete(employeeEmergencyContact).where(eq(employeeEmergencyContact.employeeId, employeeId));
       if (data.emergencyContact && data.emergencyContact.contactPerson && data.emergencyContact.contactNo) {
         const contactId = `ec_${Math.random().toString(36).substring(2, 11)}`;
@@ -77,7 +76,6 @@ export async function saveEmployee(data: any) {
         });
       }
 
-      // 3. Save deductions
       await tx.delete(employeeDeduction).where(eq(employeeDeduction.employeeId, employeeId));
       if (data.deductions && Array.isArray(data.deductions)) {
         for (const ded of data.deductions) {
@@ -117,7 +115,6 @@ export async function saveEmployee(data: any) {
         }
       }
 
-      // 4. Save allowances
       await tx.delete(employeeAllowance).where(eq(employeeAllowance.employeeId, employeeId));
       if (data.allowances && Array.isArray(data.allowances)) {
         for (const alw of data.allowances) {

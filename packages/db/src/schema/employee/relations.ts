@@ -7,6 +7,9 @@ import {
   employeeDeduction,
   allowanceType,
   employeeAllowance,
+  taxType,
+  jobPosting,
+  department,
 } from "./tables";
 
 export const employeeRelations = relations(employee, ({ one, many }) => ({
@@ -25,6 +28,14 @@ export const employeeRelations = relations(employee, ({ one, many }) => ({
   emergencyContacts: many(employeeEmergencyContact),
   deductions: many(employeeDeduction),
   allowances: many(employeeAllowance),
+  taxType: one(taxType, {
+    fields: [employee.taxTypeId],
+    references: [taxType.id],
+  }),
+  department: one(department, {
+    fields: [employee.departmentId],
+    references: [department.id],
+  }),
 }));
 
 export const employeeEmergencyContactRelations = relations(
@@ -73,4 +84,32 @@ export const employeeAllowanceRelations = relations(employeeAllowance, ({ one })
     fields: [employeeAllowance.allowanceTypeId],
     references: [allowanceType.id],
   }),
+}));
+
+export const taxTypeRelations = relations(taxType, ({ one, many }) => ({
+  company: one(company, {
+    fields: [taxType.companyId],
+    references: [company.id],
+  }),
+  employees: many(employee),
+}));
+
+export const jobPostingRelations = relations(jobPosting, ({ one }) => ({
+  company: one(company, {
+    fields: [jobPosting.companyId],
+    references: [company.id],
+  }),
+  department: one(department, {
+    fields: [jobPosting.departmentId],
+    references: [department.id],
+  }),
+}));
+
+export const departmentRelations = relations(department, ({ one, many }) => ({
+  company: one(company, {
+    fields: [department.companyId],
+    references: [company.id],
+  }),
+  employees: many(employee),
+  jobPostings: many(jobPosting),
 }));

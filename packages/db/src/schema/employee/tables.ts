@@ -30,7 +30,7 @@ export const employee = pgTable(
     philIdNo: text("phil_id_no"),
 
     companyId: text("company_id").notNull(),
-    department: text("department"),
+    departmentId: text("department_id"),
     jobTitle: text("job_title"),
     responsibilityCenter: text("responsibility_center"),
     employmentStatus: text("employment_status").default("Active").notNull(),
@@ -49,6 +49,7 @@ export const employee = pgTable(
     overtimeHours: numeric("overtime_hours", { precision: 8, scale: 2 }).default("0.00").notNull(),
     leaveBalanceDays: numeric("leave_balance_days", { precision: 5, scale: 2 }).default("0.00").notNull(),
     taxBracketCode: text("tax_bracket_code"),
+    taxTypeId: text("tax_type_id"),
 
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
@@ -60,9 +61,19 @@ export const employee = pgTable(
       name: "employee_company_id_company_id_fk",
     }).onDelete("cascade"),
     foreignKey({
+      columns: [table.departmentId],
+      foreignColumns: [department.id],
+      name: "employee_department_id_department_id_fk",
+    }).onDelete("set null"),
+    foreignKey({
       columns: [table.supervisorId],
       foreignColumns: [table.id],
       name: "employee_supervisor_id_employee_id_fk",
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [table.taxTypeId],
+      foreignColumns: [taxType.id],
+      name: "employee_tax_type_id_tax_type_id_fk",
     }).onDelete("set null"),
   ]
 );
@@ -173,5 +184,77 @@ export const employeeAllowance = pgTable(
       foreignColumns: [allowanceType.id],
       name: "employee_allowance_allowance_type_id_allowance_type_id_fk",
     }).onDelete("cascade"),
+  ]
+);
+
+export const taxType = pgTable(
+  "tax_type",
+  {
+    id: text("id").primaryKey().notNull(),
+    companyId: text("company_id").notNull(),
+    name: text("name").notNull(),
+    rate: numeric("rate", { precision: 5, scale: 2 }).default("0.00").notNull(),
+    description: text("description"),
+    isArchived: boolean("is_archived").default(false).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.companyId],
+      foreignColumns: [company.id],
+      name: "tax_type_company_id_company_id_fk",
+    }).onDelete("cascade"),
+  ]
+);
+
+export const department = pgTable(
+  "department",
+  {
+    id: text("id").primaryKey().notNull(),
+    companyId: text("company_id").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    isArchived: boolean("is_archived").default(false).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.companyId],
+      foreignColumns: [company.id],
+      name: "department_company_id_company_id_fk",
+    }).onDelete("cascade"),
+  ]
+);
+
+export const jobPosting = pgTable(
+  "job_posting",
+  {
+    id: text("id").primaryKey().notNull(),
+    companyId: text("company_id").notNull(),
+    title: text("title").notNull(),
+    departmentId: text("department_id"),
+    location: text("location"),
+    employmentType: text("employment_type").notNull(),
+    description: text("description").notNull(),
+    requirements: text("requirements"),
+    salaryRange: text("salary_range"),
+    status: text("status").default("Published").notNull(),
+    isArchived: boolean("is_archived").default(false).notNull(),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.companyId],
+      foreignColumns: [company.id],
+      name: "job_posting_company_id_company_id_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.departmentId],
+      foreignColumns: [department.id],
+      name: "job_posting_department_id_department_id_fk",
+    }).onDelete("set null"),
   ]
 );

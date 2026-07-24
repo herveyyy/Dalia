@@ -27,9 +27,16 @@ import { useEmployeeDirectory } from "../hooks/use-employee-directory";
 interface EmployeeDirectoryProps {
   initialEmployees: any[];
   companyId: string;
+  allowanceTypes: any[];
+  taxTypes: any[];
 }
 
-export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirectoryProps) {
+export function EmployeeDirectory({
+  initialEmployees,
+  companyId,
+  allowanceTypes,
+  taxTypes,
+}: EmployeeDirectoryProps) {
   const {
     activeTab,
     setActiveTab,
@@ -531,8 +538,20 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
                     <Input id="supervisorId" name="supervisorId" defaultValue={selectedEmployee?.supervisorId || ""} placeholder="Supervisor Emp ID" />
                   </div>
                   <div>
-                    <Label htmlFor="taxBracketCode">Tax Bracket/Code</Label>
-                    <Input id="taxBracketCode" name="taxBracketCode" defaultValue={selectedEmployee?.taxBracketCode || ""} />
+                    <Label htmlFor="taxTypeId">Tax Bracket/Type</Label>
+                    <select
+                      id="taxTypeId"
+                      name="taxTypeId"
+                      defaultValue={selectedEmployee?.taxTypeId || ""}
+                      className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
+                    >
+                      <option value="">Exempt / None</option>
+                      {taxTypes.map((tax) => (
+                        <option key={tax.id} value={tax.id}>
+                          {tax.name} ({tax.rate}%)
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
@@ -637,43 +656,80 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
                     {allowances.length === 0 ? (
                       <p className="text-xs text-muted-foreground text-center py-4">No allowances configured.</p>
                     ) : (
-                      allowances.map((alw, index) => (
-                        <div key={index} className="flex gap-2 items-center">
-                          <Input
-                            placeholder="Allowance Name"
-                            value={alw.name}
-                            onChange={(e) => {
-                              const newAlw = [...allowances];
-                              newAlw[index].name = e.target.value;
-                              setAllowances(newAlw);
-                            }}
-                            required
-                          />
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="Amount"
-                            className="w-24 text-right"
-                            value={alw.amount}
-                            onChange={(e) => {
-                              const newAlw = [...allowances];
-                              newAlw[index].amount = e.target.value;
-                              setAllowances(newAlw);
-                            }}
-                            required
-                          />
-                          <select
-                            value={alw.isTaxable ? "true" : "false"}
-                            onChange={(e) => {
-                              const newAlw = [...allowances];
-                              newAlw[index].isTaxable = e.target.value === "true";
-                              setAllowances(newAlw);
-                            }}
-                            className="h-10 rounded-lg border border-input bg-card px-2 text-xs outline-none"
-                          >
-                            <option value="false">Non-Tax</option>
-                            <option value="true">Taxable</option>
-                          </select>
+                      allowances.map((alw, index) => {
+                        const isCustom = alw.isCustom || (alw.name && !allowanceTypes.some((t) => t.name === alw.name));
+                        return (
+                          <div key={index} className="flex gap-2 items-center">
+                            <select
+                              value={allowanceTypes.some((t) => t.name === alw.name) ? alw.name : alw.name ? "__custom__" : ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const newAlw = [...allowances];
+                                if (val === "__custom__") {
+                                  newAlw[index].name = "";
+                                  newAlw[index].isCustom = true;
+                                } else {
+                                  newAlw[index].name = val;
+                                  newAlw[index].isCustom = false;
+                                  const matched = allowanceTypes.find((t) => t.name === val);
+                                  if (matched) {
+                                    newAlw[index].isTaxable = matched.isTaxable;
+                                  }
+                                }
+                                setAllowances(newAlw);
+                              }}
+                              className="h-10 rounded-lg border border-input bg-card px-2 text-xs outline-none w-44"
+                              required
+                            >
+                              <option value="">Select Type...</option>
+                              {allowanceTypes.map((t) => (
+                                <option key={t.id} value={t.name}>
+                                  {t.name}
+                                </option>
+                              ))}
+                              <option value="__custom__">+ Custom Type...</option>
+                            </select>
+
+                            {isCustom && (
+                              <Input
+                                placeholder="Custom Name"
+                                value={alw.name}
+                                onChange={(e) => {
+                                  const newAlw = [...allowances];
+                                  newAlw[index].name = e.target.value;
+                                  setAllowances(newAlw);
+                                }}
+                                className="text-xs"
+                                required
+                              />
+                            )}
+
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="Amount"
+                              className="w-24 text-right"
+                              value={alw.amount}
+                              onChange={(e) => {
+                                const newAlw = [...allowances];
+                                newAlw[index].amount = e.target.value;
+                                setAllowances(newAlw);
+                              }}
+                              required
+                            />
+                            <select
+                              value={alw.isTaxable ? "true" : "false"}
+                              onChange={(e) => {
+                                const newAlw = [...allowances];
+                                newAlw[index].isTaxable = e.target.value === "true";
+                                setAllowances(newAlw);
+                              }}
+                              disabled={!isCustom && allowanceTypes.some((t) => t.name === alw.name)}
+                              className="h-10 rounded-lg border border-input bg-card px-2 text-xs outline-none disabled:opacity-60"
+                            >
+                              <option value="false">Non-Tax</option>
+                              <option value="true">Taxable</option>
+                            </select>
                           <Button
                             type="button"
                             variant="ghost"
@@ -683,8 +739,9 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
                           >
                             <HiOutlineTrash className="size-4" />
                           </Button>
-                        </div>
-                      ))
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>

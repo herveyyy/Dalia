@@ -4,7 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@repo/auth/client";
 import { AppShell } from "@repo/ui/components/organisms/AppShell";
-import { HiOutlineUserGroup, HiOutlineArrowLeft } from "react-icons/hi2";
+import { HiOutlineUserGroup, HiOutlineArrowLeft, HiOutlineBriefcase, HiOutlineCalculator } from "react-icons/hi2";
 
 interface HrisShellProps {
   children: React.ReactNode;
@@ -32,6 +32,18 @@ export function HrisShell({ children, user, initialWorkspaces }: HrisShellProps)
             href: "/hris",
             Icon: HiOutlineUserGroup,
             isActive: pathname === "/hris",
+          },
+          {
+            label: "Job Postings",
+            href: "/hris/jobs",
+            Icon: HiOutlineBriefcase,
+            isActive: pathname === "/hris/jobs",
+          },
+          {
+            label: "Tax Settings",
+            href: "/hris/taxes",
+            Icon: HiOutlineCalculator,
+            isActive: pathname === "/hris/taxes",
           },
         ],
       },

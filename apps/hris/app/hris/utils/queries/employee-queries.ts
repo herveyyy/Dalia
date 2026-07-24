@@ -31,6 +31,7 @@ export async function getEmployees(companyId: string) {
             allowanceType: true,
           },
         },
+        taxType: true,
       },
     });
 
@@ -38,6 +39,17 @@ export async function getEmployees(companyId: string) {
   } catch (error) {
     console.error("Failed to fetch employees list:", error);
     throw new Error("Failed to fetch employees list");
+  }
+}
+
+export async function getAllowanceTypes(companyId: string) {
+  try {
+    return await db.query.allowanceType.findMany({
+      where: (alw, { eq }) => eq(alw.companyId, companyId),
+    });
+  } catch (error) {
+    console.error("Failed to fetch allowance types:", error);
+    throw new Error("Failed to fetch allowance types");
   }
 }
 

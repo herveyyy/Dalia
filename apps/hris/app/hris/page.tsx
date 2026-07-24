@@ -1,8 +1,8 @@
 import { auth } from "@repo/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getCompanyRecord } from "./utils/queries/employee-queries";
-import { getEmployees } from "./utils/queries/employee-queries";
+import { getCompanyRecord, getEmployees, getAllowanceTypes } from "./utils/queries/employee-queries";
+import { getTaxTypes } from "./utils/queries/tax-queries";
 import { EmployeeDirectory } from "./utils/components/employee-directory";
 
 export default async function Page() {
@@ -23,6 +23,10 @@ export default async function Page() {
   // 2. Fetch employee records with pre-joined relations using query utility
   const employeesList = user.companyId ? await getEmployees(user.companyId) : [];
 
+  // 3. Fetch allowance types and tax types
+  const allowanceTypes = user.companyId ? await getAllowanceTypes(user.companyId) : [];
+  const taxTypes = user.companyId ? await getTaxTypes(user.companyId) : [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -36,7 +40,12 @@ export default async function Page() {
       </div>
 
       {/* Employee Directory and Dashboard Component */}
-      <EmployeeDirectory initialEmployees={employeesList} companyId={user.companyId || ""} />
+      <EmployeeDirectory
+        initialEmployees={employeesList}
+        companyId={user.companyId || ""}
+        allowanceTypes={allowanceTypes}
+        taxTypes={taxTypes}
+      />
     </div>
   );
 }

@@ -123,6 +123,7 @@ export function useEmployeeDirectory(initialEmployees: any[], companyId: string)
       overtimeHours: formData.get("overtimeHours"),
       leaveBalanceDays: formData.get("leaveBalanceDays"),
       taxBracketCode: formData.get("taxBracketCode"),
+      taxTypeId: formData.get("taxTypeId"),
       
       emergencyContact: {
         contactPerson: formData.get("contactPerson"),
