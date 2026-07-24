@@ -42,7 +42,7 @@ export default async function JobsPage({ searchParams }: Props) {
   return (
     <div className="min-h-screen bg-background">
       {/* Subtle top accent bar */}
-      <div className="h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60" />
+      <div className="h-1 bg-linear-to-r from-primary/60 via-primary to-primary/60" />
 
       {/* Navigation */}
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-50">
@@ -239,7 +239,7 @@ export default async function JobsPage({ searchParams }: Props) {
                   </div>
 
                   {/* Right: CTA */}
-                  <div className="flex-shrink-0 sm:self-center">
+                  <div className="shrink-0 sm:self-center">
                     <button className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-5 py-2.5 text-sm font-bold text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 group-hover:bg-primary group-hover:text-primary-foreground">
                       View Details
                       <HiOutlineArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />

@@ -91,6 +91,7 @@ const tiers = [
     range: "Best for 1–10 employees",
     price: "350",
     badge: "1 Free Workspace",
+    isContact: false,
     target: "Small coffee shops, retail kiosks, & family-owned logistics.",
     value:
       "Easily absorbed by the accountant’s standard ₱5,000 monthly retainer. First workspace is 100% free.",
@@ -102,6 +103,7 @@ const tiers = [
     range: "Best for 11–50 employees",
     price: "1,200",
     badge: "Sweet spot",
+    isContact: false,
     target:
       "Fast-food franchises, mid-sized construction sub-contractors, and regional distributors.",
     value:
@@ -114,11 +116,25 @@ const tiers = [
     range: "Best for 51–150 employees",
     price: "3,500",
     badge: null,
+    isContact: false,
     target: "Multi-branch retail chains and large local manufacturing plants.",
     value:
       "Handles complex, multi-shift attendance logs and high-volume data arrays that crash desktop software.",
     featured: false,
     Icon: HiOutlineBuildingOffice2,
+  },
+  {
+    name: "Custom",
+    range: "White-label & Enterprise",
+    price: "Contact Us",
+    badge: "Custom Setup",
+    isContact: true,
+    target:
+      "Firms needing custom domain URL, branded logo, custom landing page, consolidated database, & custom workflows.",
+    value:
+      "Tailored infrastructure, dedicated database instances, custom feature builds, and full white-label branding.",
+    featured: false,
+    Icon: HiOutlineShieldCheck,
   },
 ] as const;
 
@@ -268,7 +284,7 @@ export default async function Home() {
             </div>
           </ScrollReveal>
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {tiers.map((tier, index) => (
               <ScrollReveal key={tier.name} delayMs={index * 150}>
                 <Card
@@ -301,6 +317,8 @@ export default async function Home() {
                             "rounded-full px-3 py-1.5 font-display text-xs font-bold tracking-[0.5px] uppercase",
                             tier.name === "Micro"
                               ? "bg-primary/15 text-primary"
+                              : tier.name === "Custom"
+                              ? "bg-primary/15 text-primary"
                               : "bg-secondary/15 text-secondary"
                           )}
                         >
@@ -314,11 +332,17 @@ export default async function Home() {
                   </CardHeader>
                   <CardContent className="flex flex-1 flex-col gap-8 pt-6">
                     <p className="tabular font-display text-3xl font-bold tracking-tight text-foreground">
-                      <span className="text-xl font-bold">₱</span>
-                      {tier.price}
-                      <span className="ml-1 text-sm font-medium text-muted-foreground">
-                        / mo per workspace
-                      </span>
+                      {tier.isContact ? (
+                        <span>Contact Us</span>
+                      ) : (
+                        <>
+                          <span className="text-xl font-bold">₱</span>
+                          {tier.price}
+                          <span className="ml-1 text-sm font-medium text-muted-foreground">
+                            / mo per workspace
+                          </span>
+                        </>
+                      )}
                     </p>
                     <div className="flex flex-col gap-6">
                       <div>
@@ -341,15 +365,15 @@ export default async function Home() {
                   </CardContent>
                   <CardFooter className="mt-8 border-t-0 bg-transparent pt-0 pb-8">
                     <Link
-                      href="/register"
+                      href={tier.isContact ? "#founding-partners" : "/register"}
                       className={cn(
                         buttonVariants({
-                          variant: tier.featured ? "default" : "outline",
+                          variant: tier.featured || tier.isContact ? "default" : "outline",
                         }),
                         "font-display w-full"
                       )}
                     >
-                      Choose {tier.name}
+                      {tier.isContact ? "Contact Us" : `Choose ${tier.name}`}
                     </Link>
                   </CardFooter>
                 </Card>
