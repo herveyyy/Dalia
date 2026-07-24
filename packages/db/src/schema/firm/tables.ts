@@ -3,6 +3,7 @@ import { foreignKey, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
 export const company = pgTable("company", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
   name: text("name").notNull(),
+  businessType: text("business_type"),
   websiteUrl: text("website_url"),
   headquarters: text("headquarters"),
   description: text("description"),
@@ -18,6 +19,7 @@ export const workspace = pgTable(
     id: uuid("id").defaultRandom().primaryKey().notNull(),
     companyId: uuid("company_id").notNull(),
     name: text("name").notNull(),
+    businessType: text("business_type"),
     adminEmail: text("admin_email"),
     websiteUrl: text("website_url"),
     headquarters: text("headquarters"),

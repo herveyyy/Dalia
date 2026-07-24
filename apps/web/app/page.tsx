@@ -71,10 +71,11 @@ const tiers = [
     name: "Micro",
     range: "1–10 employees",
     price: "350",
+    badge: "1 Free Workspace",
     target:
       "Small coffee shops, retail kiosks, & family-owned logistics.",
     value:
-      "Easily absorbed by the accountant’s standard ₱5,000 monthly retainer.",
+      "Easily absorbed by the accountant’s standard ₱5,000 monthly retainer. First workspace is 100% free.",
     featured: false,
     Icon: HiOutlineUsers,
   },
@@ -82,6 +83,7 @@ const tiers = [
     name: "SME",
     range: "11–50 employees",
     price: "1,200",
+    badge: "Sweet spot",
     target:
       "Fast-food franchises, mid-sized construction sub-contractors, and regional distributors.",
     value:
@@ -93,6 +95,7 @@ const tiers = [
     name: "Enterprise",
     range: "51–150 employees",
     price: "3,500",
+    badge: null,
     target: "Multi-branch retail chains and large local manufacturing plants.",
     value:
       "Handles complex, multi-shift attendance logs and high-volume data arrays that crash desktop software.",
@@ -236,14 +239,13 @@ export default async function Home() {
         <div className="mx-auto max-w-360 px-4 py-16 md:px-8 md:py-24">
           <div className="max-w-xl">
             <p className="font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
-              Step one pricing &middot; For accounting firms and teams
+              ERP Pricing &middot; Per Workspace
             </p>
             <h2 className="font-display mt-3 text-2xl leading-8 font-bold text-primary">
-              Fixed costs firms can roll into retainers.
+              Flat rates per workspace. 1 free Micro workspace.
             </h2>
             <p className="mt-3 text-base leading-7 text-muted-foreground">
-              Price by employee profiles per workspace—not per-seat surprise—so
-              fees track the payroll work accountants already do.
+              Price per workspace—not per seat—so fees roll cleanly into accountant retainers.
             </p>
           </div>
 
@@ -274,9 +276,16 @@ export default async function Home() {
                         {tier.name}
                       </CardTitle>
                     </div>
-                    {tier.featured ? (
-                      <span className="rounded-full bg-secondary/15 px-3 py-1.5 font-display text-xs font-bold tracking-[0.5px] text-secondary uppercase">
-                        Sweet spot
+                    {tier.badge ? (
+                      <span
+                        className={cn(
+                          "rounded-full px-3 py-1.5 font-display text-xs font-bold tracking-[0.5px] uppercase",
+                          tier.name === "Micro"
+                            ? "bg-primary/15 text-primary"
+                            : "bg-secondary/15 text-secondary",
+                        )}
+                      >
+                        {tier.badge}
                       </span>
                     ) : null}
                   </div>
@@ -285,11 +294,11 @@ export default async function Home() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col gap-8 pt-6">
-                  <p className="tabular font-display text-4xl font-bold tracking-tight text-foreground">
+                  <p className="tabular font-display text-3xl font-bold tracking-tight text-foreground">
                     <span className="text-xl font-bold">₱</span>
                     {tier.price}
-                    <span className="ml-1 text-base font-medium text-muted-foreground">
-                      / mo
+                    <span className="ml-1 text-sm font-medium text-muted-foreground">
+                      / mo per workspace
                     </span>
                   </p>
                   <div className="flex flex-col gap-6">

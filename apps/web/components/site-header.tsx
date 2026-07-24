@@ -11,7 +11,7 @@ export function SiteHeader() {
           className="font-display text-xl font-bold tracking-tight text-primary"
         >
           Dalia{" "}
-          <span className="text-sm font-bold text-muted-foreground">HRIS</span>
+          <span className="text-sm font-bold text-muted-foreground">ERP</span>
         </Link>
         <nav className="flex items-center gap-2 sm:gap-3">
           <a

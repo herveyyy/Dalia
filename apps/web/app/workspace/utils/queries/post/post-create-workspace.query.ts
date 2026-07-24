@@ -14,6 +14,7 @@ function nameFromEmail(email: string) {
 
 export async function postCreateWorkspace(data: {
   name: string;
+  businessType?: string;
   adminEmail: string;
   websiteUrl?: string;
   headquarters?: string;
@@ -40,6 +41,7 @@ export async function postCreateWorkspace(data: {
       .insert(company)
       .values({
         name: data.name,
+        businessType: data.businessType,
         websiteUrl: data.websiteUrl,
         headquarters: data.headquarters,
         description: data.description,
@@ -58,6 +60,7 @@ export async function postCreateWorkspace(data: {
         id: clientCompany.id,
         companyId: firmCompanyId,
         name: data.name,
+        businessType: data.businessType,
         adminEmail,
         websiteUrl: data.websiteUrl,
         headquarters: data.headquarters,

@@ -14,11 +14,24 @@ import { Button } from "../../atoms/Button";
 import { Label } from "../../atoms/Label";
 import { Input } from "../../atoms/Input";
 
+export const BUSINESS_TYPES = [
+  "Retail & Store Kiosk",
+  "Coffee Shop & Food Service",
+  "Fast-food Franchise & Restaurant",
+  "Logistics & Transportation",
+  "Construction & Sub-contracting",
+  "Wholesale & Regional Distribution",
+  "Manufacturing & Production",
+  "Professional Services & Consulting",
+  "Healthcare & Medical",
+  "Other / General Business",
+] as const;
+
 export interface CreateWorkspaceDialogProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  onCreate: (data: { name: string; adminEmail: string }) => void;
+  onCreate: (data: { name: string; businessType: string; adminEmail: string }) => void;
 }
 
 export function CreateWorkspaceDialog({
@@ -28,6 +41,7 @@ export function CreateWorkspaceDialog({
   onCreate,
 }: CreateWorkspaceDialogProps) {
   const [workspaceName, setWorkspaceName] = React.useState("");
+  const [businessType, setBusinessType] = React.useState<string>(BUSINESS_TYPES[0]);
   const [adminEmail, setAdminEmail] = React.useState("");
   const [internalOpen, setInternalOpen] = React.useState(false);
 
@@ -39,8 +53,9 @@ export function CreateWorkspaceDialog({
     e.preventDefault();
     if (!workspaceName || !adminEmail) return;
 
-    onCreate({ name: workspaceName, adminEmail });
+    onCreate({ name: workspaceName, businessType, adminEmail });
     setWorkspaceName("");
+    setBusinessType(BUSINESS_TYPES[0]);
     setAdminEmail("");
     setIsOpen(false);
   };
@@ -71,6 +86,22 @@ export function CreateWorkspaceDialog({
                 onChange={(e) => setWorkspaceName(e.target.value)}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="business-type">Business Type</Label>
+              <select
+                id="business-type"
+                value={businessType}
+                onChange={(e) => setBusinessType(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                required
+              >
+                {BUSINESS_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="admin-email">Admin / CEO Email</Label>

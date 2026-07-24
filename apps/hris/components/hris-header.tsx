@@ -29,7 +29,7 @@ export function HrisHeader({ companyName, userName }: HrisHeaderProps) {
           </span>
           <span className="h-4 w-px bg-border" aria-hidden="true" />
           <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
-            HRIS
+            ERP
           </span>
         </div>
         <div className="flex items-center gap-4">

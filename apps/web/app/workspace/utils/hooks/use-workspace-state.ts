@@ -204,7 +204,7 @@ export function useWorkspaceState(
   }, [firmWorkspaceId, isClientTenant, router]);
 
   const handleCreateWorkspace = React.useCallback(
-    async (data: { name: string; adminEmail: string }) => {
+    async (data: { name: string; businessType?: string; adminEmail: string }) => {
       if (!canManageFirm) return;
       try {
         const dbWorkspace = await createWorkspaceAction(data);

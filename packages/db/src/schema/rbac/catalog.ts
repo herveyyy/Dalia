@@ -31,7 +31,7 @@ export const APP_ACCESS_CATALOG: AppModuleSeed[] = [
   },
   {
     key: "hris",
-    name: "Dalia HRIS",
+    name: "Dalia ERP",
     description: "Payroll, timekeeping, and employee files",
     features: [
       { key: "directory.view", name: "View employee directory" },

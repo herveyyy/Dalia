@@ -15,8 +15,8 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "Hris",
-  description: "Hris Multi-Zone app",
+  title: "Dalia ERP",
+  description: "Dalia ERP Multi-Zone app",
 };
 
 export default function RootLayout({

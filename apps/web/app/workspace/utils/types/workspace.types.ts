@@ -3,6 +3,7 @@ import { workspace } from "@repo/db";
 export interface Workspace {
   id: string;
   name: string;
+  businessType?: string;
   adminEmail: string;
   isFirm?: boolean;
   /** True when the designated admin employee already has a /login account */
