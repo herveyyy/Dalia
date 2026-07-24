@@ -14,7 +14,7 @@ const getCachedWorkspaces = (companyId: string) =>
         throw new Error("Failed to fetch workspaces");
       }
     },
-    [`workspaces-list-${companyId}`],
+    [`workspaces-list-${companyId}-v2`],
     { tags: [`workspaces-list-${companyId}`, "workspaces-list"] }
   )();
 

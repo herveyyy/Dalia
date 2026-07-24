@@ -1,33 +1,34 @@
-import { auth } from "@repo/auth";
-import { db, eq, user, workspace } from "@repo/db";
-import { headers } from "next/headers";
+import { db, eq, workspace } from "@repo/db";
+import { getSessionTenant } from "./session-tenant";
 
 /**
  * Resolves the tenant company id for workspace HR data from ?company_id=.
- * Firm panel → firm company id. Client workspace → workspace id (= client company id).
+ * - Firm user: firm company id, or a client workspace they own
+ * - Client tenant: always their own company id only
  */
 export async function resolveTenantCompanyId(selectorId: string | undefined | null) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const tenant = await getSessionTenant();
 
-  if (!session) {
+  if (tenant.error === "unauthorized" || !tenant.session) {
     return { session: null, companyId: null as string | null, error: "unauthorized" as const };
   }
 
-  const [userRecord] = await db
-    .select({ companyId: user.companyId })
-    .from(user)
-    .where(eq(user.id, session.user.id))
-    .limit(1);
-
-  const firmCompanyId = userRecord?.companyId ?? null;
-  if (!firmCompanyId) {
-    return { session, companyId: null, error: "no_company" as const };
+  if (tenant.error === "no_company" || !tenant.companyId) {
+    return { session: tenant.session, companyId: null, error: "no_company" as const };
   }
 
+  // Client employee/admin: locked to their company — never firm or other clients
+  if (tenant.isClientTenant) {
+    if (selectorId && selectorId !== tenant.companyId) {
+      return { session: tenant.session, companyId: null, error: "forbidden" as const };
+    }
+    return { session: tenant.session, companyId: tenant.companyId, error: null };
+  }
+
+  const firmCompanyId = tenant.companyId;
+
   if (!selectorId || selectorId === firmCompanyId) {
-    return { session, companyId: firmCompanyId, error: null };
+    return { session: tenant.session, companyId: firmCompanyId, error: null };
   }
 
   const [clientWorkspace] = await db
@@ -37,8 +38,8 @@ export async function resolveTenantCompanyId(selectorId: string | undefined | nu
     .limit(1);
 
   if (!clientWorkspace || clientWorkspace.companyId !== firmCompanyId) {
-    return { session, companyId: null, error: "forbidden" as const };
+    return { session: tenant.session, companyId: null, error: "forbidden" as const };
   }
 
-  return { session, companyId: clientWorkspace.id, error: null };
+  return { session: tenant.session, companyId: clientWorkspace.id, error: null };
 }

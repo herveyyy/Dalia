@@ -18,6 +18,7 @@ export const workspace = pgTable(
     id: uuid("id").defaultRandom().primaryKey().notNull(),
     companyId: uuid("company_id").notNull(),
     name: text("name").notNull(),
+    adminEmail: text("admin_email"),
     websiteUrl: text("website_url"),
     headquarters: text("headquarters"),
     description: text("description"),

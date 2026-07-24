@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm/relations";
+import { user } from "../auth/tables";
 import { company } from "../firm/tables";
 import { role } from "../rbac/tables";
 import {
@@ -17,6 +18,10 @@ export const employeeRelations = relations(employee, ({ one, many }) => ({
   company: one(company, {
     fields: [employee.companyId],
     references: [company.id],
+  }),
+  loginUser: one(user, {
+    fields: [employee.userId],
+    references: [user.id],
   }),
   supervisor: one(employee, {
     fields: [employee.supervisorId],

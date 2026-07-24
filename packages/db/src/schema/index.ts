@@ -6,3 +6,4 @@ export * from "./employee/tables";
 export * from "./employee/relations";
 export * from "./rbac/tables";
 export * from "./rbac/relations";
+export * from "./rbac/catalog";

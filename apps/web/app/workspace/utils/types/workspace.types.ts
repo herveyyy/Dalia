@@ -5,6 +5,8 @@ export interface Workspace {
   name: string;
   adminEmail: string;
   isFirm?: boolean;
+  /** True when the designated admin employee already has a /login account */
+  adminHasLogin?: boolean;
 }
 
 export interface WorkspaceContextType {
@@ -12,6 +14,7 @@ export interface WorkspaceContextType {
   activeWorkspaceId: string;
   activeWorkspace?: Workspace;
   isFirmWorkspace: boolean;
+  canManageFirm?: boolean;
   onSelectWorkspace: (id: string) => void;
   openCreateDialog: () => void;
 }

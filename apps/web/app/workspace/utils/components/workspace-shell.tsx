@@ -17,9 +17,15 @@ interface WorkspaceShellProps {
     avatarUrl?: string;
   };
   initialWorkspaces: Workspace[];
+  canManageFirm?: boolean;
 }
 
-export function WorkspaceShell({ children, user, initialWorkspaces }: WorkspaceShellProps) {
+export function WorkspaceShell({
+  children,
+  user,
+  initialWorkspaces,
+  canManageFirm = true,
+}: WorkspaceShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const {
@@ -33,7 +39,7 @@ export function WorkspaceShell({ children, user, initialWorkspaces }: WorkspaceS
     handleSelectWorkspace,
     handleExitToFirm,
     handleCreateWorkspace,
-  } = useWorkspaceState(initialWorkspaces);
+  } = useWorkspaceState(initialWorkspaces, canManageFirm);
 
   const navGroupsWithActive = React.useMemo(
     () =>
@@ -75,26 +81,34 @@ export function WorkspaceShell({ children, user, initialWorkspaces }: WorkspaceS
         activeWorkspaceId,
         activeWorkspace,
         isFirmWorkspace,
+        canManageFirm,
         onSelectWorkspace: handleSelectWorkspace,
-        openCreateDialog: () => setCreateDialogOpen(true),
+        openCreateDialog: () => {
+          if (canManageFirm) setCreateDialogOpen(true);
+        },
       }}
     >
       <AppShell
         workspaces={workspaces}
         activeWorkspaceId={activeWorkspaceId}
         onSelectWorkspace={handleSelectWorkspace}
-        onCreateWorkspaceClick={() => setCreateDialogOpen(true)}
+        onCreateWorkspaceClick={
+          canManageFirm ? () => setCreateDialogOpen(true) : undefined
+        }
+        canManageFirm={canManageFirm}
         navGroups={navGroupsWithActive}
         user={user}
         onLogoutClick={handleLogout}
       >
         {children}
 
-        <CreateWorkspaceDialog
-          open={createDialogOpen}
-          onOpenChange={setCreateDialogOpen}
-          onCreate={handleCreateWorkspace}
-        />
+        {canManageFirm ? (
+          <CreateWorkspaceDialog
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+            onCreate={handleCreateWorkspace}
+          />
+        ) : null}
       </AppShell>
     </WorkspaceContext.Provider>
   );

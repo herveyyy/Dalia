@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { OrgRolesPanel } from "../utils/components/org-roles-panel";
+import { ensureAppAccessCatalog } from "../utils/lib/ensure-access-catalog";
 import { resolveTenantCompanyId } from "../utils/lib/resolve-tenant-company";
 import { getCompanyRecord } from "../utils/queries/get/get-company-record.query";
-import { getRoles } from "../utils/queries/get/get-org.query";
+import { getAppAccessCatalog, getRoles } from "../utils/queries/get/get-org.query";
 
 export default async function RolesPage({
   searchParams,
@@ -13,11 +14,14 @@ export default async function RolesPage({
   const { companyId, error } = await resolveTenantCompanyId(selectorId);
 
   if (error === "unauthorized") redirect("/login");
-  if (!companyId) redirect("/workspace");
+  if (error === "forbidden" || !companyId) redirect("/workspace");
 
-  const [companyRecord, roles] = await Promise.all([
+  await ensureAppAccessCatalog();
+
+  const [companyRecord, roles, catalog] = await Promise.all([
     getCompanyRecord(companyId),
     getRoles(companyId),
+    getAppAccessCatalog(),
   ]);
 
   return (
@@ -25,6 +29,7 @@ export default async function RolesPage({
       companyId={companyId}
       companyName={companyRecord?.name || "Client company"}
       roles={roles}
+      catalog={catalog}
     />
   );
 }

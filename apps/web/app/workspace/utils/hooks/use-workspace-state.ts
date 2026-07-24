@@ -12,6 +12,7 @@ import {
   HiOutlineBuildingOffice2,
   HiOutlineIdentification,
   HiOutlineUsers,
+  HiOutlineSquares2X2,
 } from "react-icons/hi2";
 import { Workspace } from "../types/workspace.types";
 import { createWorkspaceAction } from "../actions/workspace-actions";
@@ -35,42 +36,34 @@ function withCompanyId(href: string, companyId: string) {
   return `${path}?company_id=${encodeURIComponent(companyId)}`;
 }
 
-export function useWorkspaceState(initial: Workspace[] = fallbackWorkspaces) {
+export function useWorkspaceState(
+  initial: Workspace[] = fallbackWorkspaces,
+  canManageFirm = true
+) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const companyIdParam = searchParams.get("company_id");
 
-  const [workspaces, setWorkspaces] = React.useState<Workspace[]>(initial);
+  const [createdWorkspaces, setCreatedWorkspaces] = React.useState<Workspace[]>([]);
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+
+  const workspaces = React.useMemo(() => {
+    if (!canManageFirm) return initial;
+    const seen = new Set(initial.map((w) => w.id));
+    const extras = createdWorkspaces.filter((w) => !seen.has(w.id));
+    return [...initial, ...extras];
+  }, [initial, createdWorkspaces, canManageFirm]);
 
   const firmWorkspaceId = React.useMemo(
     () => workspaces.find((w) => w.isFirm)?.id ?? workspaces[0]?.id ?? "1",
     [workspaces]
   );
 
-  const [activeWorkspaceId, setActiveWorkspaceId] = React.useState(() =>
-    resolveWorkspaceId(initial, companyIdParam)
+  const activeWorkspaceId = React.useMemo(
+    () => resolveWorkspaceId(workspaces, companyIdParam),
+    [workspaces, companyIdParam]
   );
-
-  // Keep list in sync if the server layout re-fetches workspaces
-  React.useEffect(() => {
-    setWorkspaces(initial);
-  }, [initial]);
-
-  // Sync selection from ?company_id= (empty/invalid → firm)
-  React.useEffect(() => {
-    const nextId = resolveWorkspaceId(workspaces, companyIdParam);
-    setActiveWorkspaceId((prev) => (prev === nextId ? prev : nextId));
-  }, [companyIdParam, workspaces]);
-
-  // Ensure the URL always has a valid company_id once mounted
-  React.useEffect(() => {
-    if (companyIdParam === activeWorkspaceId) return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("company_id", activeWorkspaceId);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [activeWorkspaceId, companyIdParam, pathname, router, searchParams]);
 
   const activeWorkspace = React.useMemo(
     () => workspaces.find((w) => w.id === activeWorkspaceId),
@@ -78,9 +71,37 @@ export function useWorkspaceState(initial: Workspace[] = fallbackWorkspaces) {
   );
 
   const isFirmWorkspace = Boolean(activeWorkspace?.isFirm);
+  const isClientTenant = !canManageFirm;
+
+  React.useEffect(() => {
+    if (companyIdParam === activeWorkspaceId) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("company_id", activeWorkspaceId);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [activeWorkspaceId, companyIdParam, pathname, router, searchParams]);
+
+  const navigateWithCompany = React.useCallback(
+    (id: string, path: string = pathname) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("company_id", id);
+      router.replace(`${path}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
 
   const navGroups = React.useMemo(() => {
     const href = (path: string) => withCompanyId(path, activeWorkspaceId);
+    const backToApps = {
+      title: "Applications",
+      items: [
+        {
+          label: "Back to Apps",
+          href: "/apps",
+          Icon: HiOutlineSquares2X2,
+        },
+      ],
+    };
 
     if (isFirmWorkspace) {
       return [
@@ -95,16 +116,22 @@ export function useWorkspaceState(initial: Workspace[] = fallbackWorkspaces) {
           title: "Team & Staff",
           items: [
             {
-              label: "Manage Partners",
+              label: "Firm Users",
               href: href("/workspace/partners"),
               Icon: HiOutlineUserGroup,
             },
+            {
+              label: "Firm Roles",
+              href: href("/workspace/roles"),
+              Icon: HiOutlineIdentification,
+            },
           ],
         },
+        backToApps,
       ];
     }
 
-    return [
+    const clientGroups = [
       {
         title: "Client Workspace",
         items: [{ label: "Dashboard", href: href("/workspace"), Icon: HiOutlineHome }],
@@ -144,44 +171,50 @@ export function useWorkspaceState(initial: Workspace[] = fallbackWorkspaces) {
           },
         ],
       },
+    ];
+
+    if (isClientTenant) {
+      return [...clientGroups, backToApps];
+    }
+
+    return [
+      ...clientGroups,
       {
         title: "Back to Firm",
         items: [
           { label: "Exit to Firm Panel", href: "EXIT_TO_FIRM", Icon: HiOutlineArrowLeft },
         ],
       },
+      backToApps,
     ];
-  }, [isFirmWorkspace, activeWorkspaceId]);
+  }, [isFirmWorkspace, isClientTenant, activeWorkspaceId]);
 
   const handleSelectWorkspace = React.useCallback(
     (id: string) => {
-      setActiveWorkspaceId(id);
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("company_id", id);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      if (isClientTenant && id !== activeWorkspaceId) return;
+      if (id === activeWorkspaceId) return;
+      navigateWithCompany(id);
     },
-    [pathname, router, searchParams]
+    [activeWorkspaceId, isClientTenant, navigateWithCompany]
   );
 
   const handleExitToFirm = React.useCallback(() => {
-    setActiveWorkspaceId(firmWorkspaceId);
+    if (isClientTenant) return;
     router.push(withCompanyId("/workspace", firmWorkspaceId));
-  }, [firmWorkspaceId, router]);
+  }, [firmWorkspaceId, isClientTenant, router]);
 
   const handleCreateWorkspace = React.useCallback(
     async (data: { name: string; adminEmail: string }) => {
+      if (!canManageFirm) return;
       try {
         const dbWorkspace = await createWorkspaceAction(data);
-        setWorkspaces((prev) => [...prev, dbWorkspace]);
-        setActiveWorkspaceId(dbWorkspace.id);
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("company_id", dbWorkspace.id);
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        setCreatedWorkspaces((prev) => [...prev, dbWorkspace]);
+        navigateWithCompany(dbWorkspace.id);
       } catch (error) {
         console.error("Failed to create workspace:", error);
       }
     },
-    [pathname, router, searchParams]
+    [canManageFirm, navigateWithCompany]
   );
 
   return {
@@ -189,6 +222,8 @@ export function useWorkspaceState(initial: Workspace[] = fallbackWorkspaces) {
     activeWorkspaceId,
     activeWorkspace,
     isFirmWorkspace,
+    isClientTenant,
+    canManageFirm,
     firmWorkspaceId,
     createDialogOpen,
     setCreateDialogOpen,

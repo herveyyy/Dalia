@@ -6,7 +6,9 @@ import {
   boolean,
   foreignKey,
   uuid,
+  unique,
 } from "drizzle-orm/pg-core";
+import { user } from "../auth/tables";
 import { company } from "../firm/tables";
 import { role } from "../rbac/tables";
 
@@ -32,6 +34,7 @@ export const employee = pgTable(
     philIdNo: text("phil_id_no"),
 
     companyId: uuid("company_id").notNull(),
+    userId: text("user_id"),
     departmentId: uuid("department_id"),
     roleId: uuid("role_id"),
     jobTitle: text("job_title"),
@@ -64,6 +67,11 @@ export const employee = pgTable(
       name: "employee_company_id_company_id_fk",
     }).onDelete("cascade"),
     foreignKey({
+      columns: [table.userId],
+      foreignColumns: [user.id],
+      name: "employee_user_id_user_id_fk",
+    }).onDelete("set null"),
+    foreignKey({
       columns: [table.departmentId],
       foreignColumns: [department.id],
       name: "employee_department_id_department_id_fk",
@@ -83,6 +91,7 @@ export const employee = pgTable(
       foreignColumns: [taxType.id],
       name: "employee_tax_type_id_tax_type_id_fk",
     }).onDelete("set null"),
+    unique("employee_user_id_unique").on(table.userId),
   ]
 );
 

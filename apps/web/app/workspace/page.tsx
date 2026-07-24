@@ -173,10 +173,6 @@ export default function WorkspacePage() {
             Client Workspace Overview & Configuration
           </p>
         </div>
-        <Button onClick={openCreateDialog} className="gap-2 self-start font-display">
-          <HiPlus className="size-4" />
-          New Workspace
-        </Button>
       </div>
 
       {/* Dashboard Content */}
@@ -212,20 +208,33 @@ export default function WorkspacePage() {
             </span>
             <CardTitle className="text-lg font-bold mt-3">Company Admin</CardTitle>
             <CardDescription className="text-sm text-muted-foreground mt-1">
-              Active contact role for managing company integrations.
+              Admin employee created for this client (from workspace setup email).
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0 text-sm space-y-2 mt-4 pt-4 border-t border-border/40">
             <div>
               <span className="text-muted-foreground font-semibold">Designated Admin:</span>
-              <span className="ml-2 font-bold text-foreground">{activeWorkspace?.adminEmail}</span>
+              <span className="ml-2 font-bold text-foreground">
+                {activeWorkspace?.adminEmail || "—"}
+              </span>
             </div>
             <div>
               <span className="text-muted-foreground font-semibold">Access Privilege:</span>
-              <span className="ml-2 rounded bg-green-500/10 px-2 py-0.5 text-xs font-bold text-green-500 uppercase">
-                Pending Invite
+              <span
+                className={`ml-2 rounded px-2 py-0.5 text-xs font-bold uppercase ${
+                  activeWorkspace?.adminHasLogin
+                    ? "bg-green-500/10 text-green-600"
+                    : "bg-amber-500/10 text-amber-600"
+                }`}
+              >
+                {activeWorkspace?.adminHasLogin ? "Login enabled" : "In directory"}
               </span>
             </div>
+            <p className="text-xs text-muted-foreground pt-1">
+              {activeWorkspace?.adminHasLogin
+                ? "This admin can sign in at /login and only sees this company’s workspace."
+                : "Employee is in People → Employees. Use Login there so they can open this workspace."}
+            </p>
           </CardContent>
         </Card>
       </div>

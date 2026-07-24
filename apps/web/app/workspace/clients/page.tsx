@@ -1,13 +1,34 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { HiOutlineFolderOpen, HiOutlineMagnifyingGlass, HiOutlinePlus, HiOutlineArrowRight } from "react-icons/hi2";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { useWorkspace } from "../utils/context/workspace-context";
 
 export default function ClientsPage() {
-  const { activeWorkspace, isFirmWorkspace, workspaces, onSelectWorkspace, openCreateDialog } = useWorkspace();
+  const router = useRouter();
+  const {
+    activeWorkspace,
+    activeWorkspaceId,
+    isFirmWorkspace,
+    canManageFirm,
+    workspaces,
+    onSelectWorkspace,
+    openCreateDialog,
+  } = useWorkspace();
   const [searchQuery, setSearchQuery] = React.useState("");
+
+  React.useEffect(() => {
+    if (canManageFirm === false) {
+      router.replace(`/workspace?company_id=${encodeURIComponent(activeWorkspaceId)}`);
+    }
+  }, [activeWorkspaceId, canManageFirm, router]);
+
+  if (canManageFirm === false) {
+    return null;
+  }
+
 
   const clientWorkspaces = React.useMemo(
     () => workspaces.filter((w) => !w.isFirm),

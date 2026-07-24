@@ -13,7 +13,7 @@ export interface WorkspaceSelectorProps {
   workspaces: Workspace[];
   activeWorkspaceId: string;
   onSelectWorkspace: (id: string) => void;
-  onCreateWorkspaceClick: () => void;
+  onCreateWorkspaceClick?: () => void;
 }
 
 export function WorkspaceSelector({
@@ -23,6 +23,26 @@ export function WorkspaceSelector({
   onCreateWorkspaceClick,
 }: WorkspaceSelectorProps) {
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+  const canCreate = Boolean(onCreateWorkspaceClick);
+  const locked = !canCreate && workspaces.length <= 1;
+
+  if (locked) {
+    return (
+      <div className="flex w-full items-center gap-2.5 rounded-xl border border-border/85 bg-card px-3.5 py-2.5 text-left shadow-sm">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+          <Building2 className="size-4" />
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-bold text-foreground">
+            {activeWorkspace?.name || "Workspace"}
+          </div>
+          <div className="truncate text-xs font-medium text-muted-foreground">
+            {activeWorkspace?.adminEmail || "No admin assigned"}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Menu.Root>
@@ -72,17 +92,20 @@ export function WorkspaceSelector({
               ))}
             </div>
 
-            <Menu.Separator className="h-px bg-border my-1.5" />
-
-            <Menu.Item
-              onClick={() => onCreateWorkspaceClick()}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/5 outline-none select-none cursor-pointer"
-            >
-              <div className="flex size-7 items-center justify-center rounded-md bg-primary/10 shrink-0">
-                <Plus className="size-3.5" />
-              </div>
-              <span className="font-bold">Create Workspace</span>
-            </Menu.Item>
+            {canCreate ? (
+              <>
+                <Menu.Separator className="h-px bg-border my-1.5" />
+                <Menu.Item
+                  onClick={() => onCreateWorkspaceClick?.()}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/5 outline-none select-none cursor-pointer"
+                >
+                  <div className="flex size-7 items-center justify-center rounded-md bg-primary/10 shrink-0">
+                    <Plus className="size-3.5" />
+                  </div>
+                  <span className="font-bold">Create Workspace</span>
+                </Menu.Item>
+              </>
+            ) : null}
           </Menu.Popup>
         </Menu.Positioner>
       </Menu.Portal>

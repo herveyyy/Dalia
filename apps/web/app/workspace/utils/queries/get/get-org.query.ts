@@ -9,11 +9,28 @@ export async function getDepartments(companyId: string) {
 }
 
 export async function getRoles(companyId: string) {
-  return db
-    .select()
-    .from(role)
-    .where(eq(role.companyId, companyId))
-    .orderBy(asc(role.name));
+  return db.query.role.findMany({
+    where: (r, { eq: whereEq }) => whereEq(r.companyId, companyId),
+    with: {
+      permissions: {
+        columns: { featureId: true },
+      },
+    },
+    orderBy: (r, { asc: orderAsc }) => [orderAsc(r.name)],
+  });
+}
+
+export async function getAppAccessCatalog() {
+  return db.query.appModule.findMany({
+    where: (m, { eq: whereEq }) => whereEq(m.isActive, true),
+    with: {
+      features: {
+        where: (f, { eq: whereEq }) => whereEq(f.isActive, true),
+        orderBy: (f, { asc: orderAsc }) => [orderAsc(f.sortOrder), orderAsc(f.name)],
+      },
+    },
+    orderBy: (m, { asc: orderAsc }) => [orderAsc(m.sortOrder), orderAsc(m.name)],
+  });
 }
 
 export async function getEmployees(companyId: string) {
@@ -46,6 +63,7 @@ export async function getDepartmentsWithEmployees(companyId: string) {
 export type WorkspaceEmployee = Awaited<ReturnType<typeof getEmployees>>[number];
 export type WorkspaceDepartment = Awaited<ReturnType<typeof getDepartments>>[number];
 export type WorkspaceRole = Awaited<ReturnType<typeof getRoles>>[number];
+export type AppAccessCatalog = Awaited<ReturnType<typeof getAppAccessCatalog>>;
 export type DepartmentWithEmployees = Awaited<
   ReturnType<typeof getDepartmentsWithEmployees>
 >[number];

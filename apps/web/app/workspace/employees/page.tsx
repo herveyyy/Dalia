@@ -13,6 +13,7 @@ export default async function EmployeesPage({
   const { companyId, error } = await resolveTenantCompanyId(selectorId);
 
   if (error === "unauthorized") redirect("/login");
+  if (error === "forbidden") redirect("/workspace");
   if (!companyId) redirect("/workspace");
 
   const [companyRecord, employees, departments, roles] = await Promise.all([

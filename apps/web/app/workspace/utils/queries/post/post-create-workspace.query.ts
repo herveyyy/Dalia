@@ -1,33 +1,39 @@
-import { db, company, eq, user, workspace } from "@repo/db";
-import { auth } from "@repo/auth";
-import { headers } from "next/headers";
+import { db, company, employee, workspace } from "@repo/db";
 import { revalidateTag } from "next/cache";
+import { assertFirmAccess } from "../../lib/assert-firm-access";
+import { getSessionTenant } from "../../lib/session-tenant";
+
+function nameFromEmail(email: string) {
+  const local = email.split("@")[0] || "Admin";
+  const parts = local.split(/[._-]+/).filter(Boolean);
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  const firstName = parts[0] ? cap(parts[0]) : "Admin";
+  const lastName = parts.length > 1 ? parts.slice(1).map(cap).join(" ") : "User";
+  return { firstName, lastName };
+}
 
 export async function postCreateWorkspace(data: {
   name: string;
+  adminEmail: string;
   websiteUrl?: string;
   headquarters?: string;
   description?: string;
   logoUrl?: string;
 }) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      throw new Error("Unauthorized");
+    const tenant = await getSessionTenant();
+    if (!tenant.session || !tenant.isFirmUser || !tenant.companyId) {
+      throw new Error("Firm access only");
     }
 
-    const [userRecord] = await db
-      .select({ companyId: user.companyId })
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
+    await assertFirmAccess(tenant.companyId);
 
-    if (!userRecord?.companyId) {
-      throw new Error("User has no company");
+    const adminEmail = data.adminEmail.trim().toLowerCase();
+    if (!adminEmail) {
+      throw new Error("Admin email is required");
     }
+
+    const firmCompanyId = tenant.companyId;
 
     // Client company shares the workspace id so ?company_id= scopes HR data.
     const [clientCompany] = await db
@@ -38,7 +44,7 @@ export async function postCreateWorkspace(data: {
         headquarters: data.headquarters,
         description: data.description,
         logoUrl: data.logoUrl,
-        createdBy: session.user.id,
+        createdBy: tenant.session.user.id,
       })
       .returning();
 
@@ -50,23 +56,41 @@ export async function postCreateWorkspace(data: {
       .insert(workspace)
       .values({
         id: clientCompany.id,
-        companyId: userRecord.companyId,
+        companyId: firmCompanyId,
         name: data.name,
+        adminEmail,
         websiteUrl: data.websiteUrl,
         headquarters: data.headquarters,
         description: data.description,
         logoUrl: data.logoUrl,
-        createdBy: session.user.id,
+        createdBy: tenant.session.user.id,
       })
       .returning();
 
+    if (!newWorkspace) {
+      throw new Error("Failed to create workspace");
+    }
+
+    const { firstName, lastName } = nameFromEmail(adminEmail);
+
+    await db.insert(employee).values({
+      companyId: clientCompany.id,
+      firstName,
+      lastName,
+      workEmail: adminEmail,
+      jobTitle: "Company Admin",
+      employmentStatus: "Active",
+    });
+
     revalidateTag("workspaces-list", {});
-    revalidateTag(`workspaces-list-${userRecord.companyId}`, {});
-    revalidateTag(`overview-company-${session.user.id}`, {});
+    revalidateTag(`workspaces-list-${firmCompanyId}`, {});
+    revalidateTag(`overview-company-${tenant.session.user.id}`, {});
 
     return newWorkspace;
   } catch (error) {
     console.error("Failed to create workspace:", error);
-    throw new Error("Failed to create workspace");
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to create workspace"
+    );
   }
 }

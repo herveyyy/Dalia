@@ -7,6 +7,7 @@ import {
   eq,
   and,
   role,
+  rolePermission,
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { resolveTenantCompanyId } from "../lib/resolve-tenant-company";
@@ -74,12 +75,17 @@ export async function saveRoleAction(data: {
   companyId: string;
   name: string;
   description?: string | null;
+  featureIds?: string[];
 }) {
   const session = await assertCompanyAccess(data.companyId);
   const name = data.name.trim();
   if (!name) throw new Error("Role name is required");
 
-  if (data.id) {
+  const featureIds = [...new Set(data.featureIds ?? [])];
+
+  let roleId = data.id ?? null;
+
+  if (roleId) {
     await db
       .update(role)
       .set({
@@ -87,14 +93,30 @@ export async function saveRoleAction(data: {
         description: data.description?.trim() || null,
         updatedAt: new Date().toISOString(),
       })
-      .where(and(eq(role.id, data.id), eq(role.companyId, data.companyId)));
+      .where(and(eq(role.id, roleId), eq(role.companyId, data.companyId)));
   } else {
-    await db.insert(role).values({
-      companyId: data.companyId,
-      name,
-      description: data.description?.trim() || null,
-      createdBy: session.user.id,
-    });
+    const [created] = await db
+      .insert(role)
+      .values({
+        companyId: data.companyId,
+        name,
+        description: data.description?.trim() || null,
+        createdBy: session.user.id,
+      })
+      .returning({ id: role.id });
+    roleId = created?.id ?? null;
+  }
+
+  if (!roleId) throw new Error("Failed to save role");
+
+  await db.delete(rolePermission).where(eq(rolePermission.roleId, roleId));
+  if (featureIds.length > 0) {
+    await db.insert(rolePermission).values(
+      featureIds.map((featureId) => ({
+        roleId: roleId!,
+        featureId,
+      }))
+    );
   }
 
   revalidateOrg(data.companyId);
@@ -119,7 +141,7 @@ export async function saveEmployeeAction(data: {
   jobTitle?: string | null;
   employmentStatus?: string | null;
 }) {
-  await assertCompanyAccess(data.companyId);
+  const session = await assertCompanyAccess(data.companyId);
   const firstName = data.firstName.trim();
   const lastName = data.lastName.trim();
   if (!firstName || !lastName) throw new Error("First and last name are required");
@@ -136,13 +158,26 @@ export async function saveEmployeeAction(data: {
     updatedAt: new Date().toISOString(),
   };
 
-  if (data.id) {
+  let employeeId = data.id ?? null;
+
+  if (employeeId) {
     await db
       .update(employee)
       .set(values)
-      .where(and(eq(employee.id, data.id), eq(employee.companyId, data.companyId)));
+      .where(and(eq(employee.id, employeeId), eq(employee.companyId, data.companyId)));
   } else {
-    await db.insert(employee).values(values);
+    const [created] = await db.insert(employee).values(values).returning({ id: employee.id });
+    employeeId = created?.id ?? null;
+  }
+
+  if (employeeId) {
+    const { syncEmployeeLoginRole } = await import("./employee-login-actions");
+    await syncEmployeeLoginRole({
+      companyId: data.companyId,
+      employeeId,
+      roleId: data.roleId || null,
+      assignedBy: session.user.id,
+    });
   }
 
   revalidateOrg(data.companyId);
@@ -164,7 +199,7 @@ export async function assignEmployeeAction(data: {
   departmentId?: string | null;
   roleId?: string | null;
 }) {
-  await assertCompanyAccess(data.companyId);
+  const session = await assertCompanyAccess(data.companyId);
   await db
     .update(employee)
     .set({
@@ -173,6 +208,14 @@ export async function assignEmployeeAction(data: {
       updatedAt: new Date().toISOString(),
     })
     .where(and(eq(employee.id, data.employeeId), eq(employee.companyId, data.companyId)));
+
+  const { syncEmployeeLoginRole } = await import("./employee-login-actions");
+  await syncEmployeeLoginRole({
+    companyId: data.companyId,
+    employeeId: data.employeeId,
+    roleId: data.roleId || null,
+    assignedBy: session.user.id,
+  });
 
   revalidateOrg(data.companyId);
   return { success: true, message: "Assignment updated" };

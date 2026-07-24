@@ -1,10 +1,11 @@
 import { auth } from "@repo/auth";
-import { db, company, eq } from "@repo/db";
+import { db, company, eq, sql, workspace } from "@repo/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   HiOutlineArrowRight,
   HiOutlineBuildingOffice2,
+  HiOutlineHome,
   HiOutlineRocketLaunch,
   HiOutlineShieldCheck,
 } from "react-icons/hi2";
@@ -32,14 +33,47 @@ export default async function AppsPage() {
 
   const companyRecord = user.companyId
     ? await db
-        .select()
-        .from(company)
-        .where(eq(company.id, user.companyId))
-        .then((res) => res[0])
+      .select()
+      .from(company)
+      .where(eq(company.id, user.companyId))
+      .then((res) => res[0])
     : null;
   const companyName = companyRecord?.name || null;
 
+  const clientWorkspace = user.companyId
+    ? await db
+      .select({ id: workspace.id })
+      .from(workspace)
+      .where(sql`${workspace.id}::text = ${user.companyId}`)
+      .then((res) => res[0] ?? null)
+    : null;
+
   const apps = [
+    ...(!clientWorkspace
+      ? [
+          {
+            id: "firm-workspace",
+            name: "Firm Workspace",
+            description:
+              "Manage client workspaces, firm users, and company compliance.",
+            icon: HiOutlineHome,
+            href: "/workspace",
+            status: "active",
+            statusLabel: "Open Workspace",
+          },
+        ]
+      : [
+          {
+            id: "company-workspace",
+            name: "Company Workspace",
+            description:
+              "Manage employees, departments, and roles for your company only.",
+            icon: HiOutlineBuildingOffice2,
+            href: `/workspace?company_id=${encodeURIComponent(clientWorkspace.id)}`,
+            status: "active",
+            statusLabel: "Open Workspace",
+          },
+        ]),
     {
       id: "hris",
       name: "Dalia HRIS",
@@ -72,7 +106,7 @@ export default async function AppsPage() {
   return (
     <div className="min-h-screen bg-background">
       <AppsHeader companyName={companyName} userName={user.name} />
-      
+
       <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -93,8 +127,8 @@ export default async function AppsPage() {
                 key={app.id}
                 className={cn(
                   "flex flex-col justify-between border border-border/60 bg-card p-6 transition-all duration-200",
-                  isActive 
-                    ? "hover:border-primary/40 hover:shadow-md" 
+                  isActive
+                    ? "hover:border-primary/40 hover:shadow-md"
                     : "opacity-80 bg-card/40 border-dashed backdrop-blur-[2px]"
                 )}
               >
@@ -117,7 +151,7 @@ export default async function AppsPage() {
                   <CardTitle className="font-display text-lg font-bold mt-2">
                     {app.name}
                   </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground min-h-[48px]">
+                  <CardDescription className="text-sm text-muted-foreground min-h-12">
                     {app.description}
                   </CardDescription>
                 </CardHeader>

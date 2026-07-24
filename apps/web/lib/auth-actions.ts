@@ -3,7 +3,8 @@
 import { auth } from "@repo/auth";
 import { APIError } from "better-auth/api";
 import { redirect } from "next/navigation";
-import { db, company } from "@repo/db";
+import { db, company, sql, workspace } from "@repo/db";
+import { headers } from "next/headers";
 
 function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -19,6 +20,26 @@ function fail(path: "/login" | "/register", error: unknown) {
   redirect(`${path}?error=${encodeURIComponent(message)}`);
 }
 
+async function postAuthRedirect() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  const companyId = session?.user?.companyId;
+  if (companyId) {
+    const [clientWorkspace] = await db
+      .select({ id: workspace.id })
+      .from(workspace)
+      .where(sql`${workspace.id}::text = ${companyId}`)
+      .limit(1);
+
+    if (clientWorkspace) {
+      redirect(`/workspace?company_id=${encodeURIComponent(clientWorkspace.id)}`);
+    }
+  }
+
+  redirect("/apps");
+}
 
 export async function signInAction(formData: FormData) {
   try {
@@ -31,7 +52,7 @@ export async function signInAction(formData: FormData) {
   } catch (error) {
     fail("/login", error);
   }
-  redirect("/apps");
+  await postAuthRedirect();
 }
 
 export async function signUpAction(formData: FormData) {

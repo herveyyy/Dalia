@@ -48,10 +48,14 @@ export function AppShell({ children, ...sidebarProps }: AppShellProps) {
                         sidebarProps.onSelectWorkspace(id);
                         setMobileOpen(false);
                       }}
-                      onCreateWorkspaceClick={() => {
-                        sidebarProps.onCreateWorkspaceClick();
-                        setMobileOpen(false);
-                      }}
+                      onCreateWorkspaceClick={
+                        sidebarProps.onCreateWorkspaceClick
+                          ? () => {
+                              sidebarProps.onCreateWorkspaceClick?.();
+                              setMobileOpen(false);
+                            }
+                          : undefined
+                      }
                     />
                   </div>
                 </div>

@@ -19,7 +19,7 @@ export interface AppSidebarProps {
   workspaces: Workspace[];
   activeWorkspaceId: string;
   onSelectWorkspace: (id: string) => void;
-  onCreateWorkspaceClick: () => void;
+  onCreateWorkspaceClick?: () => void;
   navGroups: SidebarNavGroup[];
   user: {
     name: string;
@@ -27,6 +27,8 @@ export interface AppSidebarProps {
     avatarUrl?: string;
   };
   onLogoutClick?: () => void;
+  /** When false, shows Client badge and hides firm-only create affordances */
+  canManageFirm?: boolean;
 }
 
 export function AppSidebar({
@@ -37,6 +39,7 @@ export function AppSidebar({
   navGroups,
   user,
   onLogoutClick,
+  canManageFirm = true,
 }: AppSidebarProps) {
   return (
     <aside className="flex h-full w-full flex-col border-r border-border bg-card px-4 py-6 shadow-sm">
@@ -45,7 +48,7 @@ export function AppSidebar({
           Dalia
         </span>
         <span className="rounded-md bg-primary/10 px-2 py-0.5 font-display text-[10px] font-bold tracking-[0.5px] text-primary uppercase">
-          Firm
+          {canManageFirm ? "Firm" : "Client"}
         </span>
       </div>
 
