@@ -30,4 +30,4 @@ export const db = new Proxy({} as Db, {
 });
 
 export * from "./schema";
-export { eq } from "drizzle-orm";
+export { eq, and, ilike } from "drizzle-orm";
