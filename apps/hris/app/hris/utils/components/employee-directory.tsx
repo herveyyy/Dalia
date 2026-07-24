@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import * as React from "react";
+
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from "@repo/ui/components/atoms/Dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose, DialogPortal, DialogOverlay } from "@repo/ui/components/atoms/Dialog";
 import {
   HiOutlineUserGroup,
   HiOutlineClock,
@@ -21,7 +22,7 @@ import {
   HiOutlineMapPin,
   HiOutlineUser,
 } from "react-icons/hi2";
-import { saveEmployee, deleteEmployee } from "../actions/employee-actions";
+import { useEmployeeDirectory } from "../hooks/use-employee-directory";
 
 interface EmployeeDirectoryProps {
   initialEmployees: any[];
@@ -29,131 +30,28 @@ interface EmployeeDirectoryProps {
 }
 
 export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirectoryProps) {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "employees">("dashboard");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isPending, startTransition] = useTransition();
-
-  // Dialog & Form state
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
-  
-  // Dynamic form rows
-  const [allowances, setAllowances] = useState<any[]>([]);
-  const [deductions, setDeductions] = useState<any[]>([]);
-
-  // Open modal for Create/Edit
-  const handleOpenDialog = (emp: any | null = null) => {
-    setSelectedEmployee(emp);
-    if (emp) {
-      setAllowances(
-        emp.allowances?.map((a: any) => ({
-          name: a.allowanceType?.name || "",
-          amount: a.amount,
-          isTaxable: a.allowanceType?.isTaxable || false,
-          frequency: a.frequency || "monthly",
-        })) || []
-      );
-      setDeductions(
-        emp.deductions?.map((d: any) => ({
-          name: d.deductionType?.name || "",
-          amount: d.amount,
-          category: d.deductionType?.category || "voluntary",
-          frequency: d.frequency || "every_pay_period",
-        })) || []
-      );
-    } else {
-      setAllowances([]);
-      setDeductions([
-        { name: "SSS", amount: "0.00", category: "statutory", frequency: "every_pay_period" },
-        { name: "PhilHealth", amount: "0.00", category: "statutory", frequency: "every_pay_period" },
-        { name: "Pag-IBIG", amount: "0.00", category: "statutory", frequency: "every_pay_period" },
-      ]);
-    }
-    setIsOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setIsOpen(false);
-    setSelectedEmployee(null);
-  };
-
-  // Submit Handler
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    const payload = {
-      id: selectedEmployee?.id || null,
-      companyId,
-      employeeNo: formData.get("employeeNo"),
-      firstName: formData.get("firstName"),
-      middleName: formData.get("middleName"),
-      lastName: formData.get("lastName"),
-      suffix: formData.get("suffix"),
-      dateOfBirth: formData.get("dateOfBirth"),
-      gender: formData.get("gender"),
-      personalEmail: formData.get("personalEmail"),
-      workEmail: formData.get("workEmail"),
-      phoneNumber: formData.get("phoneNumber"),
-      residentialAddress: formData.get("residentialAddress"),
-      tin: formData.get("tin"),
-      philhealth: formData.get("philhealth"),
-      pagIbig: formData.get("pagIbig"),
-      sssNo: formData.get("sssNo"),
-      philIdNo: formData.get("philIdNo"),
-      department: formData.get("department"),
-      jobTitle: formData.get("jobTitle"),
-      responsibilityCenter: formData.get("responsibilityCenter"),
-      employmentStatus: formData.get("employmentStatus"),
-      employmentSchedule: formData.get("employmentSchedule"),
-      supervisorId: formData.get("supervisorId") || null,
-      dateOfHire: formData.get("dateOfHire"),
-      payType: formData.get("payType"),
-      basePayRate: formData.get("basePayRate"),
-      payFrequency: formData.get("payFrequency"),
-      bankName: formData.get("bankName"),
-      bankAccountNumber: formData.get("bankAccountNumber"),
-      brstnBankCode: formData.get("brstnBankCode"),
-      totalRegularHours: formData.get("totalRegularHours"),
-      overtimeHours: formData.get("overtimeHours"),
-      leaveBalanceDays: formData.get("leaveBalanceDays"),
-      taxBracketCode: formData.get("taxBracketCode"),
-      
-      emergencyContact: {
-        contactPerson: formData.get("contactPerson"),
-        contactNo: formData.get("contactNo"),
-        contactAddress: formData.get("contactAddress"),
-        relationship: formData.get("relationship"),
-      },
-      
-      allowances,
-      deductions,
-    };
-
-    startTransition(async () => {
-      const res = await saveEmployee(payload);
-      if (res.success) {
-        handleCloseDialog();
-      }
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this employee?")) {
-      startTransition(async () => {
-        await deleteEmployee(id);
-      });
-    }
-  };
-
-  // Filtered list
-  const filteredEmployees = initialEmployees.filter((emp) => {
-    const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
-    const matchesSearch =
-      fullName.includes(searchQuery.toLowerCase()) ||
-      (emp.employeeNo && emp.employeeNo.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesSearch;
-  });
+  const {
+    activeTab,
+    setActiveTab,
+    searchQuery,
+    setSearchQuery,
+    isPending,
+    isOpen,
+    setIsOpen,
+    selectedEmployee,
+    allowances,
+    setAllowances,
+    deductions,
+    setDeductions,
+    handleOpenDialog,
+    handleCloseDialog,
+    handleSubmit,
+    handleDelete,
+    filteredEmployees,
+    currentStep,
+    handleNextStep,
+    handlePrevStep,
+  } = useEmployeeDirectory(initialEmployees, companyId);
 
   return (
     <div className="mt-8">
@@ -444,16 +342,59 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
       {/* Dialog for Add/Edit */}
       {isOpen && (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300" />
-          <DialogContent className="fixed left-1/2 top-1/2 z-50 w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent className="fixed left-1/2 top-1/2 z-50 w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
             <DialogTitle>{selectedEmployee ? "Edit Employee Record" : "Add New Employee"}</DialogTitle>
             <DialogDescription>
               Configure the employee profile, identification codes, payroll settings, and emergency contacts.
             </DialogDescription>
 
+            {/* Step Wizard Progress Bar */}
+            <div className="mt-6 border-b border-border/60 pb-5">
+              <div className="flex items-center justify-between max-w-3xl mx-auto">
+                {[
+                  { step: 1, label: "Personal Profile" },
+                  { step: 2, label: "Statutory IDs" },
+                  { step: 3, label: "Job & Payroll" },
+                  { step: 4, label: "Contacts & Compensation" },
+                ].map((s, idx, arr) => (
+                  <React.Fragment key={s.step}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`flex size-7 items-center justify-center rounded-full text-xs font-bold transition-all duration-200 ${
+                          currentStep === s.step
+                            ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                            : currentStep > s.step
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {s.step}
+                      </div>
+                      <span
+                        className={`text-xs font-semibold hidden md:inline ${
+                          currentStep === s.step ? "text-foreground" : "text-muted-foreground"
+                        }`}
+                      >
+                        {s.label}
+                      </span>
+                    </div>
+                    {idx < arr.length - 1 && (
+                      <div
+                        className={`flex-1 h-0.5 mx-4 hidden md:block ${
+                          currentStep > s.step ? "bg-primary/40" : "bg-border/60"
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-              {/* Group: Personal Data */}
-              <div className="space-y-4">
+              {/* Step 1: Personal Profile */}
+              <div className={currentStep === 1 ? "space-y-4" : "hidden"}>
                 <div className="flex items-center gap-2 border-b border-border/60 pb-2">
                   <HiOutlineUser className="size-5 text-primary" />
                   <h4 className="font-display font-bold text-foreground">1. Personal Profile</h4>
@@ -510,8 +451,8 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
                 </div>
               </div>
 
-              {/* Group: Government Identifications */}
-              <div className="space-y-4">
+              {/* Step 2: Government Identifications */}
+              <div className={currentStep === 2 ? "space-y-4" : "hidden"}>
                 <div className="flex items-center gap-2 border-b border-border/60 pb-2">
                   <HiOutlineBuildingOffice2 className="size-5 text-primary" />
                   <h4 className="font-display font-bold text-foreground">2. Statutory Identifications</h4>
@@ -540,8 +481,10 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
                 </div>
               </div>
 
-              {/* Group: Job Info */}
-              <div className="space-y-4">
+              {/* Step 3: Job & Payroll Details */}
+              <div className={currentStep === 3 ? "space-y-6" : "hidden"}>
+                {/* Group: Job Info */}
+                <div className="space-y-4">
                 <div className="flex items-center gap-2 border-b border-border/60 pb-2">
                   <HiOutlineBriefcase className="size-5 text-primary" />
                   <h4 className="font-display font-bold text-foreground">3. Employment & Job Details</h4>
@@ -571,7 +514,7 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
                       id="employmentStatus"
                       name="employmentStatus"
                       defaultValue={selectedEmployee?.employmentStatus || "Active"}
-                      className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none focus-visible:border-primary"
+                      className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
                     >
                       <option value="Active">Active</option>
                       <option value="Suspended">Suspended</option>
@@ -644,8 +587,12 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
                 </div>
               </div>
 
-              {/* Group: Emergency Contacts */}
-              <div className="space-y-4">
+              </div>
+
+              {/* Step 4: Emergency Contacts & Compensation */}
+              <div className={currentStep === 4 ? "space-y-6" : "hidden"}>
+                {/* Group: Emergency Contacts */}
+                <div className="space-y-4">
                 <div className="flex items-center gap-2 border-b border-border/60 pb-2">
                   <HiOutlinePhone className="size-5 text-primary" />
                   <h4 className="font-display font-bold text-foreground">5. Emergency Contact</h4>
@@ -813,17 +760,33 @@ export function EmployeeDirectory({ initialEmployees, companyId }: EmployeeDirec
                 </div>
               </div>
 
+              </div>
+
               {/* Action Buttons */}
               <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
-                <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isPending}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? "Saving..." : "Save Record"}
-                </Button>
+                {currentStep > 1 && (
+                  <Button type="button" variant="outline" onClick={handlePrevStep} disabled={isPending}>
+                    Back
+                  </Button>
+                )}
+                {currentStep === 1 && (
+                  <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isPending}>
+                    Cancel
+                  </Button>
+                )}
+                {currentStep < 4 ? (
+                  <Button type="button" onClick={handleNextStep}>
+                    Next
+                  </Button>
+                ) : (
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Record"}
+                  </Button>
+                )}
               </div>
             </form>
-          </DialogContent>
+            </DialogContent>
+          </DialogPortal>
         </Dialog>
       )}
     </div>
