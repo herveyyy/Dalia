@@ -17,7 +17,7 @@ export const getOverviewCompany = (userId: string) =>
           return null;
         }
 
-        const workspacesList = await getCompanyWorkspaces();
+        const workspacesList = await getCompanyWorkspaces(userRecord.companyId);
 
         return {
           company: companyRecord,

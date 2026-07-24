@@ -1,4 +1,4 @@
-import { db, workspace } from "@repo/db";
+import { db, company, eq, user, workspace } from "@repo/db";
 import { auth } from "@repo/auth";
 import { headers } from "next/headers";
 import { revalidateTag } from "next/cache";
@@ -11,7 +11,6 @@ export async function postCreateWorkspace(data: {
   logoUrl?: string;
 }) {
   try {
-    // 1. Authenticate user
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -20,15 +19,20 @@ export async function postCreateWorkspace(data: {
       throw new Error("Unauthorized");
     }
 
-    // 2. Generate a unique integer ID (Drizzle/Postgres workspace.id expects an integer)
-    // Generate a secure random positive integer for the database primary key.
-    const randomIntId = Math.floor(Math.random() * 2147483647);
+    const [userRecord] = await db
+      .select({ companyId: user.companyId })
+      .from(user)
+      .where(eq(user.id, session.user.id))
+      .limit(1);
 
-    // 3. Insert workspace
-    const [newWorkspace] = await db
-      .insert(workspace)
+    if (!userRecord?.companyId) {
+      throw new Error("User has no company");
+    }
+
+    // Client company shares the workspace id so ?company_id= scopes HR data.
+    const [clientCompany] = await db
+      .insert(company)
       .values({
-        id: randomIntId,
         name: data.name,
         websiteUrl: data.websiteUrl,
         headquarters: data.headquarters,
@@ -38,8 +42,26 @@ export async function postCreateWorkspace(data: {
       })
       .returning();
 
-    // 4. Revalidate cache tags for workspaces
+    if (!clientCompany) {
+      throw new Error("Failed to create client company");
+    }
+
+    const [newWorkspace] = await db
+      .insert(workspace)
+      .values({
+        id: clientCompany.id,
+        companyId: userRecord.companyId,
+        name: data.name,
+        websiteUrl: data.websiteUrl,
+        headquarters: data.headquarters,
+        description: data.description,
+        logoUrl: data.logoUrl,
+        createdBy: session.user.id,
+      })
+      .returning();
+
     revalidateTag("workspaces-list", {});
+    revalidateTag(`workspaces-list-${userRecord.companyId}`, {});
     revalidateTag(`overview-company-${session.user.id}`, {});
 
     return newWorkspace;

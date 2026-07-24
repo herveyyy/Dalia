@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm/relations";
+import { userRole } from "../rbac/tables";
 import { account, session, user } from "./tables";
 
 export const accountRelations = relations(account, ({ one }) => ({
@@ -11,6 +12,9 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   sessions: many(session),
+  userRoles: many(userRole, {
+    relationName: "user_role_user",
+  }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

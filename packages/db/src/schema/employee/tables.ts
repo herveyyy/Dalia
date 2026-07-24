@@ -5,13 +5,15 @@ import {
   numeric,
   boolean,
   foreignKey,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { company } from "../firm/tables";
+import { role } from "../rbac/tables";
 
 export const employee = pgTable(
   "employee",
   {
-    id: text("id").primaryKey().notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
     employeeNo: text("employee_no"),
     firstName: text("first_name").notNull(),
     middleName: text("middle_name"),
@@ -29,13 +31,14 @@ export const employee = pgTable(
     sssNo: text("sss_no"),
     philIdNo: text("phil_id_no"),
 
-    companyId: text("company_id").notNull(),
-    departmentId: text("department_id"),
+    companyId: uuid("company_id").notNull(),
+    departmentId: uuid("department_id"),
+    roleId: uuid("role_id"),
     jobTitle: text("job_title"),
     responsibilityCenter: text("responsibility_center"),
     employmentStatus: text("employment_status").default("Active").notNull(),
     employmentSchedule: text("employment_schedule"),
-    supervisorId: text("supervisor_id"),
+    supervisorId: uuid("supervisor_id"),
     dateOfHire: timestamp("date_of_hire", { mode: "string" }),
 
     payType: text("pay_type"),
@@ -49,7 +52,7 @@ export const employee = pgTable(
     overtimeHours: numeric("overtime_hours", { precision: 8, scale: 2 }).default("0.00").notNull(),
     leaveBalanceDays: numeric("leave_balance_days", { precision: 5, scale: 2 }).default("0.00").notNull(),
     taxBracketCode: text("tax_bracket_code"),
-    taxTypeId: text("tax_type_id"),
+    taxTypeId: uuid("tax_type_id"),
 
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
@@ -64,6 +67,11 @@ export const employee = pgTable(
       columns: [table.departmentId],
       foreignColumns: [department.id],
       name: "employee_department_id_department_id_fk",
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [table.roleId],
+      foreignColumns: [role.id],
+      name: "employee_role_id_role_id_fk",
     }).onDelete("set null"),
     foreignKey({
       columns: [table.supervisorId],
@@ -81,8 +89,8 @@ export const employee = pgTable(
 export const employeeEmergencyContact = pgTable(
   "employee_emergency_contact",
   {
-    id: text("id").primaryKey().notNull(),
-    employeeId: text("employee_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    employeeId: uuid("employee_id").notNull(),
     contactPerson: text("contact_person").notNull(),
     contactNo: text("contact_no").notNull(),
     contactAddress: text("contact_address"),
@@ -102,8 +110,8 @@ export const employeeEmergencyContact = pgTable(
 export const deductionType = pgTable(
   "deduction_type",
   {
-    id: text("id").primaryKey().notNull(),
-    companyId: text("company_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    companyId: uuid("company_id").notNull(),
     name: text("name").notNull(),
     category: text("category").notNull(),
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
@@ -121,9 +129,9 @@ export const deductionType = pgTable(
 export const employeeDeduction = pgTable(
   "employee_deduction",
   {
-    id: text("id").primaryKey().notNull(),
-    employeeId: text("employee_id").notNull(),
-    deductionTypeId: text("deduction_type_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    employeeId: uuid("employee_id").notNull(),
+    deductionTypeId: uuid("deduction_type_id").notNull(),
     amount: numeric("amount", { precision: 12, scale: 2 }).default("0.00").notNull(),
     frequency: text("frequency").default("every_pay_period").notNull(),
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
@@ -146,8 +154,8 @@ export const employeeDeduction = pgTable(
 export const allowanceType = pgTable(
   "allowance_type",
   {
-    id: text("id").primaryKey().notNull(),
-    companyId: text("company_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    companyId: uuid("company_id").notNull(),
     name: text("name").notNull(),
     isTaxable: boolean("is_taxable").default(false).notNull(),
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
@@ -165,9 +173,9 @@ export const allowanceType = pgTable(
 export const employeeAllowance = pgTable(
   "employee_allowance",
   {
-    id: text("id").primaryKey().notNull(),
-    employeeId: text("employee_id").notNull(),
-    allowanceTypeId: text("allowance_type_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    employeeId: uuid("employee_id").notNull(),
+    allowanceTypeId: uuid("allowance_type_id").notNull(),
     amount: numeric("amount", { precision: 12, scale: 2 }).default("0.00").notNull(),
     frequency: text("frequency").default("monthly").notNull(),
     createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
@@ -190,8 +198,8 @@ export const employeeAllowance = pgTable(
 export const taxType = pgTable(
   "tax_type",
   {
-    id: text("id").primaryKey().notNull(),
-    companyId: text("company_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    companyId: uuid("company_id").notNull(),
     name: text("name").notNull(),
     rate: numeric("rate", { precision: 5, scale: 2 }).default("0.00").notNull(),
     description: text("description"),
@@ -211,8 +219,8 @@ export const taxType = pgTable(
 export const department = pgTable(
   "department",
   {
-    id: text("id").primaryKey().notNull(),
-    companyId: text("company_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    companyId: uuid("company_id").notNull(),
     name: text("name").notNull(),
     description: text("description"),
     isArchived: boolean("is_archived").default(false).notNull(),
@@ -231,10 +239,10 @@ export const department = pgTable(
 export const jobPosting = pgTable(
   "job_posting",
   {
-    id: text("id").primaryKey().notNull(),
-    companyId: text("company_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    companyId: uuid("company_id").notNull(),
     title: text("title").notNull(),
-    departmentId: text("department_id"),
+    departmentId: uuid("department_id"),
     location: text("location"),
     employmentType: text("employment_type").notNull(),
     description: text("description").notNull(),

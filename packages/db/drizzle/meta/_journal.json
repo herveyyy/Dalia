@@ -8,6 +8,34 @@
       "when": 1784854228266,
       "tag": "0000_square_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784855000000,
+      "tag": "0001_company_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784856000000,
+      "tag": "0002_uuid_ids",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784857000000,
+      "tag": "0003_workspace_company_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784858000000,
+      "tag": "0004_client_company_and_employee_role",
+      "breakpoints": true
     }
   ]
 }

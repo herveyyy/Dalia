@@ -7,7 +7,6 @@ import { AppShell } from "@repo/ui/components/organisms/AppShell";
 import { CreateWorkspaceDialog } from "@repo/ui/components/molecules/CreateWorkspaceDialog";
 import { useWorkspaceState } from "../hooks/use-workspace-state";
 import { WorkspaceContext } from "../context/workspace-context";
-
 import { Workspace } from "../types/workspace.types";
 
 interface WorkspaceShellProps {
@@ -32,37 +31,36 @@ export function WorkspaceShell({ children, user, initialWorkspaces }: WorkspaceS
     setCreateDialogOpen,
     navGroups,
     handleSelectWorkspace,
+    handleExitToFirm,
     handleCreateWorkspace,
   } = useWorkspaceState(initialWorkspaces);
 
-  // Inject isActive and custom click handlers based on current pathname
   const navGroupsWithActive = React.useMemo(
     () =>
       navGroups.map((group) => ({
         ...group,
         items: group.items.map((item) => {
           const isExitLink = item.href === "EXIT_TO_FIRM";
-          
+          const itemPath = item.href.split("?")[0] ?? item.href;
+
           return {
             ...item,
-            // Override href for Javascript actions so they don't perform page navigations
             href: isExitLink ? "#" : item.href,
             isActive: isExitLink
               ? false
-              : item.href === "/workspace"
+              : itemPath === "/workspace"
                 ? pathname === "/workspace"
-                : pathname.startsWith(item.href),
+                : pathname.startsWith(itemPath),
             onClick: isExitLink
               ? (e: React.MouseEvent) => {
                   e.preventDefault();
-                  handleSelectWorkspace("1");
-                  router.push("/workspace");
+                  handleExitToFirm();
                 }
               : undefined,
           };
         }),
       })),
-    [navGroups, pathname, handleSelectWorkspace, router]
+    [navGroups, pathname, handleExitToFirm]
   );
 
   const handleLogout = React.useCallback(async () => {

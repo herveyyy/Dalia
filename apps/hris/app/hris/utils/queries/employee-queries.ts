@@ -68,9 +68,12 @@ export async function getUserRecord(userId: string) {
   }
 }
 
-export async function getCompanyWorkspaces() {
+export async function getCompanyWorkspaces(companyId: string) {
   try {
-    return await db.select().from(workspace);
+    return await db
+      .select()
+      .from(workspace)
+      .where(eq(workspace.companyId, companyId));
   } catch (error) {
     console.error("Failed to fetch workspaces:", error);
     throw new Error("Failed to fetch workspaces");

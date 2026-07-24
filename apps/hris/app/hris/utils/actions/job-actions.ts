@@ -7,7 +7,7 @@ export async function saveJobPosting(data: {
   id?: string | null;
   companyId: string;
   title: string;
-  department?: string | null;
+  departmentId?: string | null;
   location?: string | null;
   employmentType: string;
   description: string;
@@ -17,13 +17,11 @@ export async function saveJobPosting(data: {
 }) {
   try {
     const isUpdate = !!data.id;
-    const jobId = data.id || `job_${Math.random().toString(36).substring(2, 11)}`;
 
     const values = {
-      id: jobId,
       companyId: data.companyId,
       title: data.title,
-      department: data.department || null,
+      departmentId: data.departmentId || null,
       location: data.location || null,
       employmentType: data.employmentType,
       description: data.description,
@@ -34,8 +32,8 @@ export async function saveJobPosting(data: {
       updatedAt: new Date().toISOString(),
     };
 
-    if (isUpdate) {
-      await db.update(jobPosting).set(values).where(eq(jobPosting.id, jobId));
+    if (isUpdate && data.id) {
+      await db.update(jobPosting).set(values).where(eq(jobPosting.id, data.id));
     } else {
       await db.insert(jobPosting).values({
         ...values,
@@ -53,7 +51,6 @@ export async function saveJobPosting(data: {
 
 export async function deleteJobPosting(id: string) {
   try {
-    // Per requirements, DELETE is just archive = true
     await db
       .update(jobPosting)
       .set({ isArchived: true, updatedAt: new Date().toISOString() })

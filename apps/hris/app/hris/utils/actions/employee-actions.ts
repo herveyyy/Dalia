@@ -15,11 +15,9 @@ import { revalidatePath } from "next/cache";
 export async function saveEmployee(data: any) {
   try {
     const isUpdate = !!data.id;
-    const employeeId = data.id || `emp_${Math.random().toString(36).substring(2, 11)}`;
 
     await db.transaction(async (tx) => {
       const employeeValues = {
-        id: employeeId,
         employeeNo: data.employeeNo || null,
         firstName: data.firstName,
         middleName: data.middleName || null,
@@ -37,7 +35,7 @@ export async function saveEmployee(data: any) {
         sssNo: data.sssNo || null,
         philIdNo: data.philIdNo || null,
         companyId: data.companyId,
-        department: data.department || null,
+        departmentId: data.departmentId || null,
         jobTitle: data.jobTitle || null,
         responsibilityCenter: data.responsibilityCenter || null,
         employmentStatus: data.employmentStatus || "Active",
@@ -57,17 +55,21 @@ export async function saveEmployee(data: any) {
         taxTypeId: data.taxTypeId || null,
       };
 
+      let employeeId: string = data.id;
+
       if (isUpdate) {
         await tx.update(employee).set(employeeValues).where(eq(employee.id, employeeId));
       } else {
-        await tx.insert(employee).values(employeeValues);
+        const [created] = await tx.insert(employee).values(employeeValues).returning({ id: employee.id });
+        if (!created) {
+          throw new Error("Failed to create employee");
+        }
+        employeeId = created.id;
       }
 
       await tx.delete(employeeEmergencyContact).where(eq(employeeEmergencyContact.employeeId, employeeId));
       if (data.emergencyContact && data.emergencyContact.contactPerson && data.emergencyContact.contactNo) {
-        const contactId = `ec_${Math.random().toString(36).substring(2, 11)}`;
         await tx.insert(employeeEmergencyContact).values({
-          id: contactId,
           employeeId,
           contactPerson: data.emergencyContact.contactPerson,
           contactNo: data.emergencyContact.contactNo,
@@ -88,11 +90,9 @@ export async function saveEmployee(data: any) {
             .then((res) => res.find((r) => r.name.toLowerCase() === ded.name.toLowerCase()));
 
           if (!typeRecord) {
-            const typeId = `dt_${Math.random().toString(36).substring(2, 11)}`;
             const [newType] = await tx
               .insert(deductionType)
               .values({
-                id: typeId,
                 companyId: data.companyId,
                 name: ded.name,
                 category: ded.category || "voluntary",
@@ -104,9 +104,7 @@ export async function saveEmployee(data: any) {
             typeRecord = newType;
           }
 
-          const empDedId = `ed_${Math.random().toString(36).substring(2, 11)}`;
           await tx.insert(employeeDeduction).values({
-            id: empDedId,
             employeeId,
             deductionTypeId: typeRecord.id,
             amount: ded.amount,
@@ -127,11 +125,9 @@ export async function saveEmployee(data: any) {
             .then((res) => res.find((r) => r.name.toLowerCase() === alw.name.toLowerCase()));
 
           if (!typeRecord) {
-            const typeId = `at_${Math.random().toString(36).substring(2, 11)}`;
             const [newType] = await tx
               .insert(allowanceType)
               .values({
-                id: typeId,
                 companyId: data.companyId,
                 name: alw.name,
                 isTaxable: !!alw.isTaxable,
@@ -143,9 +139,7 @@ export async function saveEmployee(data: any) {
             typeRecord = newType;
           }
 
-          const empAlwId = `ea_${Math.random().toString(36).substring(2, 11)}`;
           await tx.insert(employeeAllowance).values({
-            id: empAlwId,
             employeeId,
             allowanceTypeId: typeRecord.id,
             amount: alw.amount,

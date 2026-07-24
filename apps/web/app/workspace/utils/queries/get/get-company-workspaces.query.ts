@@ -1,22 +1,23 @@
-import { db, workspace } from "@repo/db";
-import { auth } from "@repo/auth";
-import { headers } from "next/headers";
+import { db, eq, workspace } from "@repo/db";
 import { unstable_cache } from "next/cache";
 
-const getCachedWorkspaces = () =>
+const getCachedWorkspaces = (companyId: string) =>
   unstable_cache(
     async () => {
       try {
-        return await db.select().from(workspace);
+        return await db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.companyId, companyId));
       } catch (error) {
         console.error("Failed to fetch workspaces:", error);
         throw new Error("Failed to fetch workspaces");
       }
     },
-    ["workspaces-list"],
-    { tags: ["workspaces-list"] }
+    [`workspaces-list-${companyId}`],
+    { tags: [`workspaces-list-${companyId}`, "workspaces-list"] }
   )();
 
-export async function getCompanyWorkspaces() {
-  return getCachedWorkspaces();
+export async function getCompanyWorkspaces(companyId: string) {
+  return getCachedWorkspaces(companyId);
 }

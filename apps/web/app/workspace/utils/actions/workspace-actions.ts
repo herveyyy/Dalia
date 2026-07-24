@@ -13,7 +13,7 @@ export async function createWorkspaceAction(data: { name: string; adminEmail: st
   }
 
   return {
-    id: String(newWorkspace.id),
+    id: newWorkspace.id,
     name: newWorkspace.name,
     adminEmail: data.adminEmail,
     isFirm: false,

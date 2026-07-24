@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm/relations";
 import { user } from "../auth/tables";
 import { company, workspace } from "./tables";
 import { employee, deductionType, allowanceType, taxType, jobPosting, department } from "../employee/tables";
+import { role } from "../rbac/tables";
 
 export const companyRelations = relations(company, ({ one, many }) => ({
   createdByUser: one(user, {
@@ -14,9 +15,15 @@ export const companyRelations = relations(company, ({ one, many }) => ({
   taxTypes: many(taxType),
   jobPostings: many(jobPosting),
   departments: many(department),
+  roles: many(role),
+  workspaces: many(workspace),
 }));
 
 export const workspaceRelations = relations(workspace, ({ one }) => ({
+  company: one(company, {
+    fields: [workspace.companyId],
+    references: [company.id],
+  }),
   createdByUser: one(user, {
     fields: [workspace.createdBy],
     references: [user.id],

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Suspense } from "react";
 import { auth } from "@repo/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -37,7 +38,7 @@ export default async function WorkspaceLayout({
       };
 
   const clientWorkspaces = (overview?.workspaces ?? []).map((w) => ({
-    id: String(w.id),
+    id: w.id,
     name: w.name,
     adminEmail: user.email, // or w.createdBy / some other email
     isFirm: false,
@@ -46,15 +47,17 @@ export default async function WorkspaceLayout({
   const initialWorkspaces = [firmWorkspace, ...clientWorkspaces];
 
   return (
-    <WorkspaceShell
-      user={{
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.image ?? undefined,
-      }}
-      initialWorkspaces={initialWorkspaces}
-    >
-      {children}
-    </WorkspaceShell>
+    <Suspense fallback={null}>
+      <WorkspaceShell
+        user={{
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.image ?? undefined,
+        }}
+        initialWorkspaces={initialWorkspaces}
+      >
+        {children}
+      </WorkspaceShell>
+    </Suspense>
   );
 }

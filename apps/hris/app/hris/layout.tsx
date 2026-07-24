@@ -21,7 +21,9 @@ export default async function HrisLayout({
   const { user } = session;
   const userRecord = await getUserRecord(user.id);
   const companyRecord = userRecord?.companyId ? await getCompanyRecord(userRecord.companyId) : null;
-  const workspacesList = await getCompanyWorkspaces();
+  const workspacesList = userRecord?.companyId
+    ? await getCompanyWorkspaces(userRecord.companyId)
+    : [];
 
   const firmWorkspace = companyRecord
     ? {
@@ -38,7 +40,7 @@ export default async function HrisLayout({
       };
 
   const clientWorkspaces = workspacesList.map((w) => ({
-    id: String(w.id),
+    id: w.id,
     name: w.name,
     adminEmail: user.email,
     isFirm: false,

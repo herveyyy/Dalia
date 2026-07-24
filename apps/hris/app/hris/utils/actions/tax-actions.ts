@@ -12,10 +12,8 @@ export async function saveTaxType(data: {
 }) {
   try {
     const isUpdate = !!data.id;
-    const taxId = data.id || `tax_${Math.random().toString(36).substring(2, 11)}`;
 
     const values = {
-      id: taxId,
       companyId: data.companyId,
       name: data.name,
       rate: data.rate || "0.00",
@@ -24,8 +22,8 @@ export async function saveTaxType(data: {
       updatedAt: new Date().toISOString(),
     };
 
-    if (isUpdate) {
-      await db.update(taxType).set(values).where(eq(taxType.id, taxId));
+    if (isUpdate && data.id) {
+      await db.update(taxType).set(values).where(eq(taxType.id, data.id));
     } else {
       await db.insert(taxType).values({
         ...values,
@@ -44,7 +42,6 @@ export async function saveTaxType(data: {
 
 export async function deleteTaxType(id: string) {
   try {
-    // Per requirements, DELETE is just archive = true
     await db
       .update(taxType)
       .set({ isArchived: true, updatedAt: new Date().toISOString() })

@@ -43,6 +43,9 @@ src/schema/
   auth/
     tables.ts      # user, session, account, verification
     relations.ts
+  rbac/
+    tables.ts      # role, user_role (company-scoped custom roles)
+    relations.ts
   index.ts         # re-exports every domain
 ```
 
