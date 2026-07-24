@@ -1,10 +1,11 @@
 import { auth } from "@repo/auth";
-import { db, company, eq } from "@repo/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { HrisHeader } from "../../components/hris-header";
 import { HiOutlineArrowLeft } from "react-icons/hi2";
-import { EmployeeDirectory } from "./employee-directory";
+import { getCompanyRecord } from "./utils/queries/get/get-company-record.query";
+import { getEmployees } from "./utils/queries/get/get-employees.query";
+import { EmployeeDirectory } from "./utils/components/employee-directory";
 
 export default async function Page() {
   const session = await auth.api.getSession({
@@ -17,35 +18,12 @@ export default async function Page() {
 
   const { user } = session;
 
-  // 1. Fetch company record
-  const companyRecord = user.companyId
-    ? await db
-        .select()
-        .from(company)
-        .where(eq(company.id, user.companyId))
-        .then((res) => res[0])
-    : null;
+  // 1. Fetch company record using query utility
+  const companyRecord = user.companyId ? await getCompanyRecord(user.companyId) : null;
   const companyName = companyRecord?.name || null;
 
-  // 2. Fetch employee records with pre-joined relations for 3NF tables
-  const employeesList = user.companyId
-    ? await db.query.employee.findMany({
-        where: (emp, { eq }) => eq(emp.companyId, user.companyId!),
-        with: {
-          emergencyContacts: true,
-          deductions: {
-            with: {
-              deductionType: true,
-            },
-          },
-          allowances: {
-            with: {
-              allowanceType: true,
-            },
-          },
-        },
-      })
-    : [];
+  // 2. Fetch employee records with pre-joined relations using query utility
+  const employeesList = user.companyId ? await getEmployees(user.companyId) : [];
 
   return (
     <div className="min-h-screen bg-background">

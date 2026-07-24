@@ -21,7 +21,7 @@ import {
   HiOutlineMapPin,
   HiOutlineUser,
 } from "react-icons/hi2";
-import { saveEmployee, deleteEmployee } from "./actions";
+import { saveEmployee, deleteEmployee } from "../actions/employee-actions";
 
 interface EmployeeDirectoryProps {
   initialEmployees: any[];
