@@ -54,7 +54,7 @@ All features in Dalia follow a strict 4-layer unidirectional flow:
 
 #### Standard Syntax Template:
 ```tsx
-import { enforcePermission } from "@/app/workspace/utils/lib/rbac-server";
+import { enforcePermission } from "@repo/auth/rbac";
 import { getOrgDataQuery } from "../queries/get-org.query";
 import { ClientPanel } from "../components/client-panel";
 
@@ -98,7 +98,7 @@ export default async function RolesPage({ searchParams }: PageProps) {
 
 import { db, role, rolePermission, eq, and } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { assertPermission } from "@/app/workspace/utils/lib/rbac-server";
+import { assertPermission } from "@repo/auth/rbac";
 
 export async function saveRoleAction(data: {
   id?: string | null;
