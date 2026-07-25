@@ -5,7 +5,14 @@ import { OrgBranchesPanel } from "../../../../web/app/workspace/utils/components
 import { getUserRecord, getCompanyRecord } from "../utils/queries/employee-queries";
 import { getBranchesWithEmployees } from "../../../../web/app/workspace/utils/queries/get/get-org.query";
 
-export default async function HrisBranchesPage() {
+export default async function HrisBranchesPage(props: {
+  searchParams?: Promise<{ page?: string; items?: string; view?: string }>;
+}) {
+  const searchParams = await props.searchParams;
+  const page = Number(searchParams?.page || 1);
+  const items = Number(searchParams?.items || 20);
+  const viewMode = (searchParams?.view as "grid" | "rows") || "rows";
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -27,6 +34,9 @@ export default async function HrisBranchesPage() {
       companyId={companyId}
       companyName={companyRecord?.name || "Company"}
       branches={branches}
+      page={page}
+      itemsPerPage={items}
+      viewMode={viewMode}
     />
   );
 }

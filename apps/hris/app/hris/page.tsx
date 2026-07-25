@@ -5,14 +5,7 @@ import { getCompanyRecord, getEmployees, getAllowanceTypes } from "./utils/queri
 import { getTaxTypes } from "./utils/queries/tax-queries";
 import { EmployeeDirectory } from "./utils/components/employee-directory";
 
-export default async function Page(props: {
-  searchParams?: Promise<{ page?: string; items?: string; view?: string }>;
-}) {
-  const searchParams = await props.searchParams;
-  const page = Number(searchParams?.page || 1);
-  const items = Number(searchParams?.items || 20);
-  const viewMode = (searchParams?.view as "grid" | "rows") || "rows";
-
+export default async function Page() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -51,9 +44,6 @@ export default async function Page(props: {
         companyId={user.companyId || ""}
         allowanceTypes={allowanceTypes}
         taxTypes={taxTypes}
-        page={page}
-        itemsPerPage={items}
-        viewMode={viewMode}
       />
     </div>
   );

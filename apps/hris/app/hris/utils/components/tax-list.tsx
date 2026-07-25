@@ -17,6 +17,9 @@ import { saveTaxType, deleteTaxType } from "../actions/tax-actions";
 import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineCalculator } from "react-icons/hi2";
 
+import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
+import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
+
 interface TaxTypeRecord {
   id: string;
   name: string;
@@ -29,11 +32,32 @@ interface TaxListProps {
   companyId: string;
 }
 
-export function TaxList({ taxTypes, companyId }: TaxListProps) {
+export function TaxList({
+  taxTypes,
+  companyId,
+}: TaxListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTax, setSelectedTax] = useState<TaxTypeRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [viewMode, setViewMode] = useState<"grid" | "rows">("rows");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("employee_table_hris");
+        if (saved === "row") setViewMode("rows");
+        else if (saved === "column") setViewMode("grid");
+      } catch (e) {}
+    }
+  }, []);
+
+  const totalItems = taxTypes.length;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedTaxes = taxTypes.slice(startIndex, startIndex + itemsPerPage);
 
   const handleOpenDialog = (tax: TaxTypeRecord | null = null) => {
     setSelectedTax(tax);
@@ -58,10 +82,8 @@ export function TaxList({ taxTypes, companyId }: TaxListProps) {
     };
 
     startTransition(async () => {
-      const res = await saveTaxType(payload);
-      if (res.success) {
-        handleCloseDialog();
-      }
+      await saveTaxType(payload);
+      handleCloseDialog();
     });
   };
 
@@ -79,9 +101,12 @@ export function TaxList({ taxTypes, companyId }: TaxListProps) {
             Configure custom tax rates and tax categories for company payroll calculations.
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog(null)} className="gap-2">
-          <HiOutlinePlus className="size-4" /> Add Tax Type
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle onViewChange={setViewMode} />
+          <Button onClick={() => handleOpenDialog(null)} className="gap-2">
+            <HiOutlinePlus className="size-4" /> Add Tax Type
+          </Button>
+        </div>
       </div>
 
       {/* Tax Table */}
@@ -107,7 +132,7 @@ export function TaxList({ taxTypes, companyId }: TaxListProps) {
                   </td>
                 </tr>
               ) : (
-                taxTypes.map((tax) => (
+                paginatedTaxes.map((tax) => (
                   <tr key={tax.id} className="hover:bg-muted/10 transition-colors">
                     <td className="px-6 py-4 font-semibold">{tax.name}</td>
                     <td className="px-6 py-4">{tax.rate}%</td>
@@ -141,6 +166,12 @@ export function TaxList({ taxTypes, companyId }: TaxListProps) {
           </table>
         </div>
       </div>
+
+      <DataPagination
+        totalItems={totalItems}
+        currentPage={page}
+        itemsPerPage={itemsPerPage}
+      />
 
       {/* Dialog for Add/Edit */}
       {isOpen && (

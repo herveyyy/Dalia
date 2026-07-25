@@ -18,6 +18,9 @@ export default async function Page() {
   const taxTypesList = user.companyId ? await getTaxTypes(user.companyId) : [];
 
   return (
-    <TaxList taxTypes={taxTypesList} companyId={user.companyId || ""} />
+    <TaxList
+      taxTypes={taxTypesList}
+      companyId={user.companyId || ""}
+    />
   );
 }

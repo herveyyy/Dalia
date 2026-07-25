@@ -31,9 +31,6 @@ interface EmployeeDirectoryProps {
   companyId: string;
   allowanceTypes: any[];
   taxTypes: any[];
-  page?: number;
-  itemsPerPage?: number;
-  viewMode?: "grid" | "rows";
 }
 
 export function EmployeeDirectory({
@@ -41,9 +38,6 @@ export function EmployeeDirectory({
   companyId,
   allowanceTypes,
   taxTypes,
-  page = 1,
-  itemsPerPage = 20,
-  viewMode = "rows",
 }: EmployeeDirectoryProps) {
   const {
     activeTab,
@@ -67,6 +61,20 @@ export function EmployeeDirectory({
     handleNextStep,
     handlePrevStep,
   } = useEmployeeDirectory(initialEmployees, companyId);
+
+  const [page, setPage] = React.useState(1);
+  const [itemsPerPage, setItemsPerPage] = React.useState(20);
+  const [viewMode, setViewMode] = React.useState<"grid" | "rows">("rows");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("employee_table_hris");
+        if (saved === "row") setViewMode("rows");
+        else if (saved === "column") setViewMode("grid");
+      } catch (e) {}
+    }
+  }, []);
 
   const totalItems = filteredEmployees.length;
   const startIndex = (page - 1) * itemsPerPage;
@@ -259,7 +267,7 @@ export function EmployeeDirectory({
               />
             </div>
             <div className="flex items-center gap-3">
-              <ViewToggle currentView={viewMode} />
+              <ViewToggle onViewChange={setViewMode} />
               <Button onClick={() => handleOpenDialog()} className="gap-2 font-display">
                 <HiOutlinePlus className="size-4" /> Add Employee
               </Button>

@@ -9,19 +9,35 @@ export interface ViewToggleProps {
   onViewChange?: (view: "grid" | "rows") => void;
 }
 
-export function ViewToggle({ currentView = "grid", onViewChange }: ViewToggleProps) {
+function getSnapshot(): "grid" | "rows" {
+  if (typeof window === "undefined") return "grid";
+  try {
+    const val = localStorage.getItem("employee_table_hris");
+    if (val === "row") return "rows";
+    if (val === "column") return "grid";
+  } catch (e) {}
+  return "grid";
+}
+
+function subscribe(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+export function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
+  const storedView = React.useSyncExternalStore(subscribe, getSnapshot, () => "grid");
+  const activeView = currentView ?? storedView;
+
   const setView = (view: "grid" | "rows") => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("dalia:filter:view", view);
+        localStorage.setItem("employee_table_hris", view === "grid" ? "column" : "row");
+        window.dispatchEvent(new Event("storage"));
       } catch (e) {}
     }
     if (onViewChange) {
       onViewChange(view);
-    } else if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("view", view);
-      window.location.href = url.toString();
     }
   };
 
@@ -32,7 +48,7 @@ export function ViewToggle({ currentView = "grid", onViewChange }: ViewTogglePro
         onClick={() => setView("grid")}
         className={cn(
           "flex items-center justify-center rounded-md p-1.5 text-xs font-medium transition-colors cursor-pointer",
-          currentView === "grid"
+          activeView === "grid"
             ? "bg-primary text-primary-foreground shadow-xs"
             : "text-muted-foreground hover:text-foreground"
         )}
@@ -45,7 +61,7 @@ export function ViewToggle({ currentView = "grid", onViewChange }: ViewTogglePro
         onClick={() => setView("rows")}
         className={cn(
           "flex items-center justify-center rounded-md p-1.5 text-xs font-medium transition-colors cursor-pointer",
-          currentView === "rows"
+          activeView === "rows"
             ? "bg-primary text-primary-foreground shadow-xs"
             : "text-muted-foreground hover:text-foreground"
         )}

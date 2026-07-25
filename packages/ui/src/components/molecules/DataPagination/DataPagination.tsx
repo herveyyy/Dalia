@@ -28,11 +28,6 @@ export function DataPagination({
   const handlePageChange = (newPage: number) => {
     if (onPageChange) {
       onPageChange(newPage);
-    } else if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("page", String(newPage));
-      url.searchParams.set("items", String(itemsPerPage));
-      window.location.href = url.toString();
     }
   };
 
@@ -44,11 +39,6 @@ export function DataPagination({
     }
     if (onItemsPerPageChange) {
       onItemsPerPageChange(newItems);
-    } else if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("page", "1");
-      url.searchParams.set("items", String(newItems));
-      window.location.href = url.toString();
     }
   };
 

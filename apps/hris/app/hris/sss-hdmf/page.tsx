@@ -1,11 +1,11 @@
-import { auth } from "@repo/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import * as React from "react";
+import { useState } from "react";
 import { HiOutlineClock, HiOutlineDocumentText, HiOutlinePlus } from "react-icons/hi2";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
-import { getUserRecord, getCompanyRecord } from "../utils/queries/employee-queries";
 
 const mockContributions = [
   { month: "January 2025", sss: "₱12,400", hdmf: "₱3,200", status: "Remitted" },
@@ -20,26 +20,10 @@ const statusColors: Record<string, string> = {
   Upcoming: "bg-muted text-muted-foreground",
 };
 
-export default async function HrisSssHdmfPage(props: {
-  searchParams?: Promise<{ page?: string; items?: string; view?: string }>;
-}) {
-  const searchParams = await props.searchParams;
-  const page = Number(searchParams?.page || 1);
-  const itemsPerPage = Number(searchParams?.items || 20);
-  const viewMode = (searchParams?.view as "grid" | "rows") || "grid";
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) redirect("/login");
-
-  const userRecord = await getUserRecord(session.user.id);
-  const companyId = userRecord?.companyId;
-
-  if (!companyId) redirect("/apps");
-
-  const companyRecord = await getCompanyRecord(companyId);
+export default function HrisSssHdmfPage() {
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [viewMode, setViewMode] = useState<"grid" | "rows">("grid");
 
   const totalItems = mockContributions.length;
   const startIndex = (page - 1) * itemsPerPage;
@@ -53,14 +37,14 @@ export default async function HrisSssHdmfPage(props: {
             SSS/HDMF Contributions
           </h1>
           <p className="mt-1.5 text-base text-muted-foreground">
-            Monthly SSS and HDMF statutory contribution records for {companyRecord?.name || "Company"}.
+            Monthly SSS and HDMF statutory contribution records for your company.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ViewToggle currentView={viewMode} />
+          <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
           <Button className="font-display gap-2">
             <HiOutlinePlus className="size-4" />
-            New Contribution Return
+            File Contribution R-1A
           </Button>
         </div>
       </div>
@@ -72,7 +56,7 @@ export default async function HrisSssHdmfPage(props: {
               key={idx}
               className="flex flex-col justify-between rounded-xl border border-border bg-card p-6 shadow-sm"
             >
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <HiOutlineClock className="size-5" />
@@ -90,15 +74,15 @@ export default async function HrisSssHdmfPage(props: {
                     {item.month}
                   </h3>
                   <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <p>SSS: <span className="font-semibold text-foreground">{item.sss}</span></p>
-                    <p>HDMF: <span className="font-semibold text-foreground">{item.hdmf}</span></p>
+                    <p>SSS Total: <strong className="text-foreground">{item.sss}</strong></p>
+                    <p>Pag-IBIG Total: <strong className="text-foreground">{item.hdmf}</strong></p>
                   </div>
                 </div>
               </div>
               <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-xs">
                 <button className="flex items-center gap-1 font-semibold text-primary hover:underline">
                   <HiOutlineDocumentText className="size-4" />
-                  View Details
+                  View
                 </button>
               </div>
             </div>
@@ -115,7 +99,7 @@ export default async function HrisSssHdmfPage(props: {
                 <div>
                   <h4 className="font-display text-sm font-bold text-foreground">{item.month}</h4>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    SSS: {item.sss} · HDMF: {item.hdmf}
+                    SSS: {item.sss} · Pag-IBIG: {item.hdmf}
                   </p>
                 </div>
               </div>
@@ -137,6 +121,11 @@ export default async function HrisSssHdmfPage(props: {
         totalItems={totalItems}
         currentPage={page}
         itemsPerPage={itemsPerPage}
+        onPageChange={setPage}
+        onItemsPerPageChange={(newItems) => {
+          setItemsPerPage(newItems);
+          setPage(1);
+        }}
       />
     </div>
   );

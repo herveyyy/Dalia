@@ -51,14 +51,25 @@ interface JobPostingsListProps {
 export function JobPostingsList({
   jobPostings,
   companyId,
-  page = 1,
-  itemsPerPage = 20,
-  viewMode = "grid",
 }: JobPostingsListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPostingRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [viewMode, setViewMode] = useState<"grid" | "rows">("grid");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("employee_table_hris");
+        if (saved === "row") setViewMode("rows");
+        else if (saved === "column") setViewMode("grid");
+      } catch (e) {}
+    }
+  }, []);
 
   const totalItems = jobPostings.length;
   const startIndex = (page - 1) * itemsPerPage;
@@ -114,7 +125,7 @@ export function JobPostingsList({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ViewToggle currentView={viewMode} />
+          <ViewToggle onViewChange={setViewMode} />
           <Button onClick={() => handleOpenDialog(null)} className="gap-2">
             <HiOutlinePlus className="size-4" /> Post a Job
           </Button>

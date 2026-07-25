@@ -1,11 +1,11 @@
-import { auth } from "@repo/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import * as React from "react";
+import { useState } from "react";
 import { HiOutlineShieldCheck, HiOutlineDocumentText, HiOutlinePlus } from "react-icons/hi2";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
-import { getUserRecord, getCompanyRecord } from "../utils/queries/employee-queries";
 
 const mockFilings = [
   { period: "Q1 2025", deadline: "Apr 15, 2025", status: "Filed", employees: 42 },
@@ -19,26 +19,10 @@ const statusColors: Record<string, string> = {
   Upcoming: "bg-muted text-muted-foreground",
 };
 
-export default async function HrisBirFilingPage(props: {
-  searchParams?: Promise<{ page?: string; items?: string; view?: string }>;
-}) {
-  const searchParams = await props.searchParams;
-  const page = Number(searchParams?.page || 1);
-  const itemsPerPage = Number(searchParams?.items || 20);
-  const viewMode = (searchParams?.view as "grid" | "rows") || "grid";
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) redirect("/login");
-
-  const userRecord = await getUserRecord(session.user.id);
-  const companyId = userRecord?.companyId;
-
-  if (!companyId) redirect("/apps");
-
-  const companyRecord = await getCompanyRecord(companyId);
+export default function HrisBirFilingPage() {
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [viewMode, setViewMode] = useState<"grid" | "rows">("grid");
 
   const totalItems = mockFilings.length;
   const startIndex = (page - 1) * itemsPerPage;
@@ -52,11 +36,11 @@ export default async function HrisBirFilingPage(props: {
             BIR Filing Alphalist
           </h1>
           <p className="mt-1.5 text-base text-muted-foreground">
-            Annual and quarterly BIR tax alphalist filings for {companyRecord?.name || "Company"}.
+            Annual and quarterly BIR tax alphalist filings for your company.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ViewToggle currentView={viewMode} />
+          <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
           <Button className="font-display gap-2">
             <HiOutlinePlus className="size-4" />
             Generate New Alphalist
@@ -77,29 +61,34 @@ export default async function HrisBirFilingPage(props: {
                     <HiOutlineShieldCheck className="size-5" />
                   </span>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       statusColors[filing.status]
                     }`}
                   >
                     {filing.status}
                   </span>
                 </div>
+
                 <div>
                   <h3 className="font-display text-lg font-bold text-foreground">
                     {filing.period}
                   </h3>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Deadline: {filing.deadline}
                   </p>
                 </div>
+
+                {filing.employees && (
+                  <p className="text-xs font-medium text-foreground">
+                    {filing.employees} employees included
+                  </p>
+                )}
               </div>
-              <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-xs">
-                <span className="text-muted-foreground">
-                  {filing.employees ? `${filing.employees} employees` : "Not generated"}
-                </span>
-                <button className="flex items-center gap-1 font-semibold text-primary hover:underline">
+
+              <div className="mt-6 border-t border-border pt-4">
+                <button className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline cursor-pointer">
                   <HiOutlineDocumentText className="size-4" />
-                  View
+                  View Details
                 </button>
               </div>
             </div>
@@ -114,19 +103,21 @@ export default async function HrisBirFilingPage(props: {
                   <HiOutlineShieldCheck className="size-5" />
                 </span>
                 <div>
-                  <h4 className="font-display text-sm font-bold text-foreground">{filing.period}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Deadline: {filing.deadline} · {filing.employees ? `${filing.employees} employees` : "Not generated"}
-                  </p>
+                  <h3 className="font-semibold text-foreground text-sm">{filing.period}</h3>
+                  <p className="text-xs text-muted-foreground">Deadline: {filing.deadline}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${statusColors[filing.status]}`}>
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    statusColors[filing.status]
+                  }`}
+                >
                   {filing.status}
                 </span>
-                <button className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                <button className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline cursor-pointer">
                   <HiOutlineDocumentText className="size-4" />
-                  View
+                  View Details
                 </button>
               </div>
             </div>
@@ -138,6 +129,11 @@ export default async function HrisBirFilingPage(props: {
         totalItems={totalItems}
         currentPage={page}
         itemsPerPage={itemsPerPage}
+        onPageChange={setPage}
+        onItemsPerPageChange={(newItems) => {
+          setItemsPerPage(newItems);
+          setPage(1);
+        }}
       />
     </div>
   );
