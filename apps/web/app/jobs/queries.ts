@@ -1,42 +1,58 @@
-import { db, jobPosting, company, eq, and, ilike } from "@repo/db";
-import { unstable_cache } from "next/cache";
+import { cache } from "react";
+import { db, jobPosting, company, department, eq, and, ilike, desc } from "@repo/db";
 
-export async function getPublishedJobs(companyName?: string) {
-  return unstable_cache(
-    async () => {
-      const results = await db.query.jobPosting.findMany({
-        where: and(
-          eq(jobPosting.isArchived, false),
-          eq(jobPosting.status, "Published")
-        ),
-        with: {
-          company: { columns: { id: true, name: true, logoUrl: true } },
-          department: { columns: { id: true, name: true } },
-        },
-        orderBy: (jp, { desc }) => [desc(jp.createdAt)],
-      });
+export const getPublishedJobs = cache(async (companyName?: string) => {
+  const conditions = [
+    eq(jobPosting.isArchived, false),
+    eq(jobPosting.status, "Published"),
+  ];
 
-      // If filtering by company name via relational query, we do a post-filter
-      // since drizzle relational queries don't support cross-table where on `with`
-      if (companyName) {
-        return results.filter((r) =>
-          r.company?.name?.toLowerCase().includes(companyName.toLowerCase())
-        );
-      }
+  if (companyName?.trim()) {
+    conditions.push(ilike(company.name, `%${companyName.trim()}%`));
+  }
 
-      return results;
-    },
-    [`public-jobs-${companyName || "all"}`],
-    { tags: ["public-jobs"], revalidate: 60 }
-  )();
-}
+  const rows = await db
+    .select({
+      id: jobPosting.id,
+      companyId: jobPosting.companyId,
+      title: jobPosting.title,
+      departmentId: jobPosting.departmentId,
+      location: jobPosting.location,
+      employmentType: jobPosting.employmentType,
+      description: jobPosting.description,
+      requirements: jobPosting.requirements,
+      salaryRange: jobPosting.salaryRange,
+      status: jobPosting.status,
+      isArchived: jobPosting.isArchived,
+      createdAt: jobPosting.createdAt,
+      updatedAt: jobPosting.updatedAt,
+      company: {
+        id: company.id,
+        name: company.name,
+        logoUrl: company.logoUrl,
+      },
+      department: {
+        id: department.id,
+        name: department.name,
+      },
+    })
+    .from(jobPosting)
+    .innerJoin(company, eq(jobPosting.companyId, company.id))
+    .leftJoin(department, eq(jobPosting.departmentId, department.id))
+    .where(and(...conditions))
+    .orderBy(desc(jobPosting.createdAt));
 
-export async function getCompanyByName(companyName: string) {
+  return rows;
+});
+
+export const getCompanyByName = cache(async (companyName: string) => {
+  if (!companyName?.trim()) return null;
+
   const [record] = await db
     .select()
     .from(company)
-    .where(ilike(company.name, `%${companyName}%`))
+    .where(ilike(company.name, `%${companyName.trim()}%`))
     .limit(1);
 
   return record ?? null;
-}
+});
