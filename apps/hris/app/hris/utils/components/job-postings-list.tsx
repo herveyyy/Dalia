@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
 import { saveJobPosting, deleteJobPosting } from "../actions/job-actions";
+import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import {
   HiOutlinePlus,
   HiOutlinePencil,
@@ -45,6 +46,7 @@ interface JobPostingsListProps {
 export function JobPostingsList({ jobPostings, companyId }: JobPostingsListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPostingRecord | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleOpenDialog = (job: JobPostingRecord | null = null) => {
@@ -83,11 +85,7 @@ export function JobPostingsList({ jobPostings, companyId }: JobPostingsListProps
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to archive this job posting?")) {
-      startTransition(async () => {
-        await deleteJobPosting(id);
-      });
-    }
+    setDeleteTargetId(id);
   };
 
   return (
@@ -314,6 +312,23 @@ export function JobPostingsList({ jobPostings, companyId }: JobPostingsListProps
           </DialogPortal>
         </Dialog>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTargetId)}
+        onOpenChange={(open) => !open && setDeleteTargetId(null)}
+        title="Archive Job Posting"
+        description="Are you sure you want to archive this job posting? It will no longer be visible to applicants."
+        confirmLabel="Archive"
+        variant="destructive"
+        isLoading={isPending}
+        onConfirm={() => {
+          if (!deleteTargetId) return;
+          startTransition(async () => {
+            await deleteJobPosting(deleteTargetId);
+            setDeleteTargetId(null);
+          });
+        }}
+      />
     </div>
   );
 }

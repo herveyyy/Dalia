@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineShieldCheck, HiOutlineExclamationTriangle } from "react-icons/hi2";
+import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { deleteRoleAction, saveRoleAction } from "../actions/org-actions";
 import type { AppAccessCatalog, WorkspaceRole } from "../queries/get/get-org.query";
 
@@ -32,6 +33,7 @@ export function OrgRolesPanel({
 }: OrgRolesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<WorkspaceRole | null>(null);
+  const [deleteRoleTarget, setDeleteRoleTarget] = useState<WorkspaceRole | null>(null);
   const [featureIds, setFeatureIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -46,15 +48,19 @@ export function OrgRolesPanel({
 
   const openDialog = (role: WorkspaceRole | null = null) => {
     setSelected(role);
-    setFeatureIds(role?.permissions?.map((p) => p.featureId) ?? []);
     setErrorMessage(null);
+    if (role) {
+      setFeatureIds(role.permissions.map((p) => p.featureId));
+    } else {
+      setFeatureIds([]);
+    }
     setIsOpen(true);
   };
 
   const closeDialog = () => {
     setSelected(null);
-    setFeatureIds([]);
     setErrorMessage(null);
+    setFeatureIds([]);
     setIsOpen(false);
   };
 
@@ -75,6 +81,7 @@ export function OrgRolesPanel({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrorMessage(null);
     const formData = new FormData(e.currentTarget);
     const name = String(formData.get("name") || "").trim();
 
@@ -85,7 +92,6 @@ export function OrgRolesPanel({
 
     startTransition(async () => {
       try {
-        setErrorMessage(null);
         await saveRoleAction({
           id: selected?.id || null,
           companyId,
@@ -102,15 +108,7 @@ export function OrgRolesPanel({
 
   const handleDelete = (role: WorkspaceRole) => {
     if (role.isSystem) return;
-    if (confirm(`Delete the role "${role.name}"?`)) {
-      startTransition(async () => {
-        try {
-          await deleteRoleAction(role.id, companyId);
-        } catch (err) {
-          alert(err instanceof Error ? err.message : "Failed to delete role");
-        }
-      });
-    }
+    setDeleteRoleTarget(role);
   };
 
   return (
@@ -308,6 +306,23 @@ export function OrgRolesPanel({
           </DialogPortal>
         </Dialog>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteRoleTarget)}
+        onOpenChange={(open) => !open && setDeleteRoleTarget(null)}
+        title="Delete Role"
+        description={`Are you sure you want to delete the role "${deleteRoleTarget?.name}"?`}
+        confirmLabel="Delete Role"
+        variant="destructive"
+        isLoading={isPending}
+        onConfirm={() => {
+          if (!deleteRoleTarget) return;
+          startTransition(async () => {
+            await deleteRoleAction(deleteRoleTarget.id, companyId);
+            setDeleteRoleTarget(null);
+          });
+        }}
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
 import { saveTaxType, deleteTaxType } from "../actions/tax-actions";
+import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineCalculator } from "react-icons/hi2";
 
 interface TaxTypeRecord {
@@ -31,6 +32,7 @@ interface TaxListProps {
 export function TaxList({ taxTypes, companyId }: TaxListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTax, setSelectedTax] = useState<TaxTypeRecord | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleOpenDialog = (tax: TaxTypeRecord | null = null) => {
@@ -39,8 +41,8 @@ export function TaxList({ taxTypes, companyId }: TaxListProps) {
   };
 
   const handleCloseDialog = () => {
-    setSelectedTax(null);
     setIsOpen(false);
+    setSelectedTax(null);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -64,11 +66,7 @@ export function TaxList({ taxTypes, companyId }: TaxListProps) {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to archive this tax type?")) {
-      startTransition(async () => {
-        await deleteTaxType(id);
-      });
-    }
+    setDeleteTargetId(id);
   };
 
   return (
@@ -201,6 +199,23 @@ export function TaxList({ taxTypes, companyId }: TaxListProps) {
           </DialogPortal>
         </Dialog>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTargetId)}
+        onOpenChange={(open) => !open && setDeleteTargetId(null)}
+        title="Archive Tax Setting"
+        description="Are you sure you want to archive this tax configuration?"
+        confirmLabel="Archive"
+        variant="destructive"
+        isLoading={isPending}
+        onConfirm={() => {
+          if (!deleteTargetId) return;
+          startTransition(async () => {
+            await deleteTaxType(deleteTargetId);
+            setDeleteTargetId(null);
+          });
+        }}
+      />
     </div>
   );
 }

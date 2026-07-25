@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineBuildingOffice2 } from "react-icons/hi2";
+import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { deleteDepartmentAction, saveDepartmentAction } from "../actions/org-actions";
 import type { DepartmentWithEmployees } from "../queries/get/get-org.query";
 
@@ -30,6 +31,7 @@ export function OrgDepartmentsPanel({
 }: OrgDepartmentsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<DepartmentWithEmployees | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DepartmentWithEmployees | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const openDialog = (dept: DepartmentWithEmployees | null = null) => {
@@ -102,13 +104,7 @@ export function OrgDepartmentsPanel({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => {
-                      if (confirm("Archive this department?")) {
-                        startTransition(async () => {
-                          await deleteDepartmentAction(dept.id, companyId);
-                        });
-                      }
-                    }}
+                    onClick={() => setDeleteTarget(dept)}
                   >
                     <HiOutlineTrash className="size-4 text-destructive" />
                   </Button>
@@ -144,6 +140,23 @@ export function OrgDepartmentsPanel({
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Archive Department"
+        description={`Are you sure you want to archive "${deleteTarget?.name}"? Employees tagged to this department will not be deleted.`}
+        confirmLabel="Archive"
+        variant="destructive"
+        isLoading={isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          startTransition(async () => {
+            await deleteDepartmentAction(deleteTarget.id, companyId);
+            setDeleteTarget(null);
+          });
+        }}
+      />
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogPortal>

@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineMapPin } from "react-icons/hi2";
+import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { deleteBranchAction, saveBranchAction } from "../actions/org-actions";
 import type { BranchWithEmployees } from "../queries/get/get-org.query";
 
@@ -30,6 +31,7 @@ export function OrgBranchesPanel({
 }: OrgBranchesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<BranchWithEmployees | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BranchWithEmployees | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const openDialog = (branchObj: BranchWithEmployees | null = null) => {
@@ -111,13 +113,7 @@ export function OrgBranchesPanel({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => {
-                      if (confirm("Archive this branch?")) {
-                        startTransition(async () => {
-                          await deleteBranchAction(b.id, companyId);
-                        });
-                      }
-                    }}
+                    onClick={() => setDeleteTarget(b)}
                   >
                     <HiOutlineTrash className="size-4 text-destructive" />
                   </Button>
@@ -153,6 +149,23 @@ export function OrgBranchesPanel({
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Archive Branch"
+        description={`Are you sure you want to archive "${deleteTarget?.name}"?`}
+        confirmLabel="Archive"
+        variant="destructive"
+        isLoading={isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          startTransition(async () => {
+            await deleteBranchAction(deleteTarget.id, companyId);
+            setDeleteTarget(null);
+          });
+        }}
+      />
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogPortal>
