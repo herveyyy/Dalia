@@ -39,6 +39,7 @@ import type {
 } from "../queries/get/get-org.query";
 import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
+import { useListControls } from "../hooks/use-list-controls";
 
 interface OrgEmployeesPanelProps {
   companyId: string;
@@ -47,12 +48,11 @@ interface OrgEmployeesPanelProps {
   departments: WorkspaceDepartment[];
   branches: WorkspaceBranch[];
   roles: WorkspaceRole[];
-  page?: number;
-  itemsPerPage?: number;
-  viewMode?: "grid" | "rows";
 }
 
 type LoginMode = "create" | "reset" | null;
+
+const VIEW_STORAGE_KEY = "workspace_employees_table";
 
 export function OrgEmployeesPanel({
   companyId,
@@ -61,9 +61,6 @@ export function OrgEmployeesPanel({
   departments,
   branches,
   roles,
-  page = 1,
-  itemsPerPage = 20,
-  viewMode = "rows",
 }: OrgEmployeesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<WorkspaceEmployee | null>(null);
@@ -71,6 +68,9 @@ export function OrgEmployeesPanel({
   const [loginTarget, setLoginTarget] = useState<WorkspaceEmployee | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { page, itemsPerPage, viewMode, setViewMode, navigate } = useListControls({
+    storageKey: VIEW_STORAGE_KEY,
+  });
 
   const totalItems = employees.length;
   const startIndex = (page - 1) * itemsPerPage;
@@ -177,7 +177,11 @@ export function OrgEmployeesPanel({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ViewToggle currentView={viewMode} />
+          <ViewToggle
+            storageKey={VIEW_STORAGE_KEY}
+            currentView={viewMode}
+            onViewChange={setViewMode}
+          />
           <Button onClick={() => openDialog(null)} className="gap-2 self-start font-display">
             <HiOutlinePlus className="size-4" />
             Add Employee
@@ -185,31 +189,147 @@ export function OrgEmployeesPanel({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Department</th>
-                <th className="px-6 py-4">Role</th>
-                <th className="px-6 py-4">Login</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border text-sm">
-              {employees.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <HiOutlineUserGroup className="size-8 opacity-50" />
-                      <p>No employees yet. Add someone to assign to a department or role.</p>
-                    </div>
-                  </td>
+      {viewMode === null ? null : employees.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card px-6 py-12 text-center text-muted-foreground">
+          <HiOutlineUserGroup className="mx-auto size-8 opacity-50" />
+          <p className="mt-2">No employees yet. Add someone to assign to a department or role.</p>
+        </div>
+      ) : viewMode === "grid" ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {paginatedEmployees.map((emp) => (
+            <div
+              key={emp.id}
+              className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-bold text-foreground truncate">
+                    {emp.firstName} {emp.lastName}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {emp.workEmail || "No email"}
+                  </p>
+                </div>
+                {emp.userId ? (
+                  <span className="shrink-0 rounded-md bg-green-500/10 px-2 py-1 text-xs font-bold text-green-700">
+                    Enabled
+                  </span>
+                ) : (
+                  <span className="shrink-0 rounded-md bg-muted px-2 py-1 text-xs font-bold text-muted-foreground">
+                    No login
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <select
+                  className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                  value={emp.departmentId || ""}
+                  disabled={isPending}
+                  onChange={(e) => handleAssign(emp.id, "departmentId", e.target.value)}
+                >
+                  <option value="">No department</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                  value={emp.roleId || ""}
+                  disabled={isPending}
+                  onChange={(e) => handleAssign(emp.id, "roleId", e.target.value)}
+                >
+                  <option value="">No role</option>
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-wrap gap-1 pt-1 border-t border-border/60">
+                {!emp.userId ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={!emp.workEmail}
+                    onClick={() => openLogin(emp, "create")}
+                  >
+                    <HiOutlineKey className="size-3.5" />
+                    Login
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => openLogin(emp, "reset")}
+                    >
+                      <HiOutlineKey className="size-3.5" />
+                      Password
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      title="Revoke login"
+                      onClick={() => {
+                        if (confirm(`Revoke login for ${emp.firstName}?`)) {
+                          startTransition(async () => {
+                            try {
+                              await revokeEmployeeLoginAction({
+                                companyId,
+                                employeeId: emp.id,
+                              });
+                            } catch (err) {
+                              alert(err instanceof Error ? err.message : "Revoke failed");
+                            }
+                          });
+                        }
+                      }}
+                    >
+                      <HiOutlineLockClosed className="size-4 text-destructive" />
+                    </Button>
+                  </>
+                )}
+                <Button variant="ghost" size="icon-sm" onClick={() => openDialog(emp)}>
+                  <HiOutlinePencil className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => {
+                    if (confirm("Remove this employee?")) {
+                      startTransition(async () => {
+                        await deleteEmployeeAction(emp.id, companyId);
+                      });
+                    }
+                  }}
+                >
+                  <HiOutlineTrash className="size-4 text-destructive" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Department</th>
+                  <th className="px-6 py-4">Role</th>
+                  <th className="px-6 py-4">Login</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ) : (
-                paginatedEmployees.map((emp) => (
+              </thead>
+              <tbody className="divide-y divide-border text-sm">
+                {paginatedEmployees.map((emp) => (
                   <tr key={emp.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4 font-semibold text-foreground">
                       {emp.firstName} {emp.lastName}
@@ -217,7 +337,7 @@ export function OrgEmployeesPanel({
                     <td className="px-6 py-4 text-muted-foreground">{emp.workEmail || "—"}</td>
                     <td className="px-6 py-4">
                       <select
-                        className="w-full max-w-[160px] rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                        className="w-full max-w-40 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
                         value={emp.departmentId || ""}
                         disabled={isPending}
                         onChange={(e) => handleAssign(emp.id, "departmentId", e.target.value)}
@@ -232,7 +352,7 @@ export function OrgEmployeesPanel({
                     </td>
                     <td className="px-6 py-4">
                       <select
-                        className="w-full max-w-[160px] rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                        className="w-full max-w-40 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
                         value={emp.roleId || ""}
                         disabled={isPending}
                         onChange={(e) => handleAssign(emp.id, "roleId", e.target.value)}
@@ -327,18 +447,21 @@ export function OrgEmployeesPanel({
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
-      <DataPagination
-        totalItems={totalItems}
-        currentPage={page}
-        itemsPerPage={itemsPerPage}
-      />
+      {totalItems > 0 ? (
+        <DataPagination
+          totalItems={totalItems}
+          currentPage={page}
+          itemsPerPage={itemsPerPage}
+          navigate={navigate}
+        />
+      ) : null}
 
       {isOpen && (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>

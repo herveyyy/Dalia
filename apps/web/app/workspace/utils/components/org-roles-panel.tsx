@@ -18,6 +18,7 @@ import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { deleteRoleAction, saveRoleAction } from "../actions/org-actions";
+import { useListControls } from "../hooks/use-list-controls";
 import type { AppAccessCatalog, WorkspaceRole } from "../queries/get/get-org.query";
 
 interface OrgRolesPanelProps {
@@ -25,19 +26,15 @@ interface OrgRolesPanelProps {
   companyName: string;
   roles: WorkspaceRole[];
   catalog: AppAccessCatalog;
-  page?: number;
-  itemsPerPage?: number;
-  viewMode?: "grid" | "rows";
 }
+
+const VIEW_STORAGE_KEY = "workspace_roles_table";
 
 export function OrgRolesPanel({
   companyId,
   companyName,
   roles,
   catalog,
-  page = 1,
-  itemsPerPage = 20,
-  viewMode = "rows",
 }: OrgRolesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<WorkspaceRole | null>(null);
@@ -45,6 +42,9 @@ export function OrgRolesPanel({
   const [featureIds, setFeatureIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { page, itemsPerPage, viewMode, setViewMode, navigate } = useListControls({
+    storageKey: VIEW_STORAGE_KEY,
+  });
 
   const totalItems = roles.length;
   const startIndex = (page - 1) * itemsPerPage;
@@ -135,7 +135,11 @@ export function OrgRolesPanel({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ViewToggle currentView={viewMode} />
+          <ViewToggle
+            storageKey={VIEW_STORAGE_KEY}
+            currentView={viewMode}
+            onViewChange={setViewMode}
+          />
           <Button onClick={() => openDialog(null)} className="gap-2 self-start font-display">
             <HiOutlinePlus className="size-4" />
             Add Role
@@ -143,15 +147,57 @@ export function OrgRolesPanel({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="divide-y divide-border">
-          {roles.length === 0 ? (
-            <div className="px-6 py-12 text-center text-muted-foreground">
-              <HiOutlineShieldCheck className="mx-auto size-8 opacity-50 text-primary" />
-              <p className="mt-2 text-sm">No roles yet. Create a role and pick which apps/features it can use.</p>
+      {viewMode === null ? null : roles.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card px-6 py-12 text-center text-muted-foreground">
+          <HiOutlineShieldCheck className="mx-auto size-8 opacity-50 text-primary" />
+          <p className="mt-2 text-sm">No roles yet. Create a role and pick which apps/features it can use.</p>
+        </div>
+      ) : viewMode === "grid" ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {paginatedRoles.map((role) => (
+            <div
+              key={role.id}
+              className="rounded-xl border border-border bg-card p-5 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{role.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {role.description || "No description"}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => openDialog(role)}
+                    title="Edit role"
+                  >
+                    <HiOutlinePencil className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={role.isSystem || isPending}
+                    onClick={() => handleDelete(role)}
+                    title={role.isSystem ? "System roles cannot be deleted" : "Delete role"}
+                  >
+                    <HiOutlineTrash className="size-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+              <p className="mt-4 pt-3 border-t border-border/60 text-xs text-muted-foreground">
+                {featureCountByRole.get(role.id) ?? 0} access right
+                {(featureCountByRole.get(role.id) ?? 0) === 1 ? "" : "s"}
+                {role.isSystem ? " · System" : " · Custom"}
+              </p>
             </div>
-          ) : (
-            roles.map((role) => (
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="divide-y divide-border">
+            {paginatedRoles.map((role) => (
               <div
                 key={role.id}
                 className="flex items-center justify-between gap-3 px-6 py-4 hover:bg-muted/30 transition-colors"
@@ -186,16 +232,19 @@ export function OrgRolesPanel({
                   </Button>
                 </div>
               </div>
-            ))
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      <DataPagination
-        totalItems={totalItems}
-        currentPage={page}
-        itemsPerPage={itemsPerPage}
-      />
+      {totalItems > 0 ? (
+        <DataPagination
+          totalItems={totalItems}
+          currentPage={page}
+          itemsPerPage={itemsPerPage}
+          navigate={navigate}
+        />
+      ) : null}
 
       {isOpen && (
         <Dialog

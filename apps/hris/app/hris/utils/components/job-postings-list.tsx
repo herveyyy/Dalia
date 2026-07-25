@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
@@ -48,12 +49,15 @@ interface JobPostingsListProps {
   viewMode?: "grid" | "rows";
 }
 
+const VIEW_STORAGE_KEY = "hris_job_postings_table";
+
 export function JobPostingsList({
   jobPostings,
   companyId,
   page = 1,
   itemsPerPage = 20,
 }: JobPostingsListProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPostingRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -62,13 +66,13 @@ export function JobPostingsList({
   const [viewMode, setViewMode] = useState<"grid" | "rows" | null>(null);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("employee_table_hris");
-        if (saved === "row") setViewMode("rows");
-        else if (saved === "column") setViewMode("grid");
-        else setViewMode(null);
-      } catch (e) {}
+    try {
+      const saved = localStorage.getItem(VIEW_STORAGE_KEY);
+      if (saved === "row") setViewMode("rows");
+      else if (saved === "column") setViewMode("grid");
+      else setViewMode("rows");
+    } catch {
+      setViewMode("rows");
     }
   }, []);
 
@@ -126,7 +130,11 @@ export function JobPostingsList({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ViewToggle onViewChange={setViewMode} />
+          <ViewToggle
+            storageKey={VIEW_STORAGE_KEY}
+            currentView={viewMode}
+            onViewChange={setViewMode}
+          />
           <Button onClick={() => handleOpenDialog(null)} className="gap-2">
             <HiOutlinePlus className="size-4" /> Post a Job
           </Button>
@@ -155,13 +163,12 @@ export function JobPostingsList({
               <div>
                 <div className="flex items-start justify-between">
                   <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
-                      job.status === "Published"
-                        ? "bg-emerald-500/10 text-emerald-500"
-                        : job.status === "Draft"
+                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${job.status === "Published"
+                      ? "bg-emerald-500/10 text-emerald-500"
+                      : job.status === "Draft"
                         ? "bg-amber-500/10 text-amber-500"
                         : "bg-muted text-muted-foreground"
-                    }`}
+                      }`}
                   >
                     {job.status}
                   </span>
@@ -225,13 +232,12 @@ export function JobPostingsList({
             <div key={job.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30">
               <div className="flex items-center gap-4">
                 <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    job.status === "Published"
-                      ? "bg-emerald-500/10 text-emerald-500"
-                      : job.status === "Draft"
+                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${job.status === "Published"
+                    ? "bg-emerald-500/10 text-emerald-500"
+                    : job.status === "Draft"
                       ? "bg-amber-500/10 text-amber-500"
                       : "bg-muted text-muted-foreground"
-                  }`}
+                    }`}
                 >
                   {job.status}
                 </span>
@@ -271,6 +277,7 @@ export function JobPostingsList({
         totalItems={totalItems}
         currentPage={page}
         itemsPerPage={itemsPerPage}
+        navigate={(href) => router.push(href, { scroll: false })}
       />
 
       {/* Dialog for Add/Edit */}
@@ -364,7 +371,7 @@ export function JobPostingsList({
                     rows={4}
                     defaultValue={selectedJob?.description || ""}
                     placeholder="Describe the role and key duties..."
-                    className="w-full rounded-lg border border-input bg-card p-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[100px]"
+                    className="w-full rounded-lg border border-input bg-card p-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-25"
                     required
                   />
                 </div>
@@ -377,7 +384,7 @@ export function JobPostingsList({
                     rows={3}
                     defaultValue={selectedJob?.requirements || ""}
                     placeholder="Required qualifications, skills, and tools..."
-                    className="w-full rounded-lg border border-input bg-card p-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[80px]"
+                    className="w-full rounded-lg border border-input bg-card p-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-20"
                   />
                 </div>
 

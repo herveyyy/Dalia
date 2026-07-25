@@ -7,18 +7,13 @@ import { getBranches, getDepartments, getEmployees, getRoles } from "../utils/qu
 export default async function EmployeesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ company_id?: string; page?: string; items?: string; view?: string }>;
+  searchParams: Promise<{ company_id?: string }>;
 }) {
-  const { company_id: selectorId, page: pageStr, items: itemsStr, view: viewStr } = await searchParams;
-  const page = Number(pageStr || 1);
-  const items = Number(itemsStr || 20);
-  const viewMode = (viewStr as "grid" | "rows") || "rows";
-
+  const { company_id: selectorId } = await searchParams;
   const { companyId, error } = await resolveTenantCompanyId(selectorId);
 
   if (error === "unauthorized") redirect("/login");
-  if (error === "forbidden") redirect("/workspace");
-  if (!companyId) redirect("/workspace");
+  if (error === "forbidden" || !companyId) redirect("/workspace");
 
   const [companyRecord, employees, departments, branches, roles] = await Promise.all([
     getCompanyRecord(companyId),
@@ -36,9 +31,6 @@ export default async function EmployeesPage({
       departments={departments}
       branches={branches}
       roles={roles}
-      page={page}
-      itemsPerPage={items}
-      viewMode={viewMode}
     />
   );
 }

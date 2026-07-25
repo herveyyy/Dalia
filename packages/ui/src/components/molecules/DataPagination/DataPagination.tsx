@@ -11,6 +11,32 @@ export interface DataPaginationProps {
   pageSizeOptions?: number[];
   onPageChange?: (page: number) => void;
   onItemsPerPageChange?: (items: number) => void;
+  /**
+   * Soft-navigate when page/items change (e.g. Next.js `router.push`).
+   * Prefer this over history.pushState so App Router re-reads searchParams.
+   */
+  navigate?: (href: string) => void;
+}
+
+function buildListHref(page: number, items: number) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("items", String(items));
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function syncListParams(
+  page: number,
+  items: number,
+  navigate?: (href: string) => void
+) {
+  if (typeof window === "undefined") return;
+  const href = buildListHref(page, items);
+  if (navigate) {
+    navigate(href);
+  } else {
+    window.history.pushState({}, "", href);
+  }
 }
 
 export function DataPagination({
@@ -20,33 +46,21 @@ export function DataPagination({
   pageSizeOptions = [10, 20, 50, 100],
   onPageChange,
   onItemsPerPageChange,
+  navigate,
 }: DataPaginationProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   const handlePageChange = (newPage: number) => {
-    if (onPageChange) {
-      onPageChange(newPage);
-    }
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("page", String(newPage));
-      url.searchParams.set("items", String(itemsPerPage));
-      window.history.pushState({}, "", url.toString());
-    }
+    onPageChange?.(newPage);
+    // Always reflect page/items in the URL (bookmarkable / shareable)
+    syncListParams(newPage, itemsPerPage, navigate);
   };
 
   const handleItemsPerPageChange = (newItems: number) => {
-    if (onItemsPerPageChange) {
-      onItemsPerPageChange(newItems);
-    }
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("page", "1");
-      url.searchParams.set("items", String(newItems));
-      window.history.pushState({}, "", url.toString());
-    }
+    onItemsPerPageChange?.(newItems);
+    syncListParams(1, newItems, navigate);
   };
 
   return (

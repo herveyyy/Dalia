@@ -4,41 +4,77 @@ import * as React from "react";
 import { LayoutGrid, List } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
+export type TableViewMode = "grid" | "rows";
+
 export interface ViewToggleProps {
-  currentView?: "grid" | "rows" | null;
-  onViewChange?: (view: "grid" | "rows") => void;
+  /** localStorage key for this table’s view preference */
+  storageKey?: string;
+  /** Controlled highlight; omit to read directly from localStorage */
+  currentView?: TableViewMode | null;
+  onViewChange?: (view: TableViewMode) => void;
 }
 
-function getSnapshot(): "grid" | "rows" | null {
+const DEFAULT_STORAGE_KEY = "employee_table_hris";
+
+function readStoredView(storageKey: string): TableViewMode | null {
   if (typeof window === "undefined") return null;
   try {
-    const val = localStorage.getItem("employee_table_hris");
+    const val = localStorage.getItem(storageKey);
     if (val === "row") return "rows";
     if (val === "column") return "grid";
-  } catch (e) {}
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
-function subscribe(callback: () => void) {
-  if (typeof window === "undefined") return () => {};
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
+function writeStoredView(storageKey: string, view: TableViewMode) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(storageKey, view === "grid" ? "column" : "row");
+    // storage event is cross-tab only; this covers same-tab listeners
+    window.dispatchEvent(new CustomEvent("dalia:view-toggle", { detail: { key: storageKey } }));
+  } catch {
+    /* ignore */
+  }
 }
 
-export function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
-  const storedView = React.useSyncExternalStore(subscribe, getSnapshot, () => null);
-  const activeView = currentView !== undefined ? currentView : storedView;
+function subscribeToView(storageKey: string, callback: () => void) {
+  if (typeof window === "undefined") return () => {};
 
-  const setView = (view: "grid" | "rows") => {
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("employee_table_hris", view === "grid" ? "column" : "row");
-        window.dispatchEvent(new Event("storage"));
-      } catch (e) {}
-    }
-    if (onViewChange) {
-      onViewChange(view);
-    }
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === storageKey || e.key === null) callback();
+  };
+  const onLocal = (e: Event) => {
+    const detail = (e as CustomEvent<{ key: string }>).detail;
+    if (!detail?.key || detail.key === storageKey) callback();
+  };
+
+  window.addEventListener("storage", onStorage);
+  window.addEventListener("dalia:view-toggle", onLocal);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener("dalia:view-toggle", onLocal);
+  };
+}
+
+export function ViewToggle({
+  storageKey = DEFAULT_STORAGE_KEY,
+  currentView,
+  onViewChange,
+}: ViewToggleProps) {
+  const storedView = React.useSyncExternalStore(
+    (cb) => subscribeToView(storageKey, cb),
+    () => readStoredView(storageKey),
+    () => null
+  );
+
+  const isControlled = currentView !== undefined;
+  const activeView = isControlled ? currentView : storedView;
+
+  const setView = (view: TableViewMode) => {
+    writeStoredView(storageKey, view);
+    onViewChange?.(view);
   };
 
   return (
@@ -71,4 +107,14 @@ export function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
       </button>
     </div>
   );
+}
+
+/** Read a table view from localStorage (client only). */
+export function readTableView(storageKey: string): TableViewMode | null {
+  return readStoredView(storageKey);
+}
+
+/** Persist a table view to localStorage. */
+export function writeTableView(storageKey: string, view: TableViewMode) {
+  writeStoredView(storageKey, view);
 }

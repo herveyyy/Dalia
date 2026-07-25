@@ -7,13 +7,9 @@ import { getDepartmentsWithEmployees } from "../utils/queries/get/get-org.query"
 export default async function DepartmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ company_id?: string; page?: string; items?: string; view?: string }>;
+  searchParams: Promise<{ company_id?: string }>;
 }) {
-  const { company_id: selectorId, page: pageStr, items: itemsStr, view: viewStr } = await searchParams;
-  const page = Number(pageStr || 1);
-  const items = Number(itemsStr || 20);
-  const viewMode = (viewStr as "grid" | "rows") || "rows";
-
+  const { company_id: selectorId } = await searchParams;
   const { companyId, error } = await resolveTenantCompanyId(selectorId);
 
   if (error === "unauthorized") redirect("/login");
@@ -29,9 +25,6 @@ export default async function DepartmentsPage({
       companyId={companyId}
       companyName={companyRecord?.name || "Client company"}
       departments={departments}
-      page={page}
-      itemsPerPage={items}
-      viewMode={viewMode}
     />
   );
 }

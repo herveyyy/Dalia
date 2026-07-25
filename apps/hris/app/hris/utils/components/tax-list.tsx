@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
@@ -40,6 +41,7 @@ export function TaxList({
   page = 1,
   itemsPerPage = 20,
 }: TaxListProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTax, setSelectedTax] = useState<TaxTypeRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -176,6 +178,7 @@ export function TaxList({
         totalItems={totalItems}
         currentPage={page}
         itemsPerPage={itemsPerPage}
+        navigate={(href) => router.push(href, { scroll: false })}
       />
 
       {/* Dialog for Add/Edit */}
