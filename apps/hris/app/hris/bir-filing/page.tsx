@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { HiOutlineShieldCheck, HiOutlineDocumentText, HiOutlinePlus } from "react-icons/hi2";
 import { Button } from "@repo/ui/components/atoms/Button";
+import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
+import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 import { getUserRecord, getCompanyRecord } from "../utils/queries/employee-queries";
 
 const mockFilings = [
@@ -17,7 +19,14 @@ const statusColors: Record<string, string> = {
   Upcoming: "bg-muted text-muted-foreground",
 };
 
-export default async function HrisBirFilingPage() {
+export default async function HrisBirFilingPage(props: {
+  searchParams?: Promise<{ page?: string; items?: string; view?: string }>;
+}) {
+  const searchParams = await props.searchParams;
+  const page = Number(searchParams?.page || 1);
+  const itemsPerPage = Number(searchParams?.items || 20);
+  const viewMode = (searchParams?.view as "grid" | "rows") || "grid";
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -31,6 +40,10 @@ export default async function HrisBirFilingPage() {
 
   const companyRecord = await getCompanyRecord(companyId);
 
+  const totalItems = mockFilings.length;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedData = mockFilings.slice(startIndex, startIndex + itemsPerPage);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -42,52 +55,90 @@ export default async function HrisBirFilingPage() {
             Annual and quarterly BIR tax alphalist filings for {companyRecord?.name || "Company"}.
           </p>
         </div>
-        <Button className="font-display gap-2">
-          <HiOutlinePlus className="size-4" />
-          Generate New Alphalist
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle currentView={viewMode} />
+          <Button className="font-display gap-2">
+            <HiOutlinePlus className="size-4" />
+            Generate New Alphalist
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {mockFilings.map((filing, idx) => (
-          <div
-            key={idx}
-            className="flex flex-col justify-between rounded-xl border border-border bg-card p-6 shadow-sm"
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+      {viewMode === "grid" ? (
+        <div className="grid gap-6 md:grid-cols-3">
+          {paginatedData.map((filing, idx) => (
+            <div
+              key={idx}
+              className="flex flex-col justify-between rounded-xl border border-border bg-card p-6 shadow-sm"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <HiOutlineShieldCheck className="size-5" />
+                  </span>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                      statusColors[filing.status]
+                    }`}
+                  >
+                    {filing.status}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-display text-lg font-bold text-foreground">
+                    {filing.period}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Deadline: {filing.deadline}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-xs">
+                <span className="text-muted-foreground">
+                  {filing.employees ? `${filing.employees} employees` : "Not generated"}
+                </span>
+                <button className="flex items-center gap-1 font-semibold text-primary hover:underline">
+                  <HiOutlineDocumentText className="size-4" />
+                  View
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border">
+          {paginatedData.map((filing, idx) => (
+            <div key={idx} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30">
+              <div className="flex items-center gap-4">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <HiOutlineShieldCheck className="size-5" />
                 </span>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                    statusColors[filing.status]
-                  }`}
-                >
+                <div>
+                  <h4 className="font-display text-sm font-bold text-foreground">{filing.period}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Deadline: {filing.deadline} · {filing.employees ? `${filing.employees} employees` : "Not generated"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${statusColors[filing.status]}`}>
                   {filing.status}
                 </span>
-              </div>
-              <div>
-                <h3 className="font-display text-lg font-bold text-foreground">
-                  {filing.period}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Deadline: {filing.deadline}
-                </p>
+                <button className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                  <HiOutlineDocumentText className="size-4" />
+                  View
+                </button>
               </div>
             </div>
-            <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-xs">
-              <span className="text-muted-foreground">
-                {filing.employees ? `${filing.employees} employees` : "Not generated"}
-              </span>
-              <button className="flex items-center gap-1 font-semibold text-primary hover:underline">
-                <HiOutlineDocumentText className="size-4" />
-                View
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      <DataPagination
+        totalItems={totalItems}
+        currentPage={page}
+        itemsPerPage={itemsPerPage}
+      />
     </div>
   );
 }

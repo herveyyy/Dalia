@@ -37,6 +37,8 @@ import type {
   WorkspaceEmployee,
   WorkspaceRole,
 } from "../queries/get/get-org.query";
+import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
+import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 
 interface OrgEmployeesPanelProps {
   companyId: string;
@@ -45,6 +47,9 @@ interface OrgEmployeesPanelProps {
   departments: WorkspaceDepartment[];
   branches: WorkspaceBranch[];
   roles: WorkspaceRole[];
+  page?: number;
+  itemsPerPage?: number;
+  viewMode?: "grid" | "rows";
 }
 
 type LoginMode = "create" | "reset" | null;
@@ -56,6 +61,9 @@ export function OrgEmployeesPanel({
   departments,
   branches,
   roles,
+  page = 1,
+  itemsPerPage = 20,
+  viewMode = "rows",
 }: OrgEmployeesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<WorkspaceEmployee | null>(null);
@@ -63,6 +71,10 @@ export function OrgEmployeesPanel({
   const [loginTarget, setLoginTarget] = useState<WorkspaceEmployee | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const totalItems = employees.length;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedEmployees = employees.slice(startIndex, startIndex + itemsPerPage);
 
   const openDialog = (employee: WorkspaceEmployee | null = null) => {
     setSelected(employee);
@@ -164,10 +176,13 @@ export function OrgEmployeesPanel({
             they can sign in at /login → /apps.
           </p>
         </div>
-        <Button onClick={() => openDialog(null)} className="gap-2 self-start">
-          <HiOutlinePlus className="size-4" />
-          Add Employee
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle currentView={viewMode} />
+          <Button onClick={() => openDialog(null)} className="gap-2 self-start font-display">
+            <HiOutlinePlus className="size-4" />
+            Add Employee
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
@@ -194,7 +209,7 @@ export function OrgEmployeesPanel({
                   </td>
                 </tr>
               ) : (
-                employees.map((emp) => (
+                paginatedEmployees.map((emp) => (
                   <tr key={emp.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4 font-semibold text-foreground">
                       {emp.firstName} {emp.lastName}
@@ -318,6 +333,12 @@ export function OrgEmployeesPanel({
           </table>
         </div>
       </div>
+
+      <DataPagination
+        totalItems={totalItems}
+        currentPage={page}
+        itemsPerPage={itemsPerPage}
+      />
 
       {isOpen && (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>

@@ -14,6 +14,8 @@ import {
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineMapPin } from "react-icons/hi2";
+import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
+import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { deleteBranchAction, saveBranchAction } from "../actions/org-actions";
 import type { BranchWithEmployees } from "../queries/get/get-org.query";
@@ -22,17 +24,27 @@ interface OrgBranchesPanelProps {
   companyId: string;
   companyName: string;
   branches: BranchWithEmployees[];
+  page?: number;
+  itemsPerPage?: number;
+  viewMode?: "grid" | "rows";
 }
 
 export function OrgBranchesPanel({
   companyId,
   companyName,
   branches,
+  page = 1,
+  itemsPerPage = 20,
+  viewMode = "rows",
 }: OrgBranchesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<BranchWithEmployees | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BranchWithEmployees | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const totalItems = branches.length;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedBranches = branches.slice(startIndex, startIndex + itemsPerPage);
 
   const openDialog = (branchObj: BranchWithEmployees | null = null) => {
     setSelected(branchObj);
@@ -73,10 +85,13 @@ export function OrgBranchesPanel({
             tagged under each branch.
           </p>
         </div>
-        <Button onClick={() => openDialog(null)} className="gap-2 self-start">
-          <HiOutlinePlus className="size-4" />
-          Add Branch
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle currentView={viewMode} />
+          <Button onClick={() => openDialog(null)} className="gap-2 self-start font-display">
+            <HiOutlinePlus className="size-4" />
+            Add Branch
+          </Button>
+        </div>
       </div>
 
       {branches.length === 0 ? (
@@ -85,8 +100,8 @@ export function OrgBranchesPanel({
           <p className="mt-2">No branches yet. Create your first branch or store location.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {branches.map((b) => (
+        <div className={viewMode === "grid" ? "grid gap-6 md:grid-cols-2" : "space-y-4"}>
+          {paginatedBranches.map((b) => (
             <div
               key={b.id}
               className="rounded-xl border border-border bg-card shadow-sm overflow-hidden"
@@ -149,6 +164,12 @@ export function OrgBranchesPanel({
           ))}
         </div>
       )}
+
+      <DataPagination
+        totalItems={totalItems}
+        currentPage={page}
+        itemsPerPage={itemsPerPage}
+      />
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}

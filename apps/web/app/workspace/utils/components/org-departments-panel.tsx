@@ -14,6 +14,8 @@ import {
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineBuildingOffice2 } from "react-icons/hi2";
+import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
+import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { deleteDepartmentAction, saveDepartmentAction } from "../actions/org-actions";
 import type { DepartmentWithEmployees } from "../queries/get/get-org.query";
@@ -22,17 +24,27 @@ interface OrgDepartmentsPanelProps {
   companyId: string;
   companyName: string;
   departments: DepartmentWithEmployees[];
+  page?: number;
+  itemsPerPage?: number;
+  viewMode?: "grid" | "rows";
 }
 
 export function OrgDepartmentsPanel({
   companyId,
   companyName,
   departments,
+  page = 1,
+  itemsPerPage = 20,
+  viewMode = "rows",
 }: OrgDepartmentsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<DepartmentWithEmployees | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DepartmentWithEmployees | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const totalItems = departments.length;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedDepartments = departments.slice(startIndex, startIndex + itemsPerPage);
 
   const openDialog = (dept: DepartmentWithEmployees | null = null) => {
     setSelected(dept);
@@ -71,10 +83,13 @@ export function OrgDepartmentsPanel({
             nested under each department.
           </p>
         </div>
-        <Button onClick={() => openDialog(null)} className="gap-2 self-start">
-          <HiOutlinePlus className="size-4" />
-          Add Department
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle currentView={viewMode} />
+          <Button onClick={() => openDialog(null)} className="gap-2 self-start font-display">
+            <HiOutlinePlus className="size-4" />
+            Add Department
+          </Button>
+        </div>
       </div>
 
       {departments.length === 0 ? (
@@ -83,8 +98,8 @@ export function OrgDepartmentsPanel({
           <p className="mt-2">No departments yet. Create one, then assign employees to it.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {departments.map((dept) => (
+        <div className={viewMode === "grid" ? "grid gap-6 md:grid-cols-2" : "space-y-4"}>
+          {paginatedDepartments.map((dept) => (
             <div
               key={dept.id}
               className="rounded-xl border border-border bg-card shadow-sm overflow-hidden"
@@ -140,6 +155,12 @@ export function OrgDepartmentsPanel({
           ))}
         </div>
       )}
+
+      <DataPagination
+        totalItems={totalItems}
+        currentPage={page}
+        itemsPerPage={itemsPerPage}
+      />
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}

@@ -22,6 +22,8 @@ import {
   HiOutlineMapPin,
   HiOutlineUser,
 } from "react-icons/hi2";
+import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
+import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 import { useEmployeeDirectory } from "../hooks/use-employee-directory";
 
 interface EmployeeDirectoryProps {
@@ -29,6 +31,9 @@ interface EmployeeDirectoryProps {
   companyId: string;
   allowanceTypes: any[];
   taxTypes: any[];
+  page?: number;
+  itemsPerPage?: number;
+  viewMode?: "grid" | "rows";
 }
 
 export function EmployeeDirectory({
@@ -36,6 +41,9 @@ export function EmployeeDirectory({
   companyId,
   allowanceTypes,
   taxTypes,
+  page = 1,
+  itemsPerPage = 20,
+  viewMode = "rows",
 }: EmployeeDirectoryProps) {
   const {
     activeTab,
@@ -59,6 +67,10 @@ export function EmployeeDirectory({
     handleNextStep,
     handlePrevStep,
   } = useEmployeeDirectory(initialEmployees, companyId);
+
+  const totalItems = filteredEmployees.length;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedEmployees = filteredEmployees.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="mt-8">

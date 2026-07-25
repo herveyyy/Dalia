@@ -14,6 +14,8 @@ import {
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineShieldCheck, HiOutlineExclamationTriangle } from "react-icons/hi2";
+import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
+import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import { deleteRoleAction, saveRoleAction } from "../actions/org-actions";
 import type { AppAccessCatalog, WorkspaceRole } from "../queries/get/get-org.query";
@@ -23,6 +25,9 @@ interface OrgRolesPanelProps {
   companyName: string;
   roles: WorkspaceRole[];
   catalog: AppAccessCatalog;
+  page?: number;
+  itemsPerPage?: number;
+  viewMode?: "grid" | "rows";
 }
 
 export function OrgRolesPanel({
@@ -30,6 +35,9 @@ export function OrgRolesPanel({
   companyName,
   roles,
   catalog,
+  page = 1,
+  itemsPerPage = 20,
+  viewMode = "rows",
 }: OrgRolesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<WorkspaceRole | null>(null);
@@ -37,6 +45,10 @@ export function OrgRolesPanel({
   const [featureIds, setFeatureIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const totalItems = roles.length;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedRoles = roles.slice(startIndex, startIndex + itemsPerPage);
 
   const featureCountByRole = useMemo(() => {
     const map = new Map<string, number>();
@@ -122,10 +134,13 @@ export function OrgRolesPanel({
             per app and feature.
           </p>
         </div>
-        <Button onClick={() => openDialog(null)} className="gap-2 self-start font-display">
-          <HiOutlinePlus className="size-4" />
-          Add Role
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle currentView={viewMode} />
+          <Button onClick={() => openDialog(null)} className="gap-2 self-start font-display">
+            <HiOutlinePlus className="size-4" />
+            Add Role
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
@@ -175,6 +190,12 @@ export function OrgRolesPanel({
           )}
         </div>
       </div>
+
+      <DataPagination
+        totalItems={totalItems}
+        currentPage={page}
+        itemsPerPage={itemsPerPage}
+      />
 
       {isOpen && (
         <Dialog

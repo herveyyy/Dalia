@@ -24,6 +24,8 @@ import {
   HiOutlineBuildingOffice,
   HiOutlineCurrencyDollar,
 } from "react-icons/hi2";
+import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
+import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 
 interface JobPostingRecord {
   id: string;
@@ -41,13 +43,26 @@ interface JobPostingRecord {
 interface JobPostingsListProps {
   jobPostings: JobPostingRecord[];
   companyId: string;
+  page?: number;
+  itemsPerPage?: number;
+  viewMode?: "grid" | "rows";
 }
 
-export function JobPostingsList({ jobPostings, companyId }: JobPostingsListProps) {
+export function JobPostingsList({
+  jobPostings,
+  companyId,
+  page = 1,
+  itemsPerPage = 20,
+  viewMode = "grid",
+}: JobPostingsListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPostingRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const totalItems = jobPostings.length;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedJobs = jobPostings.slice(startIndex, startIndex + itemsPerPage);
 
   const handleOpenDialog = (job: JobPostingRecord | null = null) => {
     setSelectedJob(job);
@@ -98,12 +113,15 @@ export function JobPostingsList({ jobPostings, companyId }: JobPostingsListProps
             Manage your company's career openings, recruitment pipeline, and job listings.
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog(null)} className="gap-2">
-          <HiOutlinePlus className="size-4" /> Post a Job
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle currentView={viewMode} />
+          <Button onClick={() => handleOpenDialog(null)} className="gap-2">
+            <HiOutlinePlus className="size-4" /> Post a Job
+          </Button>
+        </div>
       </div>
 
-      {/* Jobs Grid */}
+      {/* Jobs Content */}
       {jobPostings.length === 0 ? (
         <div className="border border-border/60 rounded-xl bg-card p-12 text-center text-muted-foreground">
           <div className="flex flex-col items-center gap-2 max-w-sm mx-auto">
@@ -115,9 +133,9 @@ export function JobPostingsList({ jobPostings, companyId }: JobPostingsListProps
             </Button>
           </div>
         </div>
-      ) : (
+      ) : viewMode === "grid" ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {jobPostings.map((job) => (
+          {paginatedJobs.map((job) => (
             <div
               key={job.id}
               className="border border-border/60 rounded-xl bg-card p-5 hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
@@ -189,7 +207,59 @@ export function JobPostingsList({ jobPostings, companyId }: JobPostingsListProps
             </div>
           ))}
         </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border/60">
+          {paginatedJobs.map((job) => (
+            <div key={job.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30">
+              <div className="flex items-center gap-4">
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    job.status === "Published"
+                      ? "bg-emerald-500/10 text-emerald-500"
+                      : job.status === "Draft"
+                      ? "bg-amber-500/10 text-amber-500"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {job.status}
+                </span>
+                <div>
+                  <h4 className="font-display text-sm font-bold text-foreground">{job.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {job.department || "General"} · {job.employmentType} · {job.location || "Remote"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => handleOpenDialog(job)}
+                  title="Edit"
+                >
+                  <HiOutlinePencil className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => handleDelete(job.id)}
+                  title="Delete"
+                  className="text-destructive hover:text-destructive"
+                >
+                  <HiOutlineTrash className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
+
+      <DataPagination
+        totalItems={totalItems}
+        currentPage={page}
+        itemsPerPage={itemsPerPage}
+      />
 
       {/* Dialog for Add/Edit */}
       {isOpen && (
