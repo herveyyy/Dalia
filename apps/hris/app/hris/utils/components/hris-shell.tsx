@@ -4,7 +4,17 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@repo/auth/client";
 import { AppShell } from "@repo/ui/components/organisms/AppShell";
-import { HiOutlineUserGroup, HiOutlineArrowLeft, HiOutlineBriefcase, HiOutlineCalculator } from "react-icons/hi2";
+import {
+  HiOutlineUserGroup,
+  HiOutlineArrowLeft,
+  HiOutlineBriefcase,
+  HiOutlineCalculator,
+  HiOutlineBuildingOffice2,
+  HiOutlineMapPin,
+  HiOutlineIdentification,
+  HiOutlineShieldCheck,
+  HiOutlineClock,
+} from "react-icons/hi2";
 
 interface HrisShellProps {
   children: React.ReactNode;
@@ -14,9 +24,15 @@ interface HrisShellProps {
     avatarUrl?: string;
   };
   initialWorkspaces: any[];
+  canCreateWorkspace?: boolean;
 }
 
-export function HrisShell({ children, user, initialWorkspaces }: HrisShellProps) {
+export function HrisShell({
+  children,
+  user,
+  initialWorkspaces,
+  canCreateWorkspace = false,
+}: HrisShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   
@@ -25,7 +41,7 @@ export function HrisShell({ children, user, initialWorkspaces }: HrisShellProps)
   const navGroups = React.useMemo(() => {
     return [
       {
-        title: "HRIS Control Panel",
+        title: "People & Directory",
         items: [
           {
             label: "Employee Directory",
@@ -33,6 +49,29 @@ export function HrisShell({ children, user, initialWorkspaces }: HrisShellProps)
             Icon: HiOutlineUserGroup,
             isActive: pathname === "/hris",
           },
+          {
+            label: "Departments",
+            href: "/hris/departments",
+            Icon: HiOutlineBuildingOffice2,
+            isActive: pathname === "/hris/departments",
+          },
+          {
+            label: "Branches & Locations",
+            href: "/hris/branches",
+            Icon: HiOutlineMapPin,
+            isActive: pathname === "/hris/branches",
+          },
+          {
+            label: "Roles & Access",
+            href: "/hris/roles",
+            Icon: HiOutlineIdentification,
+            isActive: pathname === "/hris/roles",
+          },
+        ],
+      },
+      {
+        title: "Recruitment & Payroll",
+        items: [
           {
             label: "Job Postings",
             href: "/hris/jobs",
@@ -44,6 +83,23 @@ export function HrisShell({ children, user, initialWorkspaces }: HrisShellProps)
             href: "/hris/taxes",
             Icon: HiOutlineCalculator,
             isActive: pathname === "/hris/taxes",
+          },
+        ],
+      },
+      {
+        title: "Statutory Tools",
+        items: [
+          {
+            label: "BIR Alphalist",
+            href: "/hris/bir-filing",
+            Icon: HiOutlineShieldCheck,
+            isActive: pathname === "/hris/bir-filing",
+          },
+          {
+            label: "SSS / HDMF",
+            href: "/hris/sss-hdmf",
+            Icon: HiOutlineClock,
+            isActive: pathname === "/hris/sss-hdmf",
           },
         ],
       },
@@ -77,7 +133,7 @@ export function HrisShell({ children, user, initialWorkspaces }: HrisShellProps)
       workspaces={initialWorkspaces}
       activeWorkspaceId={activeWorkspaceId}
       onSelectWorkspace={handleSelectWorkspace}
-      onCreateWorkspaceClick={() => {}}
+      onCreateWorkspaceClick={canCreateWorkspace ? () => { window.location.href = "/workspace"; } : undefined}
       navGroups={navGroups}
       user={user}
       onLogoutClick={handleLogout}

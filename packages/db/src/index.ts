@@ -30,4 +30,5 @@ export const db = new Proxy({} as Db, {
 });
 
 export * from "./schema";
+export * from "./queries/get-user-permissions";
 export { eq, and, ilike, asc, desc, inArray, sql } from "drizzle-orm";

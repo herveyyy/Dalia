@@ -6,15 +6,19 @@ import {
   eq,
 } from "@repo/db";
 
-/** Upserts the global app/feature permission catalog. Safe to call on page load. */
+/** Upserts the global app/feature permission catalog efficiently. Safe to call on page load. */
 export async function ensureAppAccessCatalog() {
-  for (const [moduleIndex, mod] of APP_ACCESS_CATALOG.entries()) {
-    const existing = await db.query.appModule.findFirst({
-      where: (m, { eq: whereEq }) => whereEq(m.key, mod.key),
-    });
+  const existingModules = await db.query.appModule.findMany({
+    with: { features: true },
+  });
 
+  const moduleMap = new Map(existingModules.map((m) => [m.key, m]));
+
+  for (const [moduleIndex, mod] of APP_ACCESS_CATALOG.entries()) {
+    const existing = moduleMap.get(mod.key);
     let moduleId = existing?.id;
-    if (!moduleId) {
+
+    if (!existing || !moduleId) {
       const [created] = await db
         .insert(appModule)
         .values({
@@ -25,7 +29,11 @@ export async function ensureAppAccessCatalog() {
         })
         .returning({ id: appModule.id });
       moduleId = created!.id;
-    } else {
+    } else if (
+      existing.name !== mod.name ||
+      existing.description !== (mod.description ?? null) ||
+      existing.sortOrder !== moduleIndex
+    ) {
       await db
         .update(appModule)
         .set({
@@ -37,11 +45,10 @@ export async function ensureAppAccessCatalog() {
         .where(eq(appModule.id, moduleId));
     }
 
+    const featureMap = new Map((existing?.features ?? []).map((f) => [f.key, f]));
+
     for (const [featureIndex, feature] of mod.features.entries()) {
-      const existingFeature = await db.query.appFeature.findFirst({
-        where: (f, { and: whereAnd, eq: whereEq }) =>
-          whereAnd(whereEq(f.appModuleId, moduleId!), whereEq(f.key, feature.key)),
-      });
+      const existingFeature = featureMap.get(feature.key);
 
       if (!existingFeature) {
         await db.insert(appFeature).values({
@@ -51,7 +58,11 @@ export async function ensureAppAccessCatalog() {
           description: feature.description ?? null,
           sortOrder: featureIndex,
         });
-      } else {
+      } else if (
+        existingFeature.name !== feature.name ||
+        existingFeature.description !== (feature.description ?? null) ||
+        existingFeature.sortOrder !== featureIndex
+      ) {
         await db
           .update(appFeature)
           .set({

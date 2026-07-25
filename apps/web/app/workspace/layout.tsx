@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { getUserAppPermissions } from "@repo/db";
 import { WorkspaceShell } from "./utils/components/workspace-shell";
 import { getSessionTenant } from "./utils/lib/session-tenant";
 import {
@@ -20,6 +21,11 @@ export default async function WorkspaceLayout({
   }
 
   const { user } = tenant.session;
+
+  const permissions = await getUserAppPermissions(user.id);
+  if (!permissions.hasModuleAccess("workspace")) {
+    redirect("/apps?error=restricted");
+  }
 
   // Client company admin/employee: only their workspace, no firm panel
   if (tenant.isClientTenant && tenant.clientWorkspace) {

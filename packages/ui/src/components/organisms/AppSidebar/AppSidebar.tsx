@@ -1,4 +1,5 @@
 import * as React from "react";
+import { cn } from "../../../lib/utils";
 import { SidebarItem } from "../../atoms/SidebarItem";
 import { Workspace, WorkspaceSelector } from "../../molecules/WorkspaceSelector";
 import { LogOut } from "lucide-react";
@@ -31,6 +32,60 @@ export interface AppSidebarProps {
   canManageFirm?: boolean;
 }
 
+export function AppSidebarGroup({ group }: { group: SidebarNavGroup }) {
+  const hasActiveItem = group.items.some((item) => item.isActive);
+  const [isOpen, setIsOpen] = React.useState(true);
+
+  // If active item is inside this group, ensure it stays expanded
+  React.useEffect(() => {
+    if (hasActiveItem) {
+      setIsOpen(true);
+    }
+  }, [hasActiveItem]);
+
+  return (
+    <div className="space-y-1">
+      {group.title ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between px-3 py-1.5 text-xs font-semibold tracking-wider text-muted-foreground hover:text-foreground uppercase transition-colors outline-none cursor-pointer group"
+        >
+          <span>{group.title}</span>
+          <svg
+            className={cn(
+              "size-3.5 text-muted-foreground transition-transform duration-300 ease-in-out group-hover:text-foreground",
+              isOpen ? "rotate-0" : "-rotate-180"
+            )}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      ) : null}
+
+      {isOpen && (
+        <div className="space-y-0.5">
+          {group.items.map((item, itemIdx) => (
+            <SidebarItem
+              key={itemIdx}
+              label={item.label}
+              href={item.href}
+              Icon={item.Icon}
+              isActive={item.isActive}
+              badge={item.badge}
+              onClick={item.onClick}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AppSidebar({
   workspaces,
   activeWorkspaceId,
@@ -61,28 +116,9 @@ export function AppSidebar({
         />
       </div>
 
-      <nav className="flex-1 space-y-7 mt-8 overflow-y-auto px-1">
+      <nav className="flex-1 space-y-4 mt-8 overflow-y-auto px-1">
         {navGroups.map((group, idx) => (
-          <div key={idx} className="space-y-2">
-            {group.title && (
-              <h3 className="px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                {group.title}
-              </h3>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map((item, itemIdx) => (
-                <SidebarItem
-                  key={itemIdx}
-                  label={item.label}
-                  href={item.href}
-                  Icon={item.Icon}
-                  isActive={item.isActive}
-                  badge={item.badge}
-                  onClick={item.onClick}
-                />
-              ))}
-            </div>
-          </div>
+          <AppSidebarGroup key={idx} group={group} />
         ))}
       </nav>
 

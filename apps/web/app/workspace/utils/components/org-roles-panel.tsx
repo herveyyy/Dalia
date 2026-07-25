@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineShieldCheck } from "react-icons/hi2";
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineShieldCheck, HiOutlineExclamationTriangle } from "react-icons/hi2";
 import { deleteRoleAction, saveRoleAction } from "../actions/org-actions";
 import type { AppAccessCatalog, WorkspaceRole } from "../queries/get/get-org.query";
 
@@ -33,6 +33,7 @@ export function OrgRolesPanel({
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<WorkspaceRole | null>(null);
   const [featureIds, setFeatureIds] = useState<string[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const featureCountByRole = useMemo(() => {
@@ -46,12 +47,14 @@ export function OrgRolesPanel({
   const openDialog = (role: WorkspaceRole | null = null) => {
     setSelected(role);
     setFeatureIds(role?.permissions?.map((p) => p.featureId) ?? []);
+    setErrorMessage(null);
     setIsOpen(true);
   };
 
   const closeDialog = () => {
     setSelected(null);
     setFeatureIds([]);
+    setErrorMessage(null);
     setIsOpen(false);
   };
 
@@ -73,16 +76,41 @@ export function OrgRolesPanel({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const name = String(formData.get("name") || "").trim();
+
+    if (!name) {
+      setErrorMessage("Role name is required");
+      return;
+    }
+
     startTransition(async () => {
-      await saveRoleAction({
-        id: selected?.id || null,
-        companyId,
-        name: String(formData.get("name") || ""),
-        description: String(formData.get("description") || "") || null,
-        featureIds,
-      });
-      closeDialog();
+      try {
+        setErrorMessage(null);
+        await saveRoleAction({
+          id: selected?.id || null,
+          companyId,
+          name,
+          description: String(formData.get("description") || "").trim() || null,
+          featureIds,
+        });
+        closeDialog();
+      } catch (err) {
+        setErrorMessage(err instanceof Error ? err.message : "Failed to save role");
+      }
     });
+  };
+
+  const handleDelete = (role: WorkspaceRole) => {
+    if (role.isSystem) return;
+    if (confirm(`Delete the role "${role.name}"?`)) {
+      startTransition(async () => {
+        try {
+          await deleteRoleAction(role.id, companyId);
+        } catch (err) {
+          alert(err instanceof Error ? err.message : "Failed to delete role");
+        }
+      });
+    }
   };
 
   return (
@@ -96,7 +124,7 @@ export function OrgRolesPanel({
             per app and feature.
           </p>
         </div>
-        <Button onClick={() => openDialog(null)} className="gap-2 self-start">
+        <Button onClick={() => openDialog(null)} className="gap-2 self-start font-display">
           <HiOutlinePlus className="size-4" />
           Add Role
         </Button>
@@ -106,14 +134,14 @@ export function OrgRolesPanel({
         <div className="divide-y divide-border">
           {roles.length === 0 ? (
             <div className="px-6 py-12 text-center text-muted-foreground">
-              <HiOutlineShieldCheck className="mx-auto size-8 opacity-50" />
-              <p className="mt-2">No roles yet. Create a role and pick which apps/features it can use.</p>
+              <HiOutlineShieldCheck className="mx-auto size-8 opacity-50 text-primary" />
+              <p className="mt-2 text-sm">No roles yet. Create a role and pick which apps/features it can use.</p>
             </div>
           ) : (
             roles.map((role) => (
               <div
                 key={role.id}
-                className="flex items-center justify-between gap-3 px-6 py-4 hover:bg-muted/30"
+                className="flex items-center justify-between gap-3 px-6 py-4 hover:bg-muted/30 transition-colors"
               >
                 <div>
                   <p className="text-sm font-bold text-foreground">{role.name}</p>
@@ -122,24 +150,24 @@ export function OrgRolesPanel({
                     {" · "}
                     {featureCountByRole.get(role.id) ?? 0} access right
                     {(featureCountByRole.get(role.id) ?? 0) === 1 ? "" : "s"}
-                    {role.isSystem ? " · System" : " · Custom"}
+                    {role.isSystem ? " · System Role" : " · Custom Role"}
                   </p>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon-sm" onClick={() => openDialog(role)}>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => openDialog(role)}
+                    title="Edit role"
+                  >
                     <HiOutlinePencil className="size-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    disabled={role.isSystem}
-                    onClick={() => {
-                      if (confirm("Delete this role?")) {
-                        startTransition(async () => {
-                          await deleteRoleAction(role.id, companyId);
-                        });
-                      }
-                    }}
+                    disabled={role.isSystem || isPending}
+                    onClick={() => handleDelete(role)}
+                    title={role.isSystem ? "System roles cannot be deleted" : "Delete role"}
                   >
                     <HiOutlineTrash className="size-4 text-destructive" />
                   </Button>
@@ -151,7 +179,13 @@ export function OrgRolesPanel({
       </div>
 
       {isOpen && (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog
+          open={isOpen}
+          onOpenChange={(open) => {
+            if (!open) closeDialog();
+            else setIsOpen(true);
+          }}
+        >
           <DialogPortal>
             <DialogOverlay />
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -159,23 +193,42 @@ export function OrgRolesPanel({
               <DialogDescription>
                 Name the role, then grant access rights by app and feature.
               </DialogDescription>
-              <form onSubmit={handleSubmit} className="mt-4 space-y-5">
+
+              {errorMessage && (
+                <div className="mt-3 flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-xs font-semibold text-destructive">
+                  <HiOutlineExclamationTriangle className="size-4 shrink-0" />
+                  {errorMessage}
+                </div>
+              )}
+
+              <form
+                key={selected?.id || "new-role"}
+                onSubmit={handleSubmit}
+                className="mt-4 space-y-5"
+              >
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" name="name" required defaultValue={selected?.name || ""} />
+                  <Label htmlFor="name">Role Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    required
+                    placeholder="e.g. Finance Admin, Payroll Manager"
+                    defaultValue={selected?.name || ""}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Input
                     id="description"
                     name="description"
+                    placeholder="Optional short description of this role"
                     defaultValue={selected?.description || ""}
                   />
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <Label>Access rights</Label>
+                    <Label>Access Rights</Label>
                     <p className="text-xs text-muted-foreground mt-1">
                       Select features per app. New apps/features can be added to the catalog later.
                     </p>
@@ -210,20 +263,20 @@ export function OrgRolesPanel({
                                 onChange={(e) => toggleApp(appFeatureIds, e.target.checked)}
                                 className="size-4 rounded border-border"
                               />
-                              All
+                              Select All
                             </label>
                           </div>
                           <div className="grid gap-2 p-3 sm:grid-cols-2">
                             {app.features.map((feature) => (
                               <label
                                 key={feature.id}
-                                className="flex items-start gap-2.5 rounded-lg border border-transparent px-2.5 py-2 text-sm hover:bg-card cursor-pointer"
+                                className="flex items-start gap-2.5 rounded-lg border border-transparent px-2.5 py-2 text-sm hover:bg-card cursor-pointer transition-colors"
                               >
                                 <input
                                   type="checkbox"
                                   checked={featureIds.includes(feature.id)}
                                   onChange={() => toggleFeature(feature.id)}
-                                  className="mt-0.5 size-4 rounded border-border"
+                                  className="mt-0.5 size-4 rounded border-border text-primary focus:ring-primary"
                                 />
                                 <span>
                                   <span className="font-semibold text-foreground block">
@@ -242,12 +295,12 @@ export function OrgRolesPanel({
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-border">
-                  <Button type="button" variant="outline" onClick={closeDialog}>
+                <div className="flex justify-end gap-2 pt-3 border-t border-border">
+                  <Button type="button" variant="outline" onClick={closeDialog} disabled={isPending}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving…" : "Save role"}
+                  <Button type="submit" disabled={isPending} className="font-display">
+                    {isPending ? "Saving Role…" : "Save Role"}
                   </Button>
                 </div>
               </form>

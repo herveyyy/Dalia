@@ -1,5 +1,6 @@
 import * as React from "react";
 import { auth } from "@repo/auth";
+import { getUserAppPermissions } from "@repo/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { HrisShell } from "./utils/components/hris-shell";
@@ -19,6 +20,12 @@ export default async function HrisLayout({
   }
 
   const { user } = session;
+
+  const permissions = await getUserAppPermissions(user.id);
+  if (!permissions.hasModuleAccess("hris")) {
+    redirect("/apps?error=restricted");
+  }
+
   const userRecord = await getUserRecord(user.id);
   const companyRecord = userRecord?.companyId ? await getCompanyRecord(userRecord.companyId) : null;
   const workspacesList = userRecord?.companyId
@@ -48,6 +55,8 @@ export default async function HrisLayout({
 
   const initialWorkspaces = [firmWorkspace, ...clientWorkspaces];
 
+  const canCreateWorkspace = permissions.hasFeatureAccess("workspace.clients.manage") || permissions.isOwnerOrAdmin;
+
   return (
     <HrisShell
       user={{
@@ -56,6 +65,7 @@ export default async function HrisLayout({
         avatarUrl: user.image ?? undefined,
       }}
       initialWorkspaces={initialWorkspaces}
+      canCreateWorkspace={canCreateWorkspace}
     >
       {children}
     </HrisShell>
