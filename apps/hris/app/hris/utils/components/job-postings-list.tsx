@@ -219,7 +219,7 @@ export function JobPostingsList({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border/60">
+        <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden divide-y divide-border/60">
           {paginatedJobs.map((job) => (
             <div key={job.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30">
               <div className="flex items-center gap-4">
