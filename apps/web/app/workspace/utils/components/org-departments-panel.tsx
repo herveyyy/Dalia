@@ -123,7 +123,7 @@ export function OrgDepartmentsPanel({
                   dept.employees.map((emp) => (
                     <div
                       key={emp.id}
-                      className="flex items-center justify-between px-6 py-3 hover:bg-muted/30"
+                      className="flex items-center justify-between px-6 py-4 hover:bg-muted/30"
                     >
                       <div>
                         <p className="text-sm font-semibold text-foreground">
@@ -153,7 +153,7 @@ export function OrgDepartmentsPanel({
             <DialogDescription>
               Departments group employees for this client company.
             </DialogDescription>
-            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+            <form key={selected?.id || "new"} onSubmit={handleSubmit} className="mt-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input id="name" name="name" required defaultValue={selected?.name || ""} />

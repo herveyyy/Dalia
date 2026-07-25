@@ -132,7 +132,7 @@ export function OrgBranchesPanel({
                   b.employees.map((emp) => (
                     <div
                       key={emp.id}
-                      className="flex items-center justify-between px-6 py-3 hover:bg-muted/30"
+                      className="flex items-center justify-between px-6 py-4 hover:bg-muted/30"
                     >
                       <div>
                         <p className="text-sm font-semibold text-foreground">
@@ -162,7 +162,7 @@ export function OrgBranchesPanel({
             <DialogDescription>
               Define internal store locations, offices, or regional branches.
             </DialogDescription>
-            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+            <form key={selected?.id || "new"} onSubmit={handleSubmit} className="mt-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Branch Name</Label>
                 <Input id="name" name="name" required placeholder="e.g. BGC Store / Main Office" defaultValue={selected?.name || ""} />
