@@ -5,18 +5,16 @@ import { resolveTenantCompanyId } from "../utils/lib/resolve-tenant-company";
 import { getCompanyRecord } from "../utils/queries/get/get-company-record.query";
 import { getAppAccessCatalog, getRoles } from "../utils/queries/get/get-org.query";
 
-import { enforcePermission } from "../utils/lib/rbac-server";
-
 export default async function RolesPage({
   searchParams,
 }: {
   searchParams: Promise<{ company_id?: string }>;
 }) {
   const { company_id: selectorId } = await searchParams;
+  const { companyId, error } = await resolveTenantCompanyId(selectorId);
 
-  // 🔒 RBAC Permission Guard: Requires 'workspace.roles.manage'
-  const { session, companyId } = await enforcePermission("workspace.roles.manage", selectorId);
-  if (!companyId) redirect("/workspace");
+  if (error === "unauthorized") redirect("/login");
+  if (error === "forbidden" || !companyId) redirect("/workspace");
 
   await ensureAppAccessCatalog();
 

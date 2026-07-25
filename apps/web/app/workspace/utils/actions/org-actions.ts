@@ -12,7 +12,6 @@ import {
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { resolveTenantCompanyId } from "../lib/resolve-tenant-company";
-import { assertPermission } from "../lib/rbac-server";
 
 function revalidateOrg(companyId: string) {
   revalidatePath("/workspace/employees");
@@ -128,7 +127,6 @@ export async function saveRoleAction(data: {
   description?: string | null;
   featureIds?: string[];
 }) {
-  await assertPermission("workspace.roles.manage", data.companyId);
   const session = await assertCompanyAccess(data.companyId);
   const name = data.name.trim();
   if (!name) throw new Error("Role name is required");
@@ -176,7 +174,6 @@ export async function saveRoleAction(data: {
 }
 
 export async function deleteRoleAction(id: string, companyId: string) {
-  await assertPermission("workspace.roles.manage", companyId);
   await assertCompanyAccess(companyId);
   await db.delete(role).where(and(eq(role.id, id), eq(role.companyId, companyId)));
   revalidateOrg(companyId);

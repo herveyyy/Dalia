@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./rbac": "./src/rbac/index.ts",
+    "./rbac/client": "./src/rbac/client.tsx"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
