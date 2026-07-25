@@ -106,7 +106,7 @@ export default async function HrisBirFilingPage(props: {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border">
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden divide-y">
           {paginatedData.map((filing, idx) => (
             <div key={idx} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30">
               <div className="flex items-center gap-4">

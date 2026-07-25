@@ -258,9 +258,12 @@ export function EmployeeDirectory({
                 className="pl-9"
               />
             </div>
-            <Button onClick={() => handleOpenDialog()} className="gap-2 font-display">
-              <HiOutlinePlus className="size-4" /> Add Employee
-            </Button>
+            <div className="flex items-center gap-3">
+              <ViewToggle currentView={viewMode} />
+              <Button onClick={() => handleOpenDialog()} className="gap-2 font-display">
+                <HiOutlinePlus className="size-4" /> Add Employee
+              </Button>
+            </div>
           </div>
 
           {/* Directory Table */}
@@ -280,11 +283,14 @@ export function EmployeeDirectory({
                   {filteredEmployees.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                        No employees found.
+                        <div className="flex flex-col items-center gap-2">
+                          <HiOutlineUserGroup className="size-8 opacity-50" />
+                          <p>No matching employee records found.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
-                    filteredEmployees.map((emp) => (
+                    paginatedEmployees.map((emp) => (
                       <tr key={emp.id} className="hover:bg-muted/10 transition-colors">
                         <td className="px-6 py-4">
                           <div>
@@ -355,6 +361,12 @@ export function EmployeeDirectory({
               </table>
             </div>
           </div>
+
+          <DataPagination
+            totalItems={totalItems}
+            currentPage={page}
+            itemsPerPage={itemsPerPage}
+          />
         </div>
       )}
 
