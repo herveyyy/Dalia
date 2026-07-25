@@ -30,20 +30,22 @@ interface TaxTypeRecord {
 interface TaxListProps {
   taxTypes: TaxTypeRecord[];
   companyId: string;
+  page?: number;
+  itemsPerPage?: number;
 }
 
 export function TaxList({
   taxTypes,
   companyId,
+  page = 1,
+  itemsPerPage = 20,
 }: TaxListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTax, setSelectedTax] = useState<TaxTypeRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [viewMode, setViewMode] = useState<"grid" | "rows">("rows");
+  const [viewMode, setViewMode] = useState<"grid" | "rows" | null>(null);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -51,6 +53,7 @@ export function TaxList({
         const saved = localStorage.getItem("employee_table_hris");
         if (saved === "row") setViewMode("rows");
         else if (saved === "column") setViewMode("grid");
+        else setViewMode(null);
       } catch (e) {}
     }
   }, []);
@@ -110,62 +113,64 @@ export function TaxList({
       </div>
 
       {/* Tax Table */}
-      <div className="border border-border/60 rounded-xl bg-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-border/60 bg-muted/30 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                <th className="px-6 py-4">Tax Name</th>
-                <th className="px-6 py-4">Rate (%)</th>
-                <th className="px-6 py-4">Description</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60 text-sm text-foreground">
-              {taxTypes.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <HiOutlineCalculator className="size-8 text-muted-foreground/60" />
-                      <p>No tax types configured yet.</p>
-                    </div>
-                  </td>
+      {viewMode === null ? null : (
+        <div className="border border-border/60 rounded-xl bg-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-border/60 bg-muted/30 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <th className="px-6 py-4">Tax Name</th>
+                  <th className="px-6 py-4">Rate (%)</th>
+                  <th className="px-6 py-4">Description</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ) : (
-                paginatedTaxes.map((tax) => (
-                  <tr key={tax.id} className="hover:bg-muted/10 transition-colors">
-                    <td className="px-6 py-4 font-semibold">{tax.name}</td>
-                    <td className="px-6 py-4">{tax.rate}%</td>
-                    <td className="px-6 py-4 text-muted-foreground max-w-xs truncate">
-                      {tax.description || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenDialog(tax)}
-                          className="h-8 px-2"
-                        >
-                          <HiOutlinePencil className="size-4 text-muted-foreground" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(tax.id)}
-                          className="h-8 px-2 hover:text-destructive text-muted-foreground"
-                        >
-                          <HiOutlineTrash className="size-4" />
+              </thead>
+              <tbody className="divide-y divide-border/60 text-sm">
+                {taxTypes.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2">
+                        <p>No tax types configured.</p>
+                        <Button onClick={() => handleOpenDialog(null)} size="sm" variant="outline" className="mt-2">
+                          Add First Tax Type
                         </Button>
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  paginatedTaxes.map((tax) => (
+                    <tr key={tax.id} className="hover:bg-muted/10 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-foreground">{tax.name}</td>
+                      <td className="px-6 py-4 font-mono font-medium text-foreground">{tax.rate}%</td>
+                      <td className="px-6 py-4 text-muted-foreground text-xs">{tax.description || "—"}</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenDialog(tax)}
+                            className="h-8 px-2 text-muted-foreground"
+                          >
+                            <HiOutlinePencil className="size-4 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(tax.id)}
+                            className="h-8 px-2 hover:text-destructive text-muted-foreground"
+                          >
+                            <HiOutlineTrash className="size-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       <DataPagination
         totalItems={totalItems}

@@ -31,6 +31,8 @@ interface EmployeeDirectoryProps {
   companyId: string;
   allowanceTypes: any[];
   taxTypes: any[];
+  page?: number;
+  itemsPerPage?: number;
 }
 
 export function EmployeeDirectory({
@@ -38,6 +40,8 @@ export function EmployeeDirectory({
   companyId,
   allowanceTypes,
   taxTypes,
+  page = 1,
+  itemsPerPage = 20,
 }: EmployeeDirectoryProps) {
   const {
     activeTab,
@@ -62,9 +66,7 @@ export function EmployeeDirectory({
     handlePrevStep,
   } = useEmployeeDirectory(initialEmployees, companyId);
 
-  const [page, setPage] = React.useState(1);
-  const [itemsPerPage, setItemsPerPage] = React.useState(20);
-  const [viewMode, setViewMode] = React.useState<"grid" | "rows">("rows");
+  const [viewMode, setViewMode] = React.useState<"grid" | "rows" | null>(null);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -72,6 +74,7 @@ export function EmployeeDirectory({
         const saved = localStorage.getItem("employee_table_hris");
         if (saved === "row") setViewMode("rows");
         else if (saved === "column") setViewMode("grid");
+        else setViewMode(null);
       } catch (e) {}
     }
   }, []);
@@ -275,7 +278,8 @@ export function EmployeeDirectory({
           </div>
 
           {/* Directory Table */}
-          <div className="overflow-hidden border border-border/60 rounded-xl bg-card">
+          {viewMode === null ? null : (
+            <div className="overflow-hidden border border-border/60 rounded-xl bg-card">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -369,6 +373,7 @@ export function EmployeeDirectory({
               </table>
             </div>
           </div>
+        )}
 
           <DataPagination
             totalItems={totalItems}

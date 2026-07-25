@@ -51,15 +51,15 @@ interface JobPostingsListProps {
 export function JobPostingsList({
   jobPostings,
   companyId,
+  page = 1,
+  itemsPerPage = 20,
 }: JobPostingsListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPostingRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [viewMode, setViewMode] = useState<"grid" | "rows">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "rows" | null>(null);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -67,6 +67,7 @@ export function JobPostingsList({
         const saved = localStorage.getItem("employee_table_hris");
         if (saved === "row") setViewMode("rows");
         else if (saved === "column") setViewMode("grid");
+        else setViewMode(null);
       } catch (e) {}
     }
   }, []);
@@ -144,7 +145,7 @@ export function JobPostingsList({
             </Button>
           </div>
         </div>
-      ) : viewMode === "grid" ? (
+      ) : viewMode === null ? null : viewMode === "grid" ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {paginatedJobs.map((job) => (
             <div

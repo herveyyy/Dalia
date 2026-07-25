@@ -22,7 +22,18 @@ const statusColors: Record<string, string> = {
 export default function HrisBirFilingPage() {
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [viewMode, setViewMode] = useState<"grid" | "rows">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "rows" | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("employee_table_hris");
+        if (saved === "row") setViewMode("rows");
+        else if (saved === "column") setViewMode("grid");
+        else setViewMode(null);
+      } catch (e) {}
+    }
+  }, []);
 
   const totalItems = mockFilings.length;
   const startIndex = (page - 1) * itemsPerPage;
@@ -48,7 +59,7 @@ export default function HrisBirFilingPage() {
         </div>
       </div>
 
-      {viewMode === "grid" ? (
+      {viewMode === null ? null : viewMode === "grid" ? (
         <div className="grid gap-6 md:grid-cols-3">
           {paginatedData.map((filing, idx) => (
             <div

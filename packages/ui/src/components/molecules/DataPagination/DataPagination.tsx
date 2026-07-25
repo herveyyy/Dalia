@@ -29,16 +29,23 @@ export function DataPagination({
     if (onPageChange) {
       onPageChange(newPage);
     }
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("page", String(newPage));
+      url.searchParams.set("items", String(itemsPerPage));
+      window.history.pushState({}, "", url.toString());
+    }
   };
 
   const handleItemsPerPageChange = (newItems: number) => {
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("dalia:filter:items", String(newItems));
-      } catch (e) {}
-    }
     if (onItemsPerPageChange) {
       onItemsPerPageChange(newItems);
+    }
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("page", "1");
+      url.searchParams.set("items", String(newItems));
+      window.history.pushState({}, "", url.toString());
     }
   };
 

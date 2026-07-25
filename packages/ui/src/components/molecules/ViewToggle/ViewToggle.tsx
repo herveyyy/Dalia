@@ -5,18 +5,18 @@ import { LayoutGrid, List } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
 export interface ViewToggleProps {
-  currentView?: "grid" | "rows";
+  currentView?: "grid" | "rows" | null;
   onViewChange?: (view: "grid" | "rows") => void;
 }
 
-function getSnapshot(): "grid" | "rows" {
-  if (typeof window === "undefined") return "grid";
+function getSnapshot(): "grid" | "rows" | null {
+  if (typeof window === "undefined") return null;
   try {
     const val = localStorage.getItem("employee_table_hris");
     if (val === "row") return "rows";
     if (val === "column") return "grid";
   } catch (e) {}
-  return "grid";
+  return null;
 }
 
 function subscribe(callback: () => void) {
@@ -26,8 +26,8 @@ function subscribe(callback: () => void) {
 }
 
 export function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
-  const storedView = React.useSyncExternalStore(subscribe, getSnapshot, () => "grid");
-  const activeView = currentView ?? storedView;
+  const storedView = React.useSyncExternalStore(subscribe, getSnapshot, () => null);
+  const activeView = currentView !== undefined ? currentView : storedView;
 
   const setView = (view: "grid" | "rows") => {
     if (typeof window !== "undefined") {

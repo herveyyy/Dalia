@@ -5,12 +5,11 @@ import { getJobPostings } from "../utils/queries/job-queries";
 import { JobPostingsList } from "../utils/components/job-postings-list";
 
 export default async function Page(props: {
-  searchParams?: Promise<{ page?: string; items?: string; view?: string }>;
+  searchParams?: Promise<{ page?: string; items?: string }>;
 }) {
   const searchParams = await props.searchParams;
   const page = Number(searchParams?.page || 1);
   const itemsPerPage = Number(searchParams?.items || 20);
-  const viewMode = (searchParams?.view as "grid" | "rows") || "grid";
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -30,7 +29,6 @@ export default async function Page(props: {
       companyId={user.companyId || ""}
       page={page}
       itemsPerPage={itemsPerPage}
-      viewMode={viewMode}
     />
   );
 }
