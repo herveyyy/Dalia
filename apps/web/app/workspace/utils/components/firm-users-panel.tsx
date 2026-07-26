@@ -265,28 +265,34 @@ export function FirmUsersPanel({
         <Dialog open onOpenChange={(open) => !open && closeDialog()}>
           <DialogPortal>
             <DialogOverlay />
-            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-              <DialogTitle>Add firm user</DialogTitle>
-              <DialogDescription>
-                Creates a real login (email + password). They can sign in and open /apps.
-              </DialogDescription>
-              <form onSubmit={handleCreate} className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full name</Label>
-                  <Input id="name" name="name" required />
+            <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
+              <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+                <DialogTitle>Add firm user</DialogTitle>
+                <DialogDescription>
+                  Creates a real login (email + password). They can sign in and open /apps.
+                </DialogDescription>
+              </div>
+
+              <form onSubmit={handleCreate} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full name</Label>
+                    <Input id="name" name="name" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Temporary password</Label>
+                    <Input id="password" name="password" type="password" minLength={8} required />
+                    <p className="text-xs text-muted-foreground">Minimum 8 characters.</p>
+                  </div>
+                  <RoleChecklist roles={roles} roleIds={roleIds} onToggle={toggleRole} />
+                  {error ? <p className="text-sm text-destructive">{error}</p> : null}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Temporary password</Label>
-                  <Input id="password" name="password" type="password" minLength={8} required />
-                  <p className="text-xs text-muted-foreground">Minimum 8 characters.</p>
-                </div>
-                <RoleChecklist roles={roles} roleIds={roleIds} onToggle={toggleRole} />
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
-                <div className="flex justify-end gap-2 pt-2">
+
+                <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
                   <Button type="button" variant="outline" onClick={closeDialog}>
                     Cancel
                   </Button>
@@ -304,15 +310,21 @@ export function FirmUsersPanel({
         <Dialog open onOpenChange={(open) => !open && closeDialog()}>
           <DialogPortal>
             <DialogOverlay />
-            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-              <DialogTitle>Assign roles</DialogTitle>
-              <DialogDescription>
-                Access rights for {selected.name}. Create more under Firm Roles.
-              </DialogDescription>
-              <form onSubmit={handleRoles} className="mt-4 space-y-4">
-                <RoleChecklist roles={roles} roleIds={roleIds} onToggle={toggleRole} />
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
-                <div className="flex justify-end gap-2 pt-2">
+            <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
+              <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+                <DialogTitle>Assign roles</DialogTitle>
+                <DialogDescription>
+                  Access rights for {selected.name}. Create more under Firm Roles.
+                </DialogDescription>
+              </div>
+
+              <form onSubmit={handleRoles} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <RoleChecklist roles={roles} roleIds={roleIds} onToggle={toggleRole} />
+                  {error ? <p className="text-sm text-destructive">{error}</p> : null}
+                </div>
+
+                <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
                   <Button type="button" variant="outline" onClick={closeDialog}>
                     Cancel
                   </Button>
@@ -330,16 +342,22 @@ export function FirmUsersPanel({
         <Dialog open onOpenChange={(open) => !open && closeDialog()}>
           <DialogPortal>
             <DialogOverlay />
-            <DialogContent className="max-w-md">
-              <DialogTitle>Reset password</DialogTitle>
-              <DialogDescription>Set a new password for {selected.email}.</DialogDescription>
-              <form onSubmit={handlePassword} className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">New password</Label>
-                  <Input id="password" name="password" type="password" minLength={8} required />
+            <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden">
+              <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+                <DialogTitle>Reset password</DialogTitle>
+                <DialogDescription>Set a new password for {selected.email}.</DialogDescription>
+              </div>
+
+              <form onSubmit={handlePassword} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">New password</Label>
+                    <Input id="password" name="password" type="password" minLength={8} required />
+                  </div>
+                  {error ? <p className="text-sm text-destructive">{error}</p> : null}
                 </div>
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
-                <div className="flex justify-end gap-2 pt-2">
+
+                <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
                   <Button type="button" variant="outline" onClick={closeDialog}>
                     Cancel
                   </Button>

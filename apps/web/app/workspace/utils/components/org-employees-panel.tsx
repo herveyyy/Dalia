@@ -463,16 +463,19 @@ export function OrgEmployeesPanel({
         />
       ) : null}
 
-      {isOpen && (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogPortal>
-            <DialogOverlay />
-            <DialogContent className="max-w-lg">
+      <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
+            <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
               <DialogTitle>{selected ? "Edit Employee" : "Add Employee"}</DialogTitle>
               <DialogDescription>
                 Create or update a person for this client company, then assign department and role.
               </DialogDescription>
-              <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First name</Label>
@@ -577,52 +580,58 @@ export function OrgEmployeesPanel({
                     </select>
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button type="button" variant="outline" onClick={closeDialog}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving…" : "Save"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </DialogPortal>
-        </Dialog>
-      )}
+              </div>
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
+                <Button type="button" variant="outline" onClick={closeDialog}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? "Saving…" : "Save"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
 
       {loginMode && loginTarget && (
         <Dialog open onOpenChange={(open) => !open && closeLogin()}>
           <DialogPortal>
             <DialogOverlay />
-            <DialogContent className="max-w-md">
-              <DialogTitle>
-                {loginMode === "create" ? "Create employee login" : "Reset password"}
-              </DialogTitle>
-              <DialogDescription>
-                {loginMode === "create" ? (
-                  <>
-                    Creates a Better Auth account for{" "}
-                    <span className="font-semibold text-foreground">
-                      {loginTarget.firstName} {loginTarget.lastName}
-                    </span>{" "}
-                    ({loginTarget.workEmail}). They sign in at /login → /apps. Their role access
-                    rights apply.
-                  </>
-                ) : (
-                  <>Set a new password for {loginTarget.workEmail}.</>
-                )}
-              </DialogDescription>
-              <form onSubmit={handleLoginSubmit} className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">
-                    {loginMode === "create" ? "Temporary password" : "New password"}
-                  </Label>
-                  <Input id="password" name="password" type="password" minLength={8} required />
-                  <p className="text-xs text-muted-foreground">Minimum 8 characters.</p>
+            <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden">
+              <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+                <DialogTitle>
+                  {loginMode === "create" ? "Create employee login" : "Reset password"}
+                </DialogTitle>
+                <DialogDescription>
+                  {loginMode === "create" ? (
+                    <>
+                      Creates a Better Auth account for{" "}
+                      <span className="font-semibold text-foreground">
+                        {loginTarget.firstName} {loginTarget.lastName}
+                      </span>{" "}
+                      ({loginTarget.workEmail}). They sign in at /login → /apps. Their role access
+                      rights apply.
+                    </>
+                  ) : (
+                    <>Set a new password for {loginTarget.workEmail}.</>
+                  )}
+                </DialogDescription>
+              </div>
+
+              <form onSubmit={handleLoginSubmit} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">
+                      {loginMode === "create" ? "Temporary password" : "New password"}
+                    </Label>
+                    <Input id="password" name="password" type="password" minLength={8} required />
+                    <p className="text-xs text-muted-foreground">Minimum 8 characters.</p>
+                  </div>
+                  {loginError ? <p className="text-sm text-destructive">{loginError}</p> : null}
                 </div>
-                {loginError ? <p className="text-sm text-destructive">{loginError}</p> : null}
-                <div className="flex justify-end gap-2 pt-2">
+
+                <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
                   <Button type="button" variant="outline" onClick={closeLogin}>
                     Cancel
                   </Button>

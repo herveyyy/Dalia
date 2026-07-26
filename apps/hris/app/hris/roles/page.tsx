@@ -5,14 +5,7 @@ import { OrgRolesPanel } from "../../../../web/app/workspace/utils/components/or
 import { getUserRecord, getCompanyRecord } from "../utils/queries/employee-queries";
 import { getAppAccessCatalog, getRoles } from "../../../../web/app/workspace/utils/queries/get/get-org.query";
 
-export default async function HrisRolesPage(props: {
-  searchParams?: Promise<{ page?: string; items?: string; view?: string }>;
-}) {
-  const searchParams = await props.searchParams;
-  const page = Number(searchParams?.page || 1);
-  const items = Number(searchParams?.items || 20);
-  const viewMode = (searchParams?.view as "grid" | "rows") || "rows";
-
+export default async function HrisRolesPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -36,9 +29,6 @@ export default async function HrisRolesPage(props: {
       companyName={companyRecord?.name || "Company"}
       roles={roles}
       catalog={catalog}
-      page={page}
-      itemsPerPage={items}
-      viewMode={viewMode}
     />
   );
 }

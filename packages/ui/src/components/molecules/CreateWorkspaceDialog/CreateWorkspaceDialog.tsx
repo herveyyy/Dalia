@@ -65,56 +65,61 @@ export function CreateWorkspaceDialog({
       {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
       <DialogPortal>
         <DialogOverlay />
-        <DialogContent>
-          <div className="flex items-center justify-between mb-4">
-            <DialogTitle>Create Company Workspace</DialogTitle>
-            <DialogClose className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors cursor-pointer outline-none">
-              <X className="size-5" />
-            </DialogClose>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
+          <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+            <div className="flex items-center justify-between">
+              <DialogTitle>Create Company Workspace</DialogTitle>
+              <DialogClose className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted transition-colors cursor-pointer outline-none">
+                <X className="size-5" />
+              </DialogClose>
+            </div>
+            <DialogDescription className="mt-1.5">
+              Accounting firm partners can configure dedicated workspaces for client companies. Setting up a workspace invites the company administrator (e.g. CEO or Department Head) directly.
+            </DialogDescription>
           </div>
-          <DialogDescription>
-            Accounting firm partners can configure dedicated workspaces for client companies. Setting up a workspace invites the company administrator (e.g. CEO or Department Head) directly.
-          </DialogDescription>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="workspace-name">Company Name</Label>
-              <Input
-                id="workspace-name"
-                placeholder="e.g. Acme Corporation"
-                value={workspaceName}
-                onChange={(e) => setWorkspaceName(e.target.value)}
-                required
-              />
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="workspace-name">Company Name</Label>
+                <Input
+                  id="workspace-name"
+                  placeholder="e.g. Acme Corporation"
+                  value={workspaceName}
+                  onChange={(e) => setWorkspaceName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="business-type">Business Type</Label>
+                <select
+                  id="business-type"
+                  value={businessType}
+                  onChange={(e) => setBusinessType(e.target.value)}
+                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                >
+                  {BUSINESS_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="admin-email">Admin / CEO Email</Label>
+                <Input
+                  id="admin-email"
+                  type="email"
+                  placeholder="e.g. ceo@acme.com"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="business-type">Business Type</Label>
-              <select
-                id="business-type"
-                value={businessType}
-                onChange={(e) => setBusinessType(e.target.value)}
-                className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                required
-              >
-                {BUSINESS_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="admin-email">Admin / CEO Email</Label>
-              <Input
-                id="admin-email"
-                type="email"
-                placeholder="e.g. ceo@acme.com"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
+
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-border bg-card shrink-0">
               <DialogClose className="inline-flex items-center justify-center rounded-lg border border-border bg-card px-5 h-10 text-sm font-bold text-foreground hover:bg-muted transition-all cursor-pointer">
                 Cancel
               </DialogClose>

@@ -62,7 +62,7 @@ export function OrgRolesPanel({
     setSelected(role);
     setErrorMessage(null);
     if (role) {
-      setFeatureIds(role.permissions.map((p) => p.featureId));
+      setFeatureIds(role.permissions?.map((p) => p.featureId) ?? []);
     } else {
       setFeatureIds([]);
     }
@@ -246,17 +246,11 @@ export function OrgRolesPanel({
         />
       ) : null}
 
-      {isOpen && (
-        <Dialog
-          open={isOpen}
-          onOpenChange={(open) => {
-            if (!open) closeDialog();
-            else setIsOpen(true);
-          }}
-        >
-          <DialogPortal>
-            <DialogOverlay />
-            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+            <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
               <DialogTitle>{selected ? "Edit Role" : "Add Role"}</DialogTitle>
               <DialogDescription>
                 Name the role, then grant access rights by app and feature.
@@ -268,12 +262,14 @@ export function OrgRolesPanel({
                   {errorMessage}
                 </div>
               )}
+            </div>
 
-              <form
-                key={selected?.id || "new-role"}
-                onSubmit={handleSubmit}
-                className="mt-4 space-y-5"
-              >
+            <form
+              key={selected?.id || "new-role"}
+              onSubmit={handleSubmit}
+              className="flex flex-col flex-1 min-h-0"
+            >
+              <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="name">Role Name</Label>
                   <Input
@@ -316,7 +312,7 @@ export function OrgRolesPanel({
                           key={app.id}
                           className="rounded-xl border border-border bg-muted/20 overflow-hidden"
                         >
-                          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+                          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 bg-muted/10">
                             <div>
                               <p className="text-sm font-bold text-foreground">{app.name}</p>
                               <p className="text-xs text-muted-foreground">
@@ -362,20 +358,20 @@ export function OrgRolesPanel({
                     })}
                   </div>
                 </div>
+              </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-border">
-                  <Button type="button" variant="outline" onClick={closeDialog} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending} className="font-display">
-                    {isPending ? "Saving Role…" : "Save Role"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </DialogPortal>
-        </Dialog>
-      )}
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
+                <Button type="button" variant="outline" onClick={closeDialog} disabled={isPending}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isPending} className="font-display">
+                  {isPending ? "Saving Role…" : "Save Role"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>
 
       <ConfirmDialog
         open={Boolean(deleteRoleTarget)}

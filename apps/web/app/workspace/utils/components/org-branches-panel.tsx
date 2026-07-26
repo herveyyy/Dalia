@@ -247,37 +247,43 @@ export function OrgBranchesPanel({
         }}
       />
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
         <DialogPortal>
           <DialogOverlay />
-          <DialogContent className="max-w-md">
-            <DialogTitle>{selected ? "Edit Branch" : "Add Branch / Location"}</DialogTitle>
-            <DialogDescription>
-              Define internal store locations, offices, or regional branches.
-            </DialogDescription>
-            <form key={selected?.id || "new"} onSubmit={handleSubmit} className="mt-4 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Branch Name</Label>
-                <Input id="name" name="name" required placeholder="e.g. BGC Store / Main Office" defaultValue={selected?.name || ""} />
+          <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden">
+            <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+              <DialogTitle>{selected ? "Edit Branch" : "Add Branch / Location"}</DialogTitle>
+              <DialogDescription>
+                Define internal store locations, offices, or regional branches.
+              </DialogDescription>
+            </div>
+
+            <form key={selected?.id || "new"} onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Branch Name</Label>
+                  <Input id="name" name="name" required placeholder="e.g. BGC Store / Main Office" defaultValue={selected?.name || ""} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="code">Branch Code (Optional)</Label>
+                  <Input id="code" name="code" placeholder="e.g. BGC-01" defaultValue={selected?.code || ""} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address / Location</Label>
+                  <Input id="address" name="address" placeholder="e.g. Bonifacio Global City, Taguig" defaultValue={selected?.address || ""} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Notes / Description</Label>
+                  <Input
+                    id="description"
+                    name="description"
+                    placeholder="e.g. Main retail flagship store"
+                    defaultValue={selected?.description || ""}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="code">Branch Code (Optional)</Label>
-                <Input id="code" name="code" placeholder="e.g. BGC-01" defaultValue={selected?.code || ""} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address / Location</Label>
-                <Input id="address" name="address" placeholder="e.g. Bonifacio Global City, Taguig" defaultValue={selected?.address || ""} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Notes / Description</Label>
-                <Input
-                  id="description"
-                  name="description"
-                  placeholder="e.g. Main retail flagship store"
-                  defaultValue={selected?.description || ""}
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
+
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
                 <Button type="button" variant="outline" onClick={closeDialog}>
                   Cancel
                 </Button>

@@ -233,28 +233,34 @@ export function OrgDepartmentsPanel({
         }}
       />
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
         <DialogPortal>
           <DialogOverlay />
-          <DialogContent className="max-w-md">
-            <DialogTitle>{selected ? "Edit Department" : "Add Department"}</DialogTitle>
-            <DialogDescription>
-              Departments group employees for this client company.
-            </DialogDescription>
-            <form key={selected?.id || "new"} onSubmit={handleSubmit} className="mt-4 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" name="name" required defaultValue={selected?.name || ""} />
+          <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden">
+            <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+              <DialogTitle>{selected ? "Edit Department" : "Add Department"}</DialogTitle>
+              <DialogDescription>
+                Departments group employees for this client company.
+              </DialogDescription>
+            </div>
+
+            <form key={selected?.id || "new"} onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" name="name" required defaultValue={selected?.name || ""} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    name="description"
+                    defaultValue={selected?.description || ""}
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  name="description"
-                  defaultValue={selected?.description || ""}
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
+
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
                 <Button type="button" variant="outline" onClick={closeDialog}>
                   Cancel
                 </Button>

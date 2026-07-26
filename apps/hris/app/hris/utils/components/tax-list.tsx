@@ -181,51 +181,54 @@ export function TaxList({
         navigate={(href) => router.push(href, { scroll: false })}
       />
 
-      {/* Dialog for Add/Edit */}
       {isOpen && (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogPortal>
             <DialogOverlay />
-            <DialogContent className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-6 shadow-2xl">
-              <DialogTitle>{selectedTax ? "Edit Tax Type" : "Add Tax Type"}</DialogTitle>
-              <DialogDescription>
-                Configure the tax name, percentage rate, and optional description.
-              </DialogDescription>
+            <DialogContent className="max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden">
+              <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+                <DialogTitle>{selectedTax ? "Edit Tax Type" : "Add Tax Type"}</DialogTitle>
+                <DialogDescription>
+                  Configure the tax name, percentage rate, and optional description.
+                </DialogDescription>
+              </div>
 
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                <div>
-                  <Label htmlFor="name">Tax Name *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    defaultValue={selectedTax?.name || ""}
-                    placeholder="e.g. Withholding Tax (20%)"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="rate">Rate (%) *</Label>
-                  <Input
-                    id="rate"
-                    name="rate"
-                    type="number"
-                    step="0.01"
-                    defaultValue={selectedTax?.rate || "0.00"}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Input
-                    id="description"
-                    name="description"
-                    defaultValue={selectedTax?.description || ""}
-                    placeholder="e.g. Expanded withholding tax bracket"
-                  />
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div>
+                    <Label htmlFor="name">Tax Name *</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      defaultValue={selectedTax?.name || ""}
+                      placeholder="e.g. Withholding Tax (20%)"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="rate">Rate (%) *</Label>
+                    <Input
+                      id="rate"
+                      name="rate"
+                      type="number"
+                      step="0.01"
+                      defaultValue={selectedTax?.rate || "0.00"}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      name="description"
+                      defaultValue={selectedTax?.description || ""}
+                      placeholder="e.g. Expanded withholding tax bracket"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
+                <div className="flex justify-end gap-3 px-6 py-4 border-t border-border bg-card shrink-0">
                   <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isPending}>
                     Cancel
                   </Button>

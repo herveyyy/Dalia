@@ -227,7 +227,7 @@ export function JobPostingsList({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden divide-y divide-border/60">
+        <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden divide-y">
           {paginatedJobs.map((job) => (
             <div key={job.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30">
               <div className="flex items-center gap-4">
@@ -280,115 +280,118 @@ export function JobPostingsList({
         navigate={(href) => router.push(href, { scroll: false })}
       />
 
-      {/* Dialog for Add/Edit */}
       {isOpen && (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogPortal>
             <DialogOverlay />
-            <DialogContent className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-              <DialogTitle>{selectedJob ? "Edit Job Posting" : "Post a New Job"}</DialogTitle>
-              <DialogDescription>
-                Configure the job details, requirements, department, and employment type.
-              </DialogDescription>
+            <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+              <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+                <DialogTitle>{selectedJob ? "Edit Job Posting" : "Post a New Job"}</DialogTitle>
+                <DialogDescription>
+                  Configure the job details, requirements, department, and employment type.
+                </DialogDescription>
+              </div>
 
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="title">Job Title *</Label>
+                      <Input
+                        id="title"
+                        name="title"
+                        defaultValue={selectedJob?.title || ""}
+                        placeholder="e.g. Senior Backend Engineer"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="department">Department</Label>
+                      <Input
+                        id="department"
+                        name="department"
+                        defaultValue={selectedJob?.department || ""}
+                        placeholder="e.g. Engineering"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
+                        name="location"
+                        defaultValue={selectedJob?.location || ""}
+                        placeholder="e.g. Manila / Remote"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="employmentType">Employment Type *</Label>
+                      <select
+                        id="employmentType"
+                        name="employmentType"
+                        defaultValue={selectedJob?.employmentType || "Full-time"}
+                        className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
+                      >
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Internship">Internship</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="salaryRange">Salary Range (Optional)</Label>
+                      <Input
+                        id="salaryRange"
+                        name="salaryRange"
+                        defaultValue={selectedJob?.salaryRange || ""}
+                        placeholder="e.g. ₱60k - ₱80k"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="title">Job Title *</Label>
-                    <Input
-                      id="title"
-                      name="title"
-                      defaultValue={selectedJob?.title || ""}
-                      placeholder="e.g. Senior Backend Engineer"
+                    <Label htmlFor="status">Listing Status</Label>
+                    <select
+                      id="status"
+                      name="status"
+                      defaultValue={selectedJob?.status || "Published"}
+                      className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
+                    >
+                      <option value="Published">Published</option>
+                      <option value="Draft">Draft</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Job Description *</Label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      rows={4}
+                      defaultValue={selectedJob?.description || ""}
+                      placeholder="Describe the role and key duties..."
+                      className="w-full rounded-lg border border-input bg-card p-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-25"
                       required
                     />
                   </div>
+
                   <div>
-                    <Label htmlFor="department">Department</Label>
-                    <Input
-                      id="department"
-                      name="department"
-                      defaultValue={selectedJob?.department || ""}
-                      placeholder="e.g. Engineering"
+                    <Label htmlFor="requirements">Requirements (Optional)</Label>
+                    <textarea
+                      id="requirements"
+                      name="requirements"
+                      rows={3}
+                      defaultValue={selectedJob?.requirements || ""}
+                      placeholder="Required qualifications, skills, and tools..."
+                      className="w-full rounded-lg border border-input bg-card p-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-20"
                     />
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div>
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      name="location"
-                      defaultValue={selectedJob?.location || ""}
-                      placeholder="e.g. Manila / Remote"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="employmentType">Employment Type *</Label>
-                    <select
-                      id="employmentType"
-                      name="employmentType"
-                      defaultValue={selectedJob?.employmentType || "Full-time"}
-                      className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
-                    >
-                      <option value="Full-time">Full-time</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Contract">Contract</option>
-                      <option value="Internship">Internship</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="salaryRange">Salary Range (Optional)</Label>
-                    <Input
-                      id="salaryRange"
-                      name="salaryRange"
-                      defaultValue={selectedJob?.salaryRange || ""}
-                      placeholder="e.g. ₱60k - ₱80k"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="status">Listing Status</Label>
-                  <select
-                    id="status"
-                    name="status"
-                    defaultValue={selectedJob?.status || "Published"}
-                    className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
-                  >
-                    <option value="Published">Published</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Closed">Closed</option>
-                  </select>
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Job Description *</Label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    rows={4}
-                    defaultValue={selectedJob?.description || ""}
-                    placeholder="Describe the role and key duties..."
-                    className="w-full rounded-lg border border-input bg-card p-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-25"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="requirements">Requirements (Optional)</Label>
-                  <textarea
-                    id="requirements"
-                    name="requirements"
-                    rows={3}
-                    defaultValue={selectedJob?.requirements || ""}
-                    placeholder="Required qualifications, skills, and tools..."
-                    className="w-full rounded-lg border border-input bg-card p-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-20"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
+                <div className="flex justify-end gap-3 px-6 py-4 border-t border-border bg-card shrink-0">
                   <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={isPending}>
                     Cancel
                   </Button>

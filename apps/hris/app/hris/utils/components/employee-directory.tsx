@@ -383,57 +383,59 @@ export function EmployeeDirectory({
         </div>
       )}
 
-      {/* Dialog for Add/Edit */}
       {isOpen && (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
           <DialogPortal>
             <DialogOverlay />
-            <DialogContent className="fixed left-1/2 top-1/2 z-50 w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-              <DialogTitle>{selectedEmployee ? "Edit Employee Record" : "Add New Employee"}</DialogTitle>
-              <DialogDescription>
-                Configure the employee profile, identification codes, payroll settings, and emergency contacts.
-              </DialogDescription>
+            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+              <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
+                <DialogTitle>{selectedEmployee ? "Edit Employee Record" : "Add New Employee"}</DialogTitle>
+                <DialogDescription>
+                  Configure the employee profile, identification codes, payroll settings, and emergency contacts.
+                </DialogDescription>
 
-              {/* Step Wizard Progress Bar */}
-              <div className="mt-6 border-b border-border/60 pb-5">
-                <div className="flex items-center justify-between max-w-3xl mx-auto">
-                  {[
-                    { step: 1, label: "Personal Profile" },
-                    { step: 2, label: "Statutory IDs" },
-                    { step: 3, label: "Job & Payroll" },
-                    { step: 4, label: "Contacts & Compensation" },
-                  ].map((s, idx, arr) => (
-                    <React.Fragment key={s.step}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`flex size-7 items-center justify-center rounded-full text-xs font-bold transition-all duration-200 ${currentStep === s.step
-                              ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
-                              : currentStep > s.step
-                                ? "bg-primary/10 text-primary"
-                                : "bg-muted text-muted-foreground"
-                            }`}
-                        >
-                          {s.step}
+                {/* Step Wizard Progress Bar */}
+                <div className="mt-4 border-t border-border/60 pt-4">
+                  <div className="flex items-center justify-between max-w-3xl mx-auto">
+                    {[
+                      { step: 1, label: "Personal Profile" },
+                      { step: 2, label: "Statutory IDs" },
+                      { step: 3, label: "Job & Payroll" },
+                      { step: 4, label: "Contacts & Compensation" },
+                    ].map((s, idx, arr) => (
+                      <React.Fragment key={s.step}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`flex size-7 items-center justify-center rounded-full text-xs font-bold transition-all duration-200 ${currentStep === s.step
+                                ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                                : currentStep > s.step
+                                  ? "bg-primary/10 text-primary"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                          >
+                            {s.step}
+                          </div>
+                          <span
+                            className={`text-xs font-semibold hidden md:inline ${currentStep === s.step ? "text-foreground" : "text-muted-foreground"
+                              }`}
+                          >
+                            {s.label}
+                          </span>
                         </div>
-                        <span
-                          className={`text-xs font-semibold hidden md:inline ${currentStep === s.step ? "text-foreground" : "text-muted-foreground"
-                            }`}
-                        >
-                          {s.label}
-                        </span>
-                      </div>
-                      {idx < arr.length - 1 && (
-                        <div
-                          className={`flex-1 h-0.5 mx-4 hidden md:block ${currentStep > s.step ? "bg-primary/40" : "bg-border/60"
-                            }`}
-                        />
-                      )}
-                    </React.Fragment>
-                  ))}
+                        {idx < arr.length - 1 && (
+                          <div
+                            className={`flex-1 h-0.5 mx-4 hidden md:block ${currentStep > s.step ? "bg-primary/40" : "bg-border/60"
+                              }`}
+                          />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* Step 1: Personal Profile */}
                 <div className={currentStep === 1 ? "space-y-4" : "hidden"}>
                   <div className="flex items-center gap-2 border-b border-border/60 pb-2">
@@ -850,11 +852,11 @@ export function EmployeeDirectory({
                       </div>
                     </div>
                   </div>
-
                 </div>
+              </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
+              {/* Action Buttons */}
+                <div className="flex justify-end gap-3 px-6 py-4 border-t border-border bg-card shrink-0">
                   {currentStep > 1 && (
                     <Button type="button" variant="outline" onClick={handlePrevStep} disabled={isPending}>
                       Back
