@@ -26,7 +26,7 @@ export function AppsGrid({ apps }: { apps: AppCardItem[] }) {
                     <span className="flex size-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                       <Icon className="size-5" />
                     </span>
-                    <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                    <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                       Active
                     </span>
                   </div>
@@ -58,10 +58,10 @@ export function AppsGrid({ apps }: { apps: AppCardItem[] }) {
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="flex size-10 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <span className="flex size-10 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-600">
                       <HiOutlineLockClosed className="size-5" />
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
                       <HiOutlineLockClosed className="size-3" />
                       Restricted
                     </span>
@@ -74,7 +74,7 @@ export function AppsGrid({ apps }: { apps: AppCardItem[] }) {
                   </p>
                 </div>
 
-                <div className="mt-5 flex items-center gap-1.5 border-t border-border/40 pt-3 text-xs font-medium text-amber-700 dark:text-amber-400">
+                <div className="mt-5 flex items-center gap-1.5 border-t border-border/40 pt-3 text-xs font-medium text-amber-400">
                   <HiOutlineLockClosed className="size-3.5" />
                   <span>{app.statusLabel}</span>
                 </div>
