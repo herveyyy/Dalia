@@ -21,17 +21,19 @@ export default async function AppsPage() {
     <div className="min-h-screen bg-background">
       <AppsHeader companyName={companyName} userName={user.name} />
 
-      <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Dalia ERP Applications
           </h1>
-          <p className="mt-4 text-base text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             Select an application below to manage your firm&apos;s workflows or client workspaces.
           </p>
         </div>
 
-        <AppsGrid apps={apps} />
+        <nav aria-label="ERP Applications Menu" className="mt-6">
+          <AppsGrid apps={apps} />
+        </nav>
       </main>
     </div>
   );
