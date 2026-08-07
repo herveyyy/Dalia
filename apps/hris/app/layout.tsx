@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito_Sans, Quicksand } from "next/font/google";
+import { PageTransitionLoader } from "@repo/ui/components/atoms/PageTransitionLoader";
 import "./globals.css";
 
 const nunito = Nunito_Sans({
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body
         className={`${nunito.variable} ${quicksand.variable} font-sans antialiased`}
       >
+        <PageTransitionLoader />
         {children}
       </body>
     </html>
