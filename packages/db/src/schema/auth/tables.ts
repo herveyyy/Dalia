@@ -12,9 +12,9 @@ export const verification = pgTable("verification", {
   id: text().primaryKey().notNull(),
   identifier: text().notNull(),
   value: text().notNull(),
-  expiresAt: timestamp("expires_at", { mode: "string" }).notNull(),
-  createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 });
 
 export const user = pgTable(
@@ -26,8 +26,8 @@ export const user = pgTable(
     emailVerified: boolean("email_verified").default(false).notNull(),
     image: text(),
     companyId: text("company_id"),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique("user_email_unique").on(table.email)],
 );
@@ -44,14 +44,16 @@ export const account = pgTable(
     idToken: text("id_token"),
     accessTokenExpiresAt: timestamp("access_token_expires_at", {
       mode: "string",
+      withTimezone: true,
     }),
     refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
       mode: "string",
+      withTimezone: true,
     }),
     scope: text(),
     password: text(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull(),
   },
   (table) => [
     foreignKey({
@@ -66,10 +68,10 @@ export const session = pgTable(
   "session",
   {
     id: text().primaryKey().notNull(),
-    expiresAt: timestamp("expires_at", { mode: "string" }).notNull(),
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
     token: text().notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     userId: text("user_id").notNull(),

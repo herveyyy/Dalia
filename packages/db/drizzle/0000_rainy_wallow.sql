@@ -1,21 +1,4 @@
--- Current sql file was generated after introspecting the database
--- If you want to run this migration please uncomment this code before executing migrations
-/*
-CREATE TABLE "workspace" (
-	"name" text NOT NULL,
-	"website_url" text,
-	"headquarters" text,
-	"description" text,
-	"logo_url" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"created_by" text NOT NULL,
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"company_id" uuid NOT NULL,
-	"admin_email" text,
-	"business_type" text
-);
---> statement-breakpoint
+
 CREATE TABLE "app_module" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"key" text NOT NULL,

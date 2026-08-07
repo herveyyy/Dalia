@@ -8,9 +8,15 @@ import {
 
 /** Upserts the global app/feature permission catalog efficiently. Safe to call on page load. */
 export async function ensureAppAccessCatalog() {
-  const existingModules = await db.query.appModule.findMany({
-    with: { features: true },
-  });
+  const [modules, features] = await Promise.all([
+    db.select().from(appModule),
+    db.select().from(appFeature),
+  ]);
+
+  const existingModules = modules.map((m) => ({
+    ...m,
+    features: features.filter((f) => f.appModuleId === m.id),
+  }));
 
   const moduleMap = new Map(existingModules.map((m) => [m.key, m]));
 

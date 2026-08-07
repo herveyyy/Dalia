@@ -1,4 +1,15 @@
-import { db, jobPosting, eq, and, ilike, sql } from "@repo/db";
+import {
+  db,
+  jobPosting,
+  eq,
+  and,
+  ilike,
+  sql,
+  department,
+  branch,
+  desc,
+  asc,
+} from "@repo/db";
 
 export interface GetJobPostingsParams {
   companyId: string;
@@ -28,15 +39,31 @@ export async function getJobPostings(params: GetJobPostingsParams | string) {
     const whereClause = and(...conditions);
 
     const [list, [totalResult]] = await Promise.all([
-      db.query.jobPosting.findMany({
-        where: (job, { eq, and }) => whereClause,
-        with: {
-          department: { columns: { name: true } },
-        },
-        orderBy: (job, { desc }) => desc(job.createdAt),
-        limit: itemsPerPage,
-        offset: offset,
-      }),
+      db
+        .select({
+          id: jobPosting.id,
+          companyId: jobPosting.companyId,
+          title: jobPosting.title,
+          description: jobPosting.description,
+          requirements: jobPosting.requirements,
+          departmentId: jobPosting.departmentId,
+          employmentType: jobPosting.employmentType,
+          salaryRange: jobPosting.salaryRange,
+          location: jobPosting.location,
+          status: jobPosting.status,
+          isArchived: jobPosting.isArchived,
+          createdAt: jobPosting.createdAt,
+          updatedAt: jobPosting.updatedAt,
+          department: {
+            name: department.name,
+          },
+        })
+        .from(jobPosting)
+        .leftJoin(department, eq(jobPosting.departmentId, department.id))
+        .where(whereClause)
+        .orderBy(desc(jobPosting.createdAt))
+        .limit(itemsPerPage)
+        .offset(offset),
       db
         .select({ total: sql<number>`count(*)` })
         .from(jobPosting)
@@ -60,11 +87,11 @@ export async function getJobPostings(params: GetJobPostingsParams | string) {
 
 export async function getCompanyDepartments(companyId: string) {
   try {
-    return await db.query.department.findMany({
-      where: (dept, { eq, and }) =>
-        and(eq(dept.companyId, companyId), eq(dept.isArchived, false)),
-      orderBy: (dept, { asc }) => asc(dept.name),
-    });
+    return await db
+      .select()
+      .from(department)
+      .where(and(eq(department.companyId, companyId), eq(department.isArchived, false)))
+      .orderBy(asc(department.name));
   } catch (error) {
     console.error("Failed to fetch departments:", error);
     return [];
@@ -73,11 +100,11 @@ export async function getCompanyDepartments(companyId: string) {
 
 export async function getCompanyBranches(companyId: string) {
   try {
-    return await db.query.branch.findMany({
-      where: (br, { eq, and }) =>
-        and(eq(br.companyId, companyId), eq(br.isArchived, false)),
-      orderBy: (br, { asc }) => asc(br.name),
-    });
+    return await db
+      .select()
+      .from(branch)
+      .where(and(eq(branch.companyId, companyId), eq(branch.isArchived, false)))
+      .orderBy(asc(branch.name));
   } catch (error) {
     console.error("Failed to fetch branches:", error);
     return [];

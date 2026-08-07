@@ -119,7 +119,15 @@ export function DiffViewerModal({ log, onClose }: DiffViewerModalProps) {
             <HiOutlineClock className="w-4 h-4 text-muted-foreground" />
             <span>Timestamp: </span>
             <strong className="text-foreground font-semibold">
-              {new Date(log.createdAt).toLocaleString()}
+              {new Date(log.createdAt).toLocaleString(undefined, {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                second: "2-digit",
+                timeZoneName: "short",
+              })}
             </strong>
           </div>
           <div className="flex items-center gap-2">
@@ -144,11 +152,11 @@ export function DiffViewerModal({ log, onClose }: DiffViewerModalProps) {
                   No explicit field-level changes recorded for this operation.
                 </div>
               ) : (
-                <div className="rounded-xl border border-border overflow-hidden divide-y divide-border bg-background">
+                <div className="rounded-xl border border-border overflow-hidden divide-y bg-background">
                   <div className="grid grid-cols-12 px-4 py-2.5 bg-muted/60 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
                     <div className="col-span-3">Field Name</div>
-                    <div className="col-span-4 text-rose-700 dark:text-rose-400">Previous Value (Old)</div>
-                    <div className="col-span-5 text-emerald-700 dark:text-emerald-400">New Value (Updated)</div>
+                    <div className="col-span-4 text-rose-700">Previous Value (Old)</div>
+                    <div className="col-span-5 text-emerald-700">New Value (Updated)</div>
                   </div>
 
                   {changeKeys.map((key) => {
@@ -167,10 +175,10 @@ export function DiffViewerModal({ log, onClose }: DiffViewerModalProps) {
                         <div className="col-span-3 font-mono font-semibold text-primary">
                           {key}
                         </div>
-                        <div className="col-span-4 font-mono text-rose-700 dark:text-rose-300 bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20 break-all">
+                        <div className="col-span-4 font-mono text-rose-700 break-all">
                           {formatVal(diff?.old)}
                         </div>
-                        <div className="col-span-5 font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 break-all">
+                        <div className="col-span-5 font-mono text-emerald-700 break-all">
                           {formatVal(diff?.new)}
                         </div>
                       </div>
@@ -184,11 +192,11 @@ export function DiffViewerModal({ log, onClose }: DiffViewerModalProps) {
               {/* Old Data */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-rose-700">
                     Previous State (Before)
                   </h4>
                 </div>
-                <pre className="p-4 rounded-xl bg-background border border-border text-xs font-mono text-rose-800 dark:text-rose-300 overflow-x-auto max-h-96">
+                <pre className="p-4 rounded-xl bg-background border border-border text-xs font-mono text-rose-800 overflow-x-auto max-h-96">
                   {log.oldData
                     ? JSON.stringify(log.oldData, null, 2)
                     : "// No previous record data (New entity created)"}
@@ -198,11 +206,11 @@ export function DiffViewerModal({ log, onClose }: DiffViewerModalProps) {
               {/* New Data */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  <h4 className="text-xs font-bold uppercase tracking-wider dark:text-emerald-400">
                     Updated State (After)
                   </h4>
                 </div>
-                <pre className="p-4 rounded-xl bg-background border border-border text-xs font-mono text-emerald-800 dark:text-emerald-300 overflow-x-auto max-h-96">
+                <pre className="p-4 rounded-xl bg-background border border-border text-xs font-mono text-emerald-800 overflow-x-auto max-h-96">
                   {log.newData
                     ? JSON.stringify(log.newData, null, 2)
                     : "// Entity removed/archived"}

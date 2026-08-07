@@ -21,7 +21,7 @@ export const employee = pgTable(
     middleName: text("middle_name"),
     lastName: text("last_name").notNull(),
     suffix: text("suffix"),
-    dateOfBirth: timestamp("date_of_birth", { mode: "string" }),
+    dateOfBirth: timestamp("date_of_birth", { mode: "string", withTimezone: true }),
     gender: text("gender"),
     personalEmail: text("personal_email"),
     workEmail: text("work_email"),
@@ -43,7 +43,7 @@ export const employee = pgTable(
     employmentStatus: text("employment_status").default("Active").notNull(),
     employmentSchedule: text("employment_schedule"),
     supervisorId: uuid("supervisor_id"),
-    dateOfHire: timestamp("date_of_hire", { mode: "string" }),
+    dateOfHire: timestamp("date_of_hire", { mode: "string", withTimezone: true }),
 
     payType: text("pay_type"),
     basePayRate: numeric("base_pay_rate", { precision: 12, scale: 2 }).default("0.00").notNull(),
@@ -58,8 +58,8 @@ export const employee = pgTable(
     taxBracketCode: text("tax_bracket_code"),
     taxTypeId: uuid("tax_type_id"),
 
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -110,8 +110,8 @@ export const employeeEmergencyContact = pgTable(
     contactNo: text("contact_no").notNull(),
     contactAddress: text("contact_address"),
     relationship: text("relationship").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -129,8 +129,8 @@ export const deductionType = pgTable(
     companyId: uuid("company_id").notNull(),
     name: text("name").notNull(),
     category: text("category").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -149,8 +149,8 @@ export const employeeDeduction = pgTable(
     deductionTypeId: uuid("deduction_type_id").notNull(),
     amount: numeric("amount", { precision: 12, scale: 2 }).default("0.00").notNull(),
     frequency: text("frequency").default("every_pay_period").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -173,8 +173,8 @@ export const allowanceType = pgTable(
     companyId: uuid("company_id").notNull(),
     name: text("name").notNull(),
     isTaxable: boolean("is_taxable").default(false).notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -193,8 +193,8 @@ export const employeeAllowance = pgTable(
     allowanceTypeId: uuid("allowance_type_id").notNull(),
     amount: numeric("amount", { precision: 12, scale: 2 }).default("0.00").notNull(),
     frequency: text("frequency").default("monthly").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -219,8 +219,8 @@ export const taxType = pgTable(
     rate: numeric("rate", { precision: 5, scale: 2 }).default("0.00").notNull(),
     description: text("description"),
     isArchived: boolean("is_archived").default(false).notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -239,8 +239,8 @@ export const department = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     isArchived: boolean("is_archived").default(false).notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -261,8 +261,8 @@ export const branch = pgTable(
     address: text("address"),
     description: text("description"),
     isArchived: boolean("is_archived").default(false).notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -287,8 +287,8 @@ export const jobPosting = pgTable(
     salaryRange: text("salary_range"),
     status: text("status").default("Published").notNull(),
     isArchived: boolean("is_archived").default(false).notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({

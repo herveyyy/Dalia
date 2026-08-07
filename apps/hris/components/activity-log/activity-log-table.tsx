@@ -245,8 +245,13 @@ export function ActivityLogTable({
                     <div className="flex items-center gap-1.5">
                       <HiOutlineCalendar className="size-3.5 text-muted-foreground/70" />
                       {new Date(log.createdAt).toLocaleString(undefined, {
-                        dateStyle: "short",
-                        timeStyle: "medium",
+                        year: "numeric",
+                        month: "numeric",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        timeZoneName: "short",
                       })}
                     </div>
                   </TableCell>

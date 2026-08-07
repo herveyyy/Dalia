@@ -24,8 +24,8 @@ export const role = pgTable(
     description: text("description"),
     isSystem: boolean("is_system").default(false).notNull(),
     createdBy: text("created_by").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -50,8 +50,8 @@ export const userRole = pgTable(
     userId: text("user_id").notNull(),
     roleId: uuid("role_id").notNull(),
     assignedBy: text("assigned_by"),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -83,8 +83,8 @@ export const appModule = pgTable(
     description: text("description"),
     sortOrder: integer("sort_order").default(0).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique("app_module_key_unique").on(table.key)],
 );
@@ -100,8 +100,8 @@ export const appFeature = pgTable(
     description: text("description"),
     sortOrder: integer("sort_order").default(0).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({
@@ -120,7 +120,7 @@ export const rolePermission = pgTable(
     id: uuid("id").defaultRandom().primaryKey().notNull(),
     roleId: uuid("role_id").notNull(),
     featureId: uuid("feature_id").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({

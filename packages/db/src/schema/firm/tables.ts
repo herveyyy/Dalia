@@ -8,8 +8,8 @@ export const company = pgTable("company", {
   headquarters: text("headquarters"),
   description: text("description"),
   logoUrl: text("logo_url"),
-  createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   createdBy: text("created_by").notNull(),
 });
 
@@ -25,8 +25,8 @@ export const workspace = pgTable(
     headquarters: text("headquarters"),
     description: text("description"),
     logoUrl: text("logo_url"),
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     createdBy: text("created_by").notNull(),
   },
   (table) => [

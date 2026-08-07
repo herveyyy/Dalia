@@ -29,7 +29,7 @@ export const activityLog = pgTable(
     changes: jsonb("changes"),
     metadata: jsonb("metadata"),
 
-    createdAt: timestamp("created_at", { mode: "string" }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("activity_log_company_id_idx").on(table.companyId),

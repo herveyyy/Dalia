@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/neon-serverless";
 import ws from "ws";
 import * as schema from "./schema/index";
 import { APP_ACCESS_CATALOG } from "./schema/rbac/catalog";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 neonConfig.webSocketConstructor = ws;
 
@@ -13,9 +13,11 @@ const db = drizzle({ client: pool, schema });
 
 async function main() {
   for (const [moduleIndex, mod] of APP_ACCESS_CATALOG.entries()) {
-    const existing = await db.query.appModule.findFirst({
-      where: (m, { eq: whereEq }) => whereEq(m.key, mod.key),
-    });
+    const [existing] = await db
+      .select({ id: schema.appModule.id })
+      .from(schema.appModule)
+      .where(eq(schema.appModule.key, mod.key))
+      .limit(1);
 
     let moduleId = existing?.id;
     if (!moduleId) {
@@ -44,10 +46,16 @@ async function main() {
     }
 
     for (const [featureIndex, feature] of mod.features.entries()) {
-      const existingFeature = await db.query.appFeature.findFirst({
-        where: (f, { and: whereAnd, eq: whereEq }) =>
-          whereAnd(whereEq(f.appModuleId, moduleId!), whereEq(f.key, feature.key)),
-      });
+      const [existingFeature] = await db
+        .select({ id: schema.appFeature.id })
+        .from(schema.appFeature)
+        .where(
+          and(
+            eq(schema.appFeature.appModuleId, moduleId!),
+            eq(schema.appFeature.key, feature.key)
+          )
+        )
+        .limit(1);
 
       if (!existingFeature) {
         await db.insert(schema.appFeature).values({
