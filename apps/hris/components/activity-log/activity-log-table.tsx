@@ -25,11 +25,14 @@ import {
   HiOutlineTag,
 } from "react-icons/hi2";
 
-interface ActivityLogTableProps {
+export interface ActivityLogTableProps {
   initialLogs: ActivityLogItem[];
   totalCount: number;
   page?: number;
   itemsPerPage?: number;
+  search?: string;
+  actionFilter?: string;
+  entityFilter?: string;
 }
 
 export function ActivityLogTable({
@@ -37,14 +40,18 @@ export function ActivityLogTable({
   totalCount,
   page = 1,
   itemsPerPage = 20,
+  search: initialSearch = "",
+  actionFilter: initialActionFilter = "ALL",
+  entityFilter: initialEntityFilter = "ALL",
 }: ActivityLogTableProps) {
   const router = useRouter();
   const [logs] = useState<ActivityLogItem[]>(initialLogs);
   const [selectedLog, setSelectedLog] = useState<ActivityLogItem | null>(null);
 
-  const [search, setSearch] = useState("");
-  const [actionFilter, setActionFilter] = useState("ALL");
-  const [entityFilter, setEntityFilter] = useState("ALL");
+  const [search, setSearch] = useState(initialSearch);
+  const [actionFilter, setActionFilter] = useState(initialActionFilter);
+  const [entityFilter, setEntityFilter] = useState(initialEntityFilter);
+
 
   // Filter logs based on search query, action, and entity type
   const filteredLogs = logs.filter((log) => {

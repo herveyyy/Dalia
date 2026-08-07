@@ -1,12 +1,12 @@
-import { getSafeSession } from "@repo/auth";
-import { headers } from "next/headers";
+import React from "react";
 import { redirect } from "next/navigation";
 import { db, getActivityLogs } from "@repo/db";
-import { getUserRecord } from "../utils/queries/employee-queries";
-import { ActivityLogTable } from "../../../components/activity-log/activity-log-table";
+import { resolveTenantCompanyId } from "../utils/lib/resolve-tenant-company";
+import { ActivityLogTable } from "../../../../hris/components/activity-log/activity-log-table";
 
-export default async function HrisActivityLogsPage(props: {
+export default async function WorkspaceActivityLogsPage(props: {
   searchParams?: Promise<{
+    company_id?: string;
     page?: string;
     items?: string;
     q?: string;
@@ -16,17 +16,17 @@ export default async function HrisActivityLogsPage(props: {
   }>;
 }) {
   const searchParams = await props.searchParams;
+  const selectorId = searchParams?.company_id;
   const page = Number(searchParams?.page || 1);
   const items = Number(searchParams?.items || 10);
   const search = searchParams?.q || searchParams?.search || "";
   const action = searchParams?.action || "ALL";
   const entityType = searchParams?.entity || "ALL";
 
-  const session = await getSafeSession(await headers());
-  if (!session) redirect("/login");
-
-  const userRecord = await getUserRecord(session.user.id);
-  const companyId = userRecord?.companyId ?? undefined;
+  const { session, companyId, error } = await resolveTenantCompanyId(selectorId);
+  if (!session || error || !companyId) {
+    redirect("/login");
+  }
 
   const { logs, totalCount } = await getActivityLogs(db, {
     companyId,
@@ -56,6 +56,15 @@ export default async function HrisActivityLogsPage(props: {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+          Activity Logs & Audit Trail
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Complete, version-controlled immutable audit trail of system mutations and data changes.
+        </p>
+      </div>
+
       <ActivityLogTable
         initialLogs={formattedLogs}
         totalCount={totalCount}

@@ -1,4 +1,5 @@
 import { activityLog, NewActivityLog } from "../schema/activity/tables";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 
 export const DEFAULT_SENSITIVE_FIELDS = [
   "password",
@@ -67,7 +68,6 @@ export function computeJsonDiff(
     ]);
 
     for (const key of allKeys) {
-      // Ignore timestamp keys like updatedAt if needed or compare values
       const valOld = sanitizedOld[key];
       const valNew = sanitizedNew[key];
 
@@ -135,7 +135,85 @@ export async function logActivity(
     return inserted[0];
   } catch (error) {
     console.error("Failed to log activity:", error);
-    // Non-blocking error so primary user mutations don't fail if log insertion fails
     return null;
+  }
+}
+
+export interface GetActivityLogsParams {
+  companyId?: string | string[];
+  entityType?: string;
+  entityId?: string;
+  actorId?: string;
+  action?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function getActivityLogs(dbInstance: any, params: GetActivityLogsParams = {}) {
+  try {
+    const {
+      companyId,
+      entityType,
+      entityId,
+      actorId,
+      action,
+      search,
+      limit = 50,
+      offset = 0,
+    } = params;
+
+    const conditions: any[] = [];
+
+    if (companyId) {
+      if (Array.isArray(companyId)) {
+        if (companyId.length > 0) {
+          conditions.push(inArray(activityLog.companyId, companyId));
+        }
+      } else {
+        conditions.push(eq(activityLog.companyId, companyId));
+      }
+    }
+    if (entityType) {
+      conditions.push(eq(activityLog.entityType, entityType));
+    }
+    if (entityId) {
+      conditions.push(eq(activityLog.entityId, entityId));
+    }
+    if (actorId) {
+      conditions.push(eq(activityLog.actorId, actorId));
+    }
+    if (action && action !== "ALL") {
+      conditions.push(eq(activityLog.action, action));
+    }
+    if (search && search.trim()) {
+      const term = `%${search.trim()}%`;
+      conditions.push(
+        sql`(${activityLog.summary} ILIKE ${term} OR ${activityLog.actorName} ILIKE ${term} OR ${activityLog.entityType} ILIKE ${term})`
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const logs = await dbInstance
+      .select()
+      .from(activityLog)
+      .where(whereClause)
+      .orderBy(desc(activityLog.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [countResult] = await dbInstance
+      .select({ count: sql<number>`count(*)` })
+      .from(activityLog)
+      .where(whereClause);
+
+    return {
+      logs,
+      totalCount: Number(countResult?.count ?? 0),
+    };
+  } catch (error) {
+    console.error("Failed to fetch activity logs:", error);
+    return { logs: [], totalCount: 0 };
   }
 }

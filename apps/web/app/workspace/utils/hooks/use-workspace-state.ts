@@ -14,6 +14,7 @@ import {
   HiOutlineUsers,
   HiOutlineMapPin,
   HiOutlineSquares2X2,
+  HiOutlineClipboardDocumentList,
 } from "react-icons/hi2";
 import { Workspace } from "../types/workspace.types";
 import { createWorkspaceAction } from "../actions/workspace-actions";
@@ -128,6 +129,16 @@ export function useWorkspaceState(
             },
           ],
         },
+        {
+          title: "Audit & Governance",
+          items: [
+            {
+              label: "Activity Logs",
+              href: href("/workspace/activity-logs"),
+              Icon: HiOutlineClipboardDocumentList,
+            },
+          ],
+        },
         backToApps,
       ];
     }
@@ -174,6 +185,16 @@ export function useWorkspaceState(
             label: "SSS/HDMF Contributions",
             href: href("/workspace/sss-hdmf"),
             Icon: HiOutlineClock,
+          },
+        ],
+      },
+      {
+        title: "Audit & Governance",
+        items: [
+          {
+            label: "Activity Logs",
+            href: href("/workspace/activity-logs"),
+            Icon: HiOutlineClipboardDocumentList,
           },
         ],
       },
