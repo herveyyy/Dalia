@@ -1,1 +1,2 @@
-export * from "./PageTransitionLoader.js";
+export * from "./PageTransitionLoader";
+
