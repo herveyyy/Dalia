@@ -1,6 +1,6 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { db, getActivityLogs } from "@repo/db";
+import { db, getActivityLogs, workspace, eq } from "@repo/db";
 import { resolveTenantCompanyId } from "../utils/lib/resolve-tenant-company";
 import { ActivityLogTable } from "../../../../hris/components/activity-log/activity-log-table";
 
@@ -28,8 +28,22 @@ export default async function WorkspaceActivityLogsPage(props: {
     redirect("/login");
   }
 
+  // If viewing firm workspace, aggregate logs across firm + all client workspaces owned by firm
+  let targetCompanyId: string | string[] = companyId;
+  const isFirmSelection = !selectorId || selectorId === session.user.companyId;
+
+  if (isFirmSelection) {
+    const clientWorkspaces = await db
+      .select({ id: workspace.id })
+      .from(workspace)
+      .where(eq(workspace.companyId, companyId));
+
+    const clientIds = clientWorkspaces.map((w) => w.id);
+    targetCompanyId = Array.from(new Set([companyId, ...clientIds]));
+  }
+
   const { logs, totalCount } = await getActivityLogs(db, {
-    companyId,
+    companyId: targetCompanyId,
     action: action !== "ALL" ? action : undefined,
     entityType: entityType !== "ALL" ? entityType : undefined,
     search: search || undefined,
@@ -73,6 +87,7 @@ export default async function WorkspaceActivityLogsPage(props: {
         search={search}
         actionFilter={action}
         entityFilter={entityType}
+        showHeader={false}
       />
     </div>
   );
