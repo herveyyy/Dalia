@@ -68,18 +68,18 @@ export function EmployeeDirectory({
     handlePrevStep,
   } = useEmployeeDirectory(initialEmployees, companyId);
 
-  const [viewMode, setViewMode] = React.useState<"grid" | "rows" | null>(null);
+  const [viewMode, setViewMode] = React.useState<"grid" | "rows">("rows");
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("employee_table_hris");
-        if (saved === "row") setViewMode("rows");
-        else if (saved === "column") setViewMode("grid");
-        else setViewMode(null);
+        if (saved === "column") setViewMode("grid");
+        else setViewMode("rows");
       } catch (e) { }
     }
   }, []);
+
 
   const totalItems = filteredEmployees.length;
   const startIndex = (page - 1) * itemsPerPage;

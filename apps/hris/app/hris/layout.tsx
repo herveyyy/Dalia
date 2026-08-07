@@ -1,5 +1,5 @@
 import * as React from "react";
-import { auth } from "@repo/auth";
+import { getSafeSession } from "@repo/auth";
 import { getUserAppPermissions } from "@repo/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -11,9 +11,7 @@ export default async function HrisLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSafeSession(await headers());
 
   if (!session) {
     redirect("/login");

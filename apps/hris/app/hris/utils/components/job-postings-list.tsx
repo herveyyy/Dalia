@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
+import { SearchableSelect } from "@repo/ui/components/atoms/SearchableSelect";
 import {
   Dialog,
   DialogPortal,
@@ -24,6 +25,7 @@ import {
   HiOutlineMapPin,
   HiOutlineBuildingOffice,
   HiOutlineCurrencyDollar,
+  HiOutlineMagnifyingGlass,
 } from "react-icons/hi2";
 import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
@@ -41,11 +43,27 @@ interface JobPostingRecord {
   createdAt: string;
 }
 
+interface DepartmentRecord {
+  id: string;
+  name: string;
+}
+
+interface BranchRecord {
+  id: string;
+  name: string;
+  code?: string | null;
+  address?: string | null;
+}
+
 interface JobPostingsListProps {
   jobPostings: JobPostingRecord[];
+  totalCount: number;
+  departments?: DepartmentRecord[];
+  branches?: BranchRecord[];
   companyId: string;
   page?: number;
   itemsPerPage?: number;
+  search?: string;
   viewMode?: "grid" | "rows";
 }
 
@@ -53,17 +71,23 @@ const VIEW_STORAGE_KEY = "hris_job_postings_table";
 
 export function JobPostingsList({
   jobPostings,
+  totalCount,
+  departments = [],
+  branches = [],
   companyId,
   page = 1,
-  itemsPerPage = 20,
+  itemsPerPage = 10,
+  search: initialSearch = "",
 }: JobPostingsListProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPostingRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const [viewMode, setViewMode] = useState<"grid" | "rows" | null>(null);
+  const [searchValue, setSearchValue] = useState(initialSearch);
+  const [viewMode, setViewMode] = useState<"grid" | "rows">("rows");
 
   React.useEffect(() => {
     try {
@@ -76,9 +100,38 @@ export function JobPostingsList({
     }
   }, []);
 
-  const totalItems = jobPostings.length;
-  const startIndex = (page - 1) * itemsPerPage;
-  const paginatedJobs = jobPostings.slice(startIndex, startIndex + itemsPerPage);
+  const updateQueryParams = (newParams: Record<string, string | number | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== "") {
+        params.set(key, String(val));
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`/hris/jobs?${params.toString()}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateQueryParams({ q: searchValue, page: 1 });
+  };
+
+  // Format department options for SearchableSelect
+  const departmentOptions = departments.map((d) => ({
+    value: d.name,
+    label: d.name,
+  }));
+
+  // Format branch/location options for SearchableSelect
+  const locationOptions = [
+    ...branches.map((b) => ({
+      value: b.name,
+      label: b.name,
+      sublabel: b.address || b.code || undefined,
+    })),
+    { value: "Remote", label: "Remote", sublabel: "Work from anywhere" },
+  ];
 
   const handleOpenDialog = (job: JobPostingRecord | null = null) => {
     setSelectedJob(job);
@@ -141,6 +194,24 @@ export function JobPostingsList({
         </div>
       </div>
 
+      {/* Filter / Search Bar UI */}
+      <div className="flex items-center justify-between gap-4 bg-card p-3 rounded-xl border border-border/60">
+        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
+          <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search job postings..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="pl-9 text-xs"
+          />
+        </form>
+        <div className="text-xs text-muted-foreground">
+          Showing <span className="font-semibold text-foreground">{jobPostings.length}</span> of{" "}
+          <span className="font-semibold text-foreground">{totalCount}</span> listings
+        </div>
+      </div>
+
       {/* Jobs Content */}
       {jobPostings.length === 0 ? (
         <div className="border border-border/60 rounded-xl bg-card p-12 text-center text-muted-foreground">
@@ -153,9 +224,9 @@ export function JobPostingsList({
             </Button>
           </div>
         </div>
-      ) : viewMode === null ? null : viewMode === "grid" ? (
+      ) : viewMode === "grid" ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {paginatedJobs.map((job) => (
+          {jobPostings.map((job) => (
             <div
               key={job.id}
               className="border border-border/60 rounded-xl bg-card p-5 hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
@@ -163,12 +234,13 @@ export function JobPostingsList({
               <div>
                 <div className="flex items-start justify-between">
                   <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${job.status === "Published"
-                      ? "bg-emerald-500/10 text-emerald-500"
-                      : job.status === "Draft"
-                        ? "bg-amber-500/10 text-amber-500"
-                        : "bg-muted text-muted-foreground"
-                      }`}
+                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
+                      job.status === "Published"
+                        ? "bg-emerald-500/10 text-emerald-500"
+                        : job.status === "Draft"
+                          ? "bg-amber-500/10 text-amber-500"
+                          : "bg-muted text-muted-foreground"
+                    }`}
                   >
                     {job.status}
                   </span>
@@ -228,16 +300,17 @@ export function JobPostingsList({
         </div>
       ) : (
         <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden divide-y">
-          {paginatedJobs.map((job) => (
+          {jobPostings.map((job) => (
             <div key={job.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30">
               <div className="flex items-center gap-4">
                 <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${job.status === "Published"
-                    ? "bg-emerald-500/10 text-emerald-500"
-                    : job.status === "Draft"
-                      ? "bg-amber-500/10 text-amber-500"
-                      : "bg-muted text-muted-foreground"
-                    }`}
+                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    job.status === "Published"
+                      ? "bg-emerald-500/10 text-emerald-500"
+                      : job.status === "Draft"
+                        ? "bg-amber-500/10 text-amber-500"
+                        : "bg-muted text-muted-foreground"
+                  }`}
                 >
                   {job.status}
                 </span>
@@ -274,7 +347,7 @@ export function JobPostingsList({
       )}
 
       <DataPagination
-        totalItems={totalItems}
+        totalItems={totalCount}
         currentPage={page}
         itemsPerPage={itemsPerPage}
         navigate={(href) => router.push(href, { scroll: false })}
@@ -305,34 +378,44 @@ export function JobPostingsList({
                         required
                       />
                     </div>
+
+                    {/* Department Searchable Select */}
                     <div>
                       <Label htmlFor="department">Department</Label>
-                      <Input
+                      <SearchableSelect
                         id="department"
                         name="department"
                         defaultValue={selectedJob?.department || ""}
-                        placeholder="e.g. Engineering"
+                        options={departmentOptions}
+                        placeholder="Select or search department..."
+                        searchPlaceholder="Search departments..."
+                        allowCustom={true}
                       />
                     </div>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-3">
+                    {/* Location / Branch Searchable Select */}
                     <div>
-                      <Label htmlFor="location">Location</Label>
-                      <Input
+                      <Label htmlFor="location">Location / Branch</Label>
+                      <SearchableSelect
                         id="location"
                         name="location"
                         defaultValue={selectedJob?.location || ""}
-                        placeholder="e.g. Manila / Remote"
+                        options={locationOptions}
+                        placeholder="Select branch or location..."
+                        searchPlaceholder="Search branches..."
+                        allowCustom={true}
                       />
                     </div>
+
                     <div>
                       <Label htmlFor="employmentType">Employment Type *</Label>
                       <select
                         id="employmentType"
                         name="employmentType"
                         defaultValue={selectedJob?.employmentType || "Full-time"}
-                        className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
+                        className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none cursor-pointer"
                       >
                         <option value="Full-time">Full-time</option>
                         <option value="Part-time">Part-time</option>
@@ -340,6 +423,7 @@ export function JobPostingsList({
                         <option value="Internship">Internship</option>
                       </select>
                     </div>
+
                     <div>
                       <Label htmlFor="salaryRange">Salary Range (Optional)</Label>
                       <Input
@@ -357,7 +441,7 @@ export function JobPostingsList({
                       id="status"
                       name="status"
                       defaultValue={selectedJob?.status || "Published"}
-                      className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
+                      className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none cursor-pointer"
                     >
                       <option value="Published">Published</option>
                       <option value="Draft">Draft</option>

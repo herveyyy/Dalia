@@ -9,6 +9,7 @@ import {
   and,
   role,
   rolePermission,
+  logActivity,
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { resolveTenantCompanyId } from "../lib/resolve-tenant-company";
@@ -18,6 +19,11 @@ function revalidateOrg(companyId: string) {
   revalidatePath("/workspace/departments");
   revalidatePath("/workspace/branches");
   revalidatePath("/workspace/roles");
+  revalidatePath("/hris");
+  revalidatePath("/hris/departments");
+  revalidatePath("/hris/branches");
+  revalidatePath("/hris/roles");
+  revalidatePath("/hris/activity-logs");
   revalidatePath(`/workspace/employees?company_id=${companyId}`);
   revalidatePath(`/workspace/departments?company_id=${companyId}`);
   revalidatePath(`/workspace/branches?company_id=${companyId}`);
@@ -38,24 +44,53 @@ export async function saveDepartmentAction(data: {
   name: string;
   description?: string | null;
 }) {
-  await assertCompanyAccess(data.companyId);
+  const session = await assertCompanyAccess(data.companyId);
   const name = data.name.trim();
   if (!name) throw new Error("Department name is required");
 
+  let oldRecord: any = null;
+  let newRecord: any = null;
+  let deptId = data.id ?? null;
+
   if (data.id) {
-    await db
+    [oldRecord] = await db
+      .select()
+      .from(department)
+      .where(and(eq(department.id, data.id), eq(department.companyId, data.companyId)));
+
+    [newRecord] = await db
       .update(department)
       .set({
         name,
         description: data.description?.trim() || null,
         updatedAt: new Date().toISOString(),
       })
-      .where(and(eq(department.id, data.id), eq(department.companyId, data.companyId)));
+      .where(and(eq(department.id, data.id), eq(department.companyId, data.companyId)))
+      .returning();
   } else {
-    await db.insert(department).values({
+    [newRecord] = await db
+      .insert(department)
+      .values({
+        companyId: data.companyId,
+        name,
+        description: data.description?.trim() || null,
+      })
+      .returning();
+    deptId = newRecord?.id ?? null;
+  }
+
+  if (deptId && newRecord) {
+    await logActivity(db, {
       companyId: data.companyId,
-      name,
-      description: data.description?.trim() || null,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "department",
+      entityId: deptId,
+      action: data.id ? "UPDATE" : "CREATE",
+      summary: data.id ? `Updated department "${name}"` : `Created department "${name}"`,
+      oldData: oldRecord || null,
+      newData: newRecord || null,
     });
   }
 
@@ -64,11 +99,34 @@ export async function saveDepartmentAction(data: {
 }
 
 export async function deleteDepartmentAction(id: string, companyId: string) {
-  await assertCompanyAccess(companyId);
-  await db
+  const session = await assertCompanyAccess(companyId);
+
+  const [oldRecord] = await db
+    .select()
+    .from(department)
+    .where(and(eq(department.id, id), eq(department.companyId, companyId)));
+
+  const [newRecord] = await db
     .update(department)
     .set({ isArchived: true, updatedAt: new Date().toISOString() })
-    .where(and(eq(department.id, id), eq(department.companyId, companyId)));
+    .where(and(eq(department.id, id), eq(department.companyId, companyId)))
+    .returning();
+
+  if (oldRecord && newRecord) {
+    await logActivity(db, {
+      companyId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "department",
+      entityId: id,
+      action: "ARCHIVE",
+      summary: `Archived department "${oldRecord.name}"`,
+      oldData: oldRecord,
+      newData: newRecord,
+    });
+  }
+
   revalidateOrg(companyId);
   return { success: true, message: "Department archived" };
 }
@@ -81,12 +139,21 @@ export async function saveBranchAction(data: {
   address?: string | null;
   description?: string | null;
 }) {
-  await assertCompanyAccess(data.companyId);
+  const session = await assertCompanyAccess(data.companyId);
   const name = data.name.trim();
   if (!name) throw new Error("Branch name is required");
 
+  let oldRecord: any = null;
+  let newRecord: any = null;
+  let branchId = data.id ?? null;
+
   if (data.id) {
-    await db
+    [oldRecord] = await db
+      .select()
+      .from(branch)
+      .where(and(eq(branch.id, data.id), eq(branch.companyId, data.companyId)));
+
+    [newRecord] = await db
       .update(branch)
       .set({
         name,
@@ -95,14 +162,34 @@ export async function saveBranchAction(data: {
         description: data.description?.trim() || null,
         updatedAt: new Date().toISOString(),
       })
-      .where(and(eq(branch.id, data.id), eq(branch.companyId, data.companyId)));
+      .where(and(eq(branch.id, data.id), eq(branch.companyId, data.companyId)))
+      .returning();
   } else {
-    await db.insert(branch).values({
+    [newRecord] = await db
+      .insert(branch)
+      .values({
+        companyId: data.companyId,
+        name,
+        code: data.code?.trim() || null,
+        address: data.address?.trim() || null,
+        description: data.description?.trim() || null,
+      })
+      .returning();
+    branchId = newRecord?.id ?? null;
+  }
+
+  if (branchId && newRecord) {
+    await logActivity(db, {
       companyId: data.companyId,
-      name,
-      code: data.code?.trim() || null,
-      address: data.address?.trim() || null,
-      description: data.description?.trim() || null,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "branch",
+      entityId: branchId,
+      action: data.id ? "UPDATE" : "CREATE",
+      summary: data.id ? `Updated branch "${name}"` : `Created branch "${name}"`,
+      oldData: oldRecord || null,
+      newData: newRecord || null,
     });
   }
 
@@ -111,11 +198,34 @@ export async function saveBranchAction(data: {
 }
 
 export async function deleteBranchAction(id: string, companyId: string) {
-  await assertCompanyAccess(companyId);
-  await db
+  const session = await assertCompanyAccess(companyId);
+
+  const [oldRecord] = await db
+    .select()
+    .from(branch)
+    .where(and(eq(branch.id, id), eq(branch.companyId, companyId)));
+
+  const [newRecord] = await db
     .update(branch)
     .set({ isArchived: true, updatedAt: new Date().toISOString() })
-    .where(and(eq(branch.id, id), eq(branch.companyId, companyId)));
+    .where(and(eq(branch.id, id), eq(branch.companyId, companyId)))
+    .returning();
+
+  if (oldRecord && newRecord) {
+    await logActivity(db, {
+      companyId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "branch",
+      entityId: id,
+      action: "ARCHIVE",
+      summary: `Archived branch "${oldRecord.name}"`,
+      oldData: oldRecord,
+      newData: newRecord,
+    });
+  }
+
   revalidateOrg(companyId);
   return { success: true, message: "Branch archived" };
 }
@@ -132,20 +242,27 @@ export async function saveRoleAction(data: {
   if (!name) throw new Error("Role name is required");
 
   const featureIds = [...new Set(data.featureIds ?? [])];
-
   let roleId = data.id ?? null;
+  let oldRecord: any = null;
+  let newRecord: any = null;
 
   if (roleId) {
-    await db
+    [oldRecord] = await db
+      .select()
+      .from(role)
+      .where(and(eq(role.id, roleId), eq(role.companyId, data.companyId)));
+
+    [newRecord] = await db
       .update(role)
       .set({
         name,
         description: data.description?.trim() || null,
         updatedAt: new Date().toISOString(),
       })
-      .where(and(eq(role.id, roleId), eq(role.companyId, data.companyId)));
+      .where(and(eq(role.id, roleId), eq(role.companyId, data.companyId)))
+      .returning();
   } else {
-    const [created] = await db
+    [newRecord] = await db
       .insert(role)
       .values({
         companyId: data.companyId,
@@ -153,8 +270,8 @@ export async function saveRoleAction(data: {
         description: data.description?.trim() || null,
         createdBy: session.user.id,
       })
-      .returning({ id: role.id });
-    roleId = created?.id ?? null;
+      .returning();
+    roleId = newRecord?.id ?? null;
   }
 
   if (!roleId) throw new Error("Failed to save role");
@@ -169,13 +286,50 @@ export async function saveRoleAction(data: {
     );
   }
 
+  if (roleId && newRecord) {
+    await logActivity(db, {
+      companyId: data.companyId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "role",
+      entityId: roleId,
+      action: data.id ? "UPDATE" : "CREATE",
+      summary: data.id ? `Updated role "${name}"` : `Created role "${name}"`,
+      oldData: oldRecord || null,
+      newData: newRecord || null,
+    });
+  }
+
   revalidateOrg(data.companyId);
   return { success: true, message: "Role saved" };
 }
 
 export async function deleteRoleAction(id: string, companyId: string) {
-  await assertCompanyAccess(companyId);
+  const session = await assertCompanyAccess(companyId);
+
+  const [oldRecord] = await db
+    .select()
+    .from(role)
+    .where(and(eq(role.id, id), eq(role.companyId, companyId)));
+
   await db.delete(role).where(and(eq(role.id, id), eq(role.companyId, companyId)));
+
+  if (oldRecord) {
+    await logActivity(db, {
+      companyId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "role",
+      entityId: id,
+      action: "DELETE",
+      summary: `Deleted role "${oldRecord.name}"`,
+      oldData: oldRecord,
+      newData: null,
+    });
+  }
+
   revalidateOrg(companyId);
   return { success: true, message: "Role deleted" };
 }
@@ -211,15 +365,23 @@ export async function saveEmployeeAction(data: {
   };
 
   let employeeId = data.id ?? null;
+  let oldRecord: any = null;
+  let newRecord: any = null;
 
   if (employeeId) {
-    await db
+    [oldRecord] = await db
+      .select()
+      .from(employee)
+      .where(and(eq(employee.id, employeeId), eq(employee.companyId, data.companyId)));
+
+    [newRecord] = await db
       .update(employee)
       .set(values)
-      .where(and(eq(employee.id, employeeId), eq(employee.companyId, data.companyId)));
+      .where(and(eq(employee.id, employeeId), eq(employee.companyId, data.companyId)))
+      .returning();
   } else {
-    const [created] = await db.insert(employee).values(values).returning({ id: employee.id });
-    employeeId = created?.id ?? null;
+    [newRecord] = await db.insert(employee).values(values).returning();
+    employeeId = newRecord?.id ?? null;
   }
 
   if (employeeId) {
@@ -232,15 +394,54 @@ export async function saveEmployeeAction(data: {
     });
   }
 
+  if (employeeId && newRecord) {
+    await logActivity(db, {
+      companyId: data.companyId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "employee",
+      entityId: employeeId,
+      action: data.id ? "UPDATE" : "CREATE",
+      summary: data.id
+        ? `Updated employee ${firstName} ${lastName}`
+        : `Created employee ${firstName} ${lastName}`,
+      oldData: oldRecord || null,
+      newData: newRecord || null,
+    });
+  }
+
   revalidateOrg(data.companyId);
   return { success: true, message: "Employee saved" };
 }
 
 export async function deleteEmployeeAction(id: string, companyId: string) {
-  await assertCompanyAccess(companyId);
+  const session = await assertCompanyAccess(companyId);
+
+  const [oldRecord] = await db
+    .select()
+    .from(employee)
+    .where(and(eq(employee.id, id), eq(employee.companyId, companyId)));
+
   await db
     .delete(employee)
     .where(and(eq(employee.id, id), eq(employee.companyId, companyId)));
+
+  if (oldRecord) {
+    await logActivity(db, {
+      companyId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "employee",
+      entityId: id,
+      action: "DELETE",
+      summary: `Removed employee ${oldRecord.firstName} ${oldRecord.lastName}`,
+      oldData: oldRecord,
+      newData: null,
+    });
+  }
+
   revalidateOrg(companyId);
   return { success: true, message: "Employee removed" };
 }
@@ -252,14 +453,21 @@ export async function assignEmployeeAction(data: {
   roleId?: string | null;
 }) {
   const session = await assertCompanyAccess(data.companyId);
-  await db
+
+  const [oldRecord] = await db
+    .select()
+    .from(employee)
+    .where(and(eq(employee.id, data.employeeId), eq(employee.companyId, data.companyId)));
+
+  const [newRecord] = await db
     .update(employee)
     .set({
       departmentId: data.departmentId || null,
       roleId: data.roleId || null,
       updatedAt: new Date().toISOString(),
     })
-    .where(and(eq(employee.id, data.employeeId), eq(employee.companyId, data.companyId)));
+    .where(and(eq(employee.id, data.employeeId), eq(employee.companyId, data.companyId)))
+    .returning();
 
   const { syncEmployeeLoginRole } = await import("./employee-login-actions");
   await syncEmployeeLoginRole({
@@ -268,6 +476,21 @@ export async function assignEmployeeAction(data: {
     roleId: data.roleId || null,
     assignedBy: session.user.id,
   });
+
+  if (oldRecord && newRecord) {
+    await logActivity(db, {
+      companyId: data.companyId,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      entityType: "employee",
+      entityId: data.employeeId,
+      action: "UPDATE",
+      summary: `Updated department/role assignments for employee ${oldRecord.firstName} ${oldRecord.lastName}`,
+      oldData: oldRecord,
+      newData: newRecord,
+    });
+  }
 
   revalidateOrg(data.companyId);
   return { success: true, message: "Assignment updated" };

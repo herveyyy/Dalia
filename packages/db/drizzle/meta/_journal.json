@@ -5,57 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1784854228266,
-      "tag": "0000_square_power_man",
+      "when": 1786089786960,
+      "tag": "0000_rainy_wallow",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1784855000000,
-      "tag": "0001_company_roles",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1784856000000,
-      "tag": "0002_uuid_ids",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1784857000000,
-      "tag": "0003_workspace_company_id",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1784858000000,
-      "tag": "0004_client_company_and_employee_role",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1784859000000,
-      "tag": "0005_app_access_rights",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1784860000000,
-      "tag": "0006_employee_user_login",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1784861000000,
-      "tag": "0007_workspace_admin_email",
+      "when": 1786089794742,
+      "tag": "0001_futuristic_anthem",
       "breakpoints": true
     }
   ]

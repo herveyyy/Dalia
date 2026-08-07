@@ -2,10 +2,20 @@
 
 import * as React from "react";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
+import {
+  TableContainer,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableEmpty,
+} from "@repo/ui/components/atoms/Table";
 import {
   Dialog,
   DialogPortal,
@@ -16,8 +26,13 @@ import {
 } from "@repo/ui/components/atoms/Dialog";
 import { saveTaxType, deleteTaxType } from "../actions/tax-actions";
 import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineCalculator } from "react-icons/hi2";
-
+import {
+  HiOutlinePlus,
+  HiOutlinePencil,
+  HiOutlineTrash,
+  HiOutlineCalculator,
+  HiOutlineMagnifyingGlass,
+} from "react-icons/hi2";
 import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
 
@@ -30,39 +45,57 @@ interface TaxTypeRecord {
 
 interface TaxListProps {
   taxTypes: TaxTypeRecord[];
+  totalCount: number;
   companyId: string;
   page?: number;
   itemsPerPage?: number;
+  search?: string;
 }
 
 export function TaxList({
   taxTypes,
+  totalCount,
   companyId,
   page = 1,
-  itemsPerPage = 20,
+  itemsPerPage = 10,
+  search: initialSearch = "",
 }: TaxListProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTax, setSelectedTax] = useState<TaxTypeRecord | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const [viewMode, setViewMode] = useState<"grid" | "rows" | null>(null);
+  const [searchValue, setSearchValue] = useState(initialSearch);
+  const [viewMode, setViewMode] = useState<"grid" | "rows">("rows");
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("employee_table_hris");
-        if (saved === "row") setViewMode("rows");
-        else if (saved === "column") setViewMode("grid");
-        else setViewMode(null);
+        if (saved === "column") setViewMode("grid");
+        else setViewMode("rows");
       } catch (e) {}
     }
   }, []);
 
-  const totalItems = taxTypes.length;
-  const startIndex = (page - 1) * itemsPerPage;
-  const paginatedTaxes = taxTypes.slice(startIndex, startIndex + itemsPerPage);
+  const updateQueryParams = (newParams: Record<string, string | number | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== "") {
+        params.set(key, String(val));
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`/hris/taxes?${params.toString()}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateQueryParams({ q: searchValue, page: 1 });
+  };
 
   const handleOpenDialog = (tax: TaxTypeRecord | null = null) => {
     setSelectedTax(tax);
@@ -99,83 +132,121 @@ export function TaxList({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/60 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-4 gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Tax Settings</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <HiOutlineCalculator className="size-7 text-primary" />
+            Tax Settings
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Configure custom tax rates and tax categories for company payroll calculations.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ViewToggle onViewChange={setViewMode} />
-          <Button onClick={() => handleOpenDialog(null)} className="gap-2">
+          <ViewToggle onViewChange={(mode) => setViewMode(mode || "rows")} />
+          <Button onClick={() => handleOpenDialog(null)} className="gap-2 font-display">
             <HiOutlinePlus className="size-4" /> Add Tax Type
           </Button>
         </div>
       </div>
 
-      {/* Tax Table */}
-      {viewMode === null ? null : (
-        <div className="border border-border/60 rounded-xl bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border/60 bg-muted/30 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <th className="px-6 py-4">Tax Name</th>
-                  <th className="px-6 py-4">Rate (%)</th>
-                  <th className="px-6 py-4">Description</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60 text-sm">
-                {taxTypes.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                      <div className="flex flex-col items-center gap-2">
-                        <p>No tax types configured.</p>
-                        <Button onClick={() => handleOpenDialog(null)} size="sm" variant="outline" className="mt-2">
-                          Add First Tax Type
+      {/* Filter / Search Bar UI */}
+      <div className="flex items-center justify-between gap-4 bg-card p-3 rounded-xl border border-border/60">
+        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
+          <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search tax types..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="pl-9 text-xs"
+          />
+        </form>
+        <div className="text-xs text-muted-foreground">
+          Showing <span className="font-semibold text-foreground">{taxTypes.length}</span> of{" "}
+          <span className="font-semibold text-foreground">{totalCount}</span> entries
+        </div>
+      </div>
+
+      {/* Tax Table / Grid */}
+      {viewMode === "grid" ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {taxTypes.map((tax) => (
+            <div key={tax.id} className="border border-border/60 rounded-xl bg-card p-5 shadow-xs space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-bold text-foreground">{tax.name}</h3>
+                  <p className="text-xs text-muted-foreground">{tax.description || "No description"}</p>
+                </div>
+                <span className="font-mono font-bold text-primary text-base">{tax.rate}%</span>
+              </div>
+              <div className="flex justify-end gap-1 pt-2 border-t border-border/40">
+                <Button variant="ghost" size="xs" onClick={() => handleOpenDialog(tax)}>
+                  <HiOutlinePencil className="size-3.5" /> Edit
+                </Button>
+                <Button variant="ghost" size="xs" onClick={() => handleDelete(tax.id)} className="text-destructive">
+                  <HiOutlineTrash className="size-3.5" /> Delete
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <TableContainer>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tax Name</TableHead>
+                <TableHead>Rate (%)</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {taxTypes.length === 0 ? (
+                <TableEmpty colSpan={4}>
+                  <div className="flex flex-col items-center gap-2">
+                    <p>No tax types found.</p>
+                    <Button onClick={() => handleOpenDialog(null)} size="sm" variant="outline" className="mt-2">
+                      Add First Tax Type
+                    </Button>
+                  </div>
+                </TableEmpty>
+              ) : (
+                taxTypes.map((tax) => (
+                  <TableRow key={tax.id}>
+                    <TableCell className="font-semibold text-foreground">{tax.name}</TableCell>
+                    <TableCell className="font-mono font-medium text-foreground">{tax.rate}%</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{tax.description || "—"}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => handleOpenDialog(tax)}
+                        >
+                          <HiOutlinePencil className="size-3.5 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => handleDelete(tax.id)}
+                          className="hover:text-destructive"
+                        >
+                          <HiOutlineTrash className="size-3.5 text-muted-foreground" />
                         </Button>
                       </div>
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedTaxes.map((tax) => (
-                    <tr key={tax.id} className="hover:bg-muted/10 transition-colors">
-                      <td className="px-6 py-4 font-semibold text-foreground">{tax.name}</td>
-                      <td className="px-6 py-4 font-mono font-medium text-foreground">{tax.rate}%</td>
-                      <td className="px-6 py-4 text-muted-foreground text-xs">{tax.description || "—"}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenDialog(tax)}
-                            className="h-8 px-2 text-muted-foreground"
-                          >
-                            <HiOutlinePencil className="size-4 text-muted-foreground" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(tax.id)}
-                            className="h-8 px-2 hover:text-destructive text-muted-foreground"
-                          >
-                            <HiOutlineTrash className="size-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
       <DataPagination
-        totalItems={totalItems}
+        totalItems={totalCount}
         currentPage={page}
         itemsPerPage={itemsPerPage}
         navigate={(href) => router.push(href, { scroll: false })}

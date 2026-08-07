@@ -1,19 +1,22 @@
-import { auth } from "@repo/auth";
+import { getSafeSession } from "@repo/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getJobPostings } from "../utils/queries/job-queries";
+import {
+  getJobPostings,
+  getCompanyDepartments,
+  getCompanyBranches,
+} from "../utils/queries/job-queries";
 import { JobPostingsList } from "../utils/components/job-postings-list";
 
 export default async function Page(props: {
-  searchParams?: Promise<{ page?: string; items?: string }>;
+  searchParams?: Promise<{ page?: string; items?: string; q?: string; search?: string }>;
 }) {
   const searchParams = await props.searchParams;
   const page = Number(searchParams?.page || 1);
-  const itemsPerPage = Number(searchParams?.items || 20);
+  const items = Number(searchParams?.items || 10);
+  const search = searchParams?.q || searchParams?.search || "";
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSafeSession(await headers());
 
   if (!session) {
     redirect("/login");
@@ -21,14 +24,29 @@ export default async function Page(props: {
 
   const { user } = session;
 
-  const jobPostingsList = user.companyId ? await getJobPostings(user.companyId) : [];
+  const [{ jobPostings, totalCount }, departmentsList, branchesList] = await Promise.all([
+    user.companyId
+      ? getJobPostings({
+          companyId: user.companyId,
+          page,
+          itemsPerPage: items,
+          search,
+        })
+      : { jobPostings: [], totalCount: 0 },
+    user.companyId ? getCompanyDepartments(user.companyId) : [],
+    user.companyId ? getCompanyBranches(user.companyId) : [],
+  ]);
 
   return (
     <JobPostingsList
-      jobPostings={jobPostingsList}
+      jobPostings={jobPostings}
+      totalCount={totalCount}
+      departments={departmentsList}
+      branches={branchesList}
       companyId={user.companyId || ""}
       page={page}
-      itemsPerPage={itemsPerPage}
+      itemsPerPage={items}
+      search={search}
     />
   );
 }

@@ -14,7 +14,9 @@ import {
   HiOutlineIdentification,
   HiOutlineShieldCheck,
   HiOutlineClock,
+  HiOutlineDocumentText,
 } from "react-icons/hi2";
+
 
 interface HrisShellProps {
   children: React.ReactNode;
@@ -104,7 +106,19 @@ export function HrisShell({
         ],
       },
       {
+        title: "Audit & Governance",
+        items: [
+          {
+            label: "Activity Logs",
+            href: "/hris/activity-logs",
+            Icon: HiOutlineDocumentText,
+            isActive: pathname === "/hris/activity-logs",
+          },
+        ],
+      },
+      {
         title: "Back to Platform",
+
         items: [
           {
             label: "Back to App Menu",

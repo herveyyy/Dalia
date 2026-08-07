@@ -1,4 +1,4 @@
-import { auth } from "@repo/auth";
+import { getSafeSession } from "@repo/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCompanyRecord, getEmployees, getAllowanceTypes } from "./utils/queries/employee-queries";
@@ -12,9 +12,7 @@ export default async function Page(props: {
   const page = Number(searchParams?.page || 1);
   const items = Number(searchParams?.items || 20);
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSafeSession(await headers());
 
   if (!session) {
     redirect("/login");
@@ -30,7 +28,7 @@ export default async function Page(props: {
 
   // 3. Fetch allowance types and tax types
   const allowanceTypes = user.companyId ? await getAllowanceTypes(user.companyId) : [];
-  const taxTypes = user.companyId ? await getTaxTypes(user.companyId) : [];
+  const { taxTypes } = user.companyId ? await getTaxTypes(user.companyId) : { taxTypes: [] };
 
   return (
     <div className="space-y-6">
