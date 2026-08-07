@@ -5,7 +5,8 @@
     "DATABASE_URL",
     "BETTER_AUTH_URL",
     "BETTER_AUTH_SECRET",
-    "DOCS_URL"
+    "DOCS_URL",
+    "HRIS_URL"
   ],
   "tasks": {
     "build": {
