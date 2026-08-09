@@ -31,6 +31,14 @@ export const zones = [
     envKey: "HRIS_URL",
     access: "private",
   },
+  {
+    name: "user",
+    basePath: "/user",
+    assetPrefix: "/user-static",
+    port: 3003,
+    envKey: "USER_URL",
+    access: "private",
+  },
 ];
 
 /**

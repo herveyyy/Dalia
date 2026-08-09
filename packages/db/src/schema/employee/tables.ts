@@ -303,3 +303,37 @@ export const jobPosting = pgTable(
     }).onDelete("set null"),
   ]
 );
+
+export const jobApplication = pgTable(
+  "job_application",
+  {
+    id: uuid("id").defaultRandom().primaryKey().notNull(),
+    jobPostingId: uuid("job_posting_id").notNull(),
+    userId: text("user_id").notNull(),
+    companyId: uuid("company_id").notNull(),
+    status: text("status").default("Pending").notNull(),
+    coverLetter: text("cover_letter"),
+    resumeUrl: text("resume_url"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.jobPostingId],
+      foreignColumns: [jobPosting.id],
+      name: "job_application_job_posting_id_job_posting_id_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [user.id],
+      name: "job_application_user_id_user_id_fk",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.companyId],
+      foreignColumns: [company.id],
+      name: "job_application_company_id_company_id_fk",
+    }).onDelete("cascade"),
+  ]
+);
+

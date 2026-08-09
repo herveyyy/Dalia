@@ -41,6 +41,7 @@ interface JobPostingRecord {
   salaryRange: string | null;
   status: string;
   createdAt: string;
+  applicantCount?: number;
 }
 
 interface DepartmentRecord {
@@ -292,8 +293,11 @@ export function JobPostingsList({
                 </p>
               </div>
 
-              <div className="border-t border-border/40 mt-4 pt-3 text-[10px] text-muted-foreground flex justify-between">
+              <div className="border-t border-border/40 mt-4 pt-3 text-[10px] text-muted-foreground flex items-center justify-between">
                 <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
+                <span className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                  {job.applicantCount ?? 0} Applicant{(job.applicantCount ?? 0) !== 1 ? "s" : ""}
+                </span>
               </div>
             </div>
           ))}
@@ -315,12 +319,18 @@ export function JobPostingsList({
                   {job.status}
                 </span>
                 <div>
-                  <h4 className="font-display text-sm font-bold text-foreground">{job.title}</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-display text-sm font-bold text-foreground">{job.title}</h4>
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                      {job.applicantCount ?? 0} applicant{(job.applicantCount ?? 0) !== 1 ? "s" : ""}
+                    </span>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {job.department || "General"} · {job.employmentType} · {job.location || "Remote"}
                   </p>
                 </div>
               </div>
+
 
               <div className="flex items-center gap-3">
                 <Button

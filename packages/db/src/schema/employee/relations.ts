@@ -11,9 +11,11 @@ import {
   employeeAllowance,
   taxType,
   jobPosting,
+  jobApplication,
   department,
   branch,
 } from "./tables";
+
 
 export const employeeRelations = relations(employee, ({ one, many }) => ({
   company: one(company, {
@@ -109,7 +111,7 @@ export const taxTypeRelations = relations(taxType, ({ one, many }) => ({
   employees: many(employee),
 }));
 
-export const jobPostingRelations = relations(jobPosting, ({ one }) => ({
+export const jobPostingRelations = relations(jobPosting, ({ one, many }) => ({
   company: one(company, {
     fields: [jobPosting.companyId],
     references: [company.id],
@@ -118,7 +120,24 @@ export const jobPostingRelations = relations(jobPosting, ({ one }) => ({
     fields: [jobPosting.departmentId],
     references: [department.id],
   }),
+  applications: many(jobApplication),
 }));
+
+export const jobApplicationRelations = relations(jobApplication, ({ one }) => ({
+  jobPosting: one(jobPosting, {
+    fields: [jobApplication.jobPostingId],
+    references: [jobPosting.id],
+  }),
+  user: one(user, {
+    fields: [jobApplication.userId],
+    references: [user.id],
+  }),
+  company: one(company, {
+    fields: [jobApplication.companyId],
+    references: [company.id],
+  }),
+}));
+
 
 export const departmentRelations = relations(department, ({ one, many }) => ({
   company: one(company, {

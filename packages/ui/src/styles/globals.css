@@ -1,7 +1,8 @@
 /* apps/ is gitignored → auto-detect would scan node_modules (@base-ui docs) and emit broken CSS */
-@import "tailwindcss" source(none);
+@import "tailwindcss";
 @source "../components";
 @source "../hooks";
+
 
 @custom-variant dark (&:is(.dark *));
 

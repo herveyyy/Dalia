@@ -1,6 +1,7 @@
 import {
   db,
   jobPosting,
+  jobApplication,
   eq,
   and,
   ilike,
@@ -57,6 +58,9 @@ export async function getJobPostings(params: GetJobPostingsParams | string) {
           department: {
             name: department.name,
           },
+          applicantCount: sql<number>`(
+            SELECT count(*) FROM "job_application" ja WHERE ja."job_posting_id" = ${jobPosting.id}
+          )::int`,
         })
         .from(jobPosting)
         .leftJoin(department, eq(jobPosting.departmentId, department.id))
@@ -73,6 +77,7 @@ export async function getJobPostings(params: GetJobPostingsParams | string) {
     const formatted = list.map((job) => ({
       ...job,
       department: job.department?.name || null,
+      applicantCount: Number(job.applicantCount ?? 0),
     }));
 
     return {
@@ -83,6 +88,7 @@ export async function getJobPostings(params: GetJobPostingsParams | string) {
     console.error("Failed to fetch job postings:", error);
     return { jobPostings: [], totalCount: 0 };
   }
+
 }
 
 export async function getCompanyDepartments(companyId: string) {
