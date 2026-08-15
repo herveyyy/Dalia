@@ -11,7 +11,7 @@ import {
   HiOutlineTrash,
   HiOutlineCloudArrowUp,
 } from "react-icons/hi2";
-import { UploadedFilePayload } from "../app/user/utils/actions";
+import type { UploadedFilePayload } from "../app/user/utils/queries";
 import { useFileUploader, InitialFileItem } from "./file-uploader.hooks";
 
 interface FileUploaderProps {

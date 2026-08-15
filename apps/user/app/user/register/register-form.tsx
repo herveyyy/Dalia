@@ -18,10 +18,10 @@ import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
 import { FileUploader } from "../../../components/file-uploader";
 import {
-  UploadedFilePayload,
   registerAndApplyAction,
   applyForJobAction,
 } from "../utils/actions";
+import type { UploadedFilePayload } from "../utils/queries";
 import { FileRecord } from "@repo/db";
 
 interface RegisterFormProps {

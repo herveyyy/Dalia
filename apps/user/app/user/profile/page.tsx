@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getUserProfileAndEmployment, getUserDefaultMaterials } from "../utils/queries";
 import { changePasswordAction } from "../utils/actions";
 import { ProfileMaterialsForm } from "./profile-materials-form";
+import { ProfileAvatar } from "./profile-avatar";
 import {
   HiOutlineUser,
   HiOutlineBuildingOffice2,
@@ -76,9 +77,11 @@ export default async function ProfilePage(props: {
         {/* User Account Info Card */}
         <div className="md:col-span-1 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
           <div className="flex flex-col items-center text-center pb-4 border-b border-border">
-            <div className="flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-2xl shadow-inner mb-3">
-              {user.name?.[0]?.toUpperCase() ?? "U"}
-            </div>
+            <ProfileAvatar
+              userId={user.id}
+              initials={user.name?.[0]?.toUpperCase() ?? "U"}
+              imageUrl={user.image}
+            />
             <h2 className="text-lg font-bold text-foreground">{user.name}</h2>
             <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
             <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">

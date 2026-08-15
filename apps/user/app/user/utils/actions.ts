@@ -4,20 +4,21 @@ import { auth, getSafeSession } from "@repo/auth";
 import {
   createPresignedUploadUrl,
   PresignedUploadResult,
+  db,
+  eq,
+  user,
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
-  UploadedFilePayload,
   createCandidateJobApplication,
   saveUserDefaultMaterialsDb,
   deleteUserFileDb,
   getPublishedJobsPaginated,
   getUserAppliedJobIds,
 } from "./queries";
-
-export type { UploadedFilePayload };
+import type { UploadedFilePayload } from "./queries";
 
 async function getSessionUser() {
   const session = await getSafeSession(await headers());
@@ -280,5 +281,27 @@ export async function deleteUserFileAction(fileId: string) {
   } catch (error: any) {
     console.error("Failed to delete user file:", error);
     return { success: false, error: error?.message || "Failed to delete file." };
+  }
+}
+
+export async function updateProfileImageAction(imageUrl: string) {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return { success: false, error: "Please log in to update profile image." };
+    }
+
+    await db
+      .update(user)
+      .set({
+        image: imageUrl,
+      })
+      .where(eq(user.id, sessionUser.id));
+
+    revalidatePath("/user/profile");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to update profile image:", error);
+    return { success: false, error: error?.message || "Failed to update profile image." };
   }
 }

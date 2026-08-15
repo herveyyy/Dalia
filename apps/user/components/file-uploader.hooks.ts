@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { UploadedFilePayload, getPresignedUploadUrlAction } from "../app/user/utils/actions";
+import { getPresignedUploadUrlAction } from "../app/user/utils/actions";
+import type { UploadedFilePayload } from "../app/user/utils/queries";
 
 export interface UploadSlotState {
   file: File | null;
@@ -186,16 +187,37 @@ export function useFileUploader({
 
         // 3. Upload file directly to S3 if external URL
         if (presignedRes.uploadUrl && presignedRes.uploadUrl.startsWith("http")) {
-          const uploadRes = await fetch(presignedRes.uploadUrl, {
-            method: "PUT",
-            headers: {
-              "Content-Type": file.type || "application/octet-stream",
-            },
-            body: file,
-          });
+          try {
+            const uploadRes = await fetch(presignedRes.uploadUrl, {
+              method: "PUT",
+              headers: {
+                "Content-Type": file.type || "application/octet-stream",
+              },
+              body: file,
+            });
 
-          if (!uploadRes.ok && uploadRes.status !== 200 && uploadRes.status !== 204) {
-            throw new Error(`Direct S3 upload failed (HTTP ${uploadRes.status})`);
+            if (!uploadRes.ok && uploadRes.status !== 200 && uploadRes.status !== 204) {
+              throw new Error(`Direct S3 upload failed (HTTP ${uploadRes.status})`);
+            }
+          } catch (fetchError) {
+            console.warn(
+              "Direct browser upload failed (possibly S3 CORS block). Attempting server-side upload proxy fallback...",
+              fetchError
+            );
+
+            const fallbackFormData = new FormData();
+            fallbackFormData.append("file", file);
+            fallbackFormData.append("fileKey", presignedRes.fileKey);
+
+            const fallbackRes = await fetch("/user/api/files/upload", {
+              method: "POST",
+              body: fallbackFormData,
+            });
+
+            if (!fallbackRes.ok) {
+              const errorText = await fallbackRes.text();
+              throw new Error(`Fallback upload failed: ${errorText || fallbackRes.statusText}`);
+            }
           }
         }
 

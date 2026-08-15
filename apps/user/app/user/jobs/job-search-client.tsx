@@ -31,7 +31,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@repo/ui/components/atoms/Dialog";
-import { applyForJobAction, fetchPublishedJobsPaginatedAction, UploadedFilePayload } from "../utils/actions";
+import { applyForJobAction, fetchPublishedJobsPaginatedAction } from "../utils/actions";
+import type { UploadedFilePayload } from "../utils/queries";
 import { FileUploader } from "../../../components/file-uploader";
 import { FileRecord } from "@repo/db";
 

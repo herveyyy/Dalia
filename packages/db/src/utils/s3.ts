@@ -159,7 +159,7 @@ export async function getOrRefreshPresignedUrl(
   if (!freshUrl) {
     freshUrl = file.fileKey.startsWith("http")
       ? file.fileKey
-      : `/api/files/download?key=${encodeURIComponent(file.fileKey)}`;
+      : `/user/api/files/download?key=${encodeURIComponent(file.fileKey)}`;
   }
 
   const newExpiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
@@ -292,4 +292,20 @@ export async function saveFileRecord(
   }
 
   return inserted;
+}
+
+export async function uploadToS3Direct(fileKey: string, body: Buffer, contentType: string) {
+  const client = getS3Client();
+  const config = getAwsConfig();
+  if (client) {
+    const command = new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: fileKey,
+      ContentType: contentType,
+      Body: body,
+    });
+    await client.send(command);
+    return { success: true };
+  }
+  return { success: false, error: "No S3 client configured" };
 }

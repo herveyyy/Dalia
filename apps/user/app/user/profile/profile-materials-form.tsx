@@ -14,7 +14,8 @@ import {
 } from "react-icons/hi2";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { FileUploader } from "../../../components/file-uploader";
-import { UploadedFilePayload, saveUserDefaultMaterialsAction, deleteUserFileAction } from "../utils/actions";
+import { saveUserDefaultMaterialsAction, deleteUserFileAction } from "../utils/actions";
+import type { UploadedFilePayload } from "../utils/queries";
 import { FileRecord } from "@repo/db";
 
 interface ProfileMaterialsFormProps {
