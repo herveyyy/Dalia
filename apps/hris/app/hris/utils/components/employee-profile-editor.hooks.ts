@@ -62,7 +62,7 @@ export function useEmployeeProfileEditor(
         return;
       }
     }
-    if (currentStep === 3) {
+    if (currentStep === 4) {
       const basePayRateInput = document.getElementById("basePayRate") as HTMLInputElement;
       if (basePayRateInput && !basePayRateInput.value.trim()) {
         basePayRateInput.reportValidity();
