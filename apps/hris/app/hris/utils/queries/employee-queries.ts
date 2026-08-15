@@ -182,3 +182,108 @@ export async function getCompanyWorkspaces(companyId: string) {
     throw new Error("Failed to fetch workspaces");
   }
 }
+
+export async function getEmployeeById(employeeId: string) {
+  try {
+    const [emp] = await db
+      .select({
+        id: employee.id,
+        employeeNo: employee.employeeNo,
+        firstName: employee.firstName,
+        middleName: employee.middleName,
+        lastName: employee.lastName,
+        suffix: employee.suffix,
+        dateOfBirth: employee.dateOfBirth,
+        gender: employee.gender,
+        personalEmail: employee.personalEmail,
+        workEmail: employee.workEmail,
+        phoneNumber: employee.phoneNumber,
+        residentialAddress: employee.residentialAddress,
+        tin: employee.tin,
+        philhealth: employee.philhealth,
+        pagIbig: employee.pagIbig,
+        sssNo: employee.sssNo,
+        philIdNo: employee.philIdNo,
+        companyId: employee.companyId,
+        userId: employee.userId,
+        departmentId: employee.departmentId,
+        branchId: employee.branchId,
+        roleId: employee.roleId,
+        jobTitle: employee.jobTitle,
+        responsibilityCenter: employee.responsibilityCenter,
+        employmentStatus: employee.employmentStatus,
+        employmentSchedule: employee.employmentSchedule,
+        supervisorId: employee.supervisorId,
+        dateOfHire: employee.dateOfHire,
+        payType: employee.payType,
+        basePayRate: employee.basePayRate,
+        payFrequency: employee.payFrequency,
+        bankName: employee.bankName,
+        bankAccountNumber: employee.bankAccountNumber,
+        brstnBankCode: employee.brstnBankCode,
+        totalRegularHours: employee.totalRegularHours,
+        overtimeHours: employee.overtimeHours,
+        leaveBalanceDays: employee.leaveBalanceDays,
+        taxBracketCode: employee.taxBracketCode,
+        taxTypeId: employee.taxTypeId,
+        createdAt: employee.createdAt,
+        updatedAt: employee.updatedAt,
+        department: department.name,
+      })
+      .from(employee)
+      .leftJoin(department, eq(employee.departmentId, department.id))
+      .where(eq(employee.id, employeeId))
+      .limit(1);
+
+    if (!emp) return null;
+
+    const [contacts, deductions, allowances, taxTypes] = await Promise.all([
+      db
+        .select()
+        .from(employeeEmergencyContact)
+        .where(eq(employeeEmergencyContact.employeeId, employeeId)),
+      db
+        .select({
+          deduction: employeeDeduction,
+          type: deductionType,
+        })
+        .from(employeeDeduction)
+        .leftJoin(deductionType, eq(employeeDeduction.deductionTypeId, deductionType.id))
+        .where(eq(employeeDeduction.employeeId, employeeId)),
+      db
+        .select({
+          allowance: employeeAllowance,
+          type: allowanceType,
+        })
+        .from(employeeAllowance)
+        .leftJoin(allowanceType, eq(employeeAllowance.allowanceTypeId, allowanceType.id))
+        .where(eq(employeeAllowance.employeeId, employeeId)),
+      db
+        .select()
+        .from(taxType)
+        .where(eq(taxType.companyId, emp.companyId)),
+    ]);
+
+    const empContacts = contacts;
+    const empDeductions = deductions.map((d) => ({
+      ...d.deduction,
+      deductionType: d.type,
+    }));
+    const empAllowances = allowances.map((a) => ({
+      ...a.allowance,
+      allowanceType: a.type,
+    }));
+    const empTaxType = taxTypes.find((t) => t.id === emp.taxTypeId) || null;
+
+    return {
+      ...emp,
+      emergencyContacts: empContacts,
+      deductions: empDeductions,
+      allowances: empAllowances,
+      taxType: empTaxType,
+    };
+  } catch (error) {
+    console.error("Failed to fetch employee details by id:", error);
+    return null;
+  }
+}

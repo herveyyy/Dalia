@@ -348,7 +348,7 @@ export function EmployeeDirectory({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleOpenDialog(emp)}
+                                onClick={() => router.push(`/hris/employee/${emp.id}/profile?edit=true`)}
                                 className="size-8 p-0"
                                 title="Edit Employee"
                               >
@@ -434,7 +434,15 @@ export function EmployeeDirectory({
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+              <form
+                onSubmit={handleSubmit}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") {
+                    e.preventDefault();
+                  }
+                }}
+                className="flex flex-col flex-1 min-h-0"
+              >
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* Step 1: Personal Profile */}
                 <div className={currentStep === 1 ? "space-y-4" : "hidden"}>
