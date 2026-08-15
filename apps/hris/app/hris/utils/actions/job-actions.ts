@@ -1,6 +1,6 @@
 "use server";
 
-import { db, eq, jobPosting, logActivity, jobApplication, user, getFilesWithFreshUrlsByParent, desc } from "@repo/db";
+import { db, eq, jobPosting, logActivity, jobApplication, user, employee, getFilesWithFreshUrlsByParent, desc } from "@repo/db";
 import { getSafeSession } from "@repo/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -170,6 +170,40 @@ export async function getJobApplicationsAction(jobPostingId: string) {
   }
 }
 
+function parseSalaryNumber(salaryRange: string | null | undefined): string {
+  if (!salaryRange) return "0.00";
+
+  // Lowercase and trim
+  const clean = salaryRange.toLowerCase().trim();
+
+  // If there's a range, let's take the first part
+  // e.g. "60k - 80k" -> "60k"
+  // e.g. "₱50,000 to ₱70,000" -> "₱50,000"
+  const firstPart = (clean.split(/[-–—]|to/)[0] || "").trim();
+
+  // Extract all digits, commas, dots, and 'k'
+  // e.g. "₱60k" -> "60k"
+  // e.g. "₱50,000" -> "50,000"
+  const numberPart = firstPart.replace(/[^0-9.k]/g, "");
+
+  if (numberPart.includes("k")) {
+    const numericStr = numberPart.replace("k", "");
+    const value = parseFloat(numericStr);
+    if (!isNaN(value)) {
+      return (value * 1000).toFixed(2);
+    }
+  } else {
+    // Strip commas if any and parse float
+    const numericStr = numberPart.replace(/,/g, "");
+    const value = parseFloat(numericStr);
+    if (!isNaN(value)) {
+      return value.toFixed(2);
+    }
+  }
+
+  return "0.00";
+}
+
 export async function updateApplicationStatusAction(
   applicationId: string,
   status: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected"
@@ -207,16 +241,64 @@ export async function updateApplicationStatusAction(
 
     // 3. Fetch candidate user name
     const [candidate] = await db
-      .select({ name: user.name })
+      .select({ name: user.name, email: user.email })
       .from(user)
       .where(eq(user.id, oldApp.userId))
       .limit(1);
 
     const [job] = await db
-      .select({ title: jobPosting.title })
+      .select({
+        title: jobPosting.title,
+        departmentId: jobPosting.departmentId,
+        salaryRange: jobPosting.salaryRange,
+      })
       .from(jobPosting)
       .where(eq(jobPosting.id, oldApp.jobPostingId))
       .limit(1);
+
+    // If accepted, check and auto-create an employee record
+    if (status === "Accepted") {
+      const [existingEmployee] = await db
+        .select()
+        .from(employee)
+        .where(eq(employee.userId, oldApp.userId))
+        .limit(1);
+
+      if (!existingEmployee && candidate) {
+        const nameParts = (candidate.name || "First Last").split(" ");
+        const firstName = nameParts[0] || "First";
+        const lastName = nameParts.slice(1).join(" ") || "Last";
+
+        await db.insert(employee).values({
+          userId: oldApp.userId,
+          companyId: oldApp.companyId,
+          firstName,
+          lastName,
+          workEmail: candidate.email,
+          personalEmail: candidate.email,
+          jobTitle: job?.title || "New Hire",
+          departmentId: job?.departmentId || null,
+          employmentStatus: "Active",
+          payFrequency: "Semi-monthly",
+          basePayRate: parseSalaryNumber(job?.salaryRange),
+          totalRegularHours: "0.00",
+          overtimeHours: "0.00",
+          leaveBalanceDays: "0.00",
+          dateOfHire: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      // Close the job posting since it has been filled/accepted
+      await db
+        .update(jobPosting)
+        .set({
+          status: "Closed",
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(jobPosting.id, oldApp.jobPostingId));
+    }
 
     // 4. Log activity
     await logActivity(db, {

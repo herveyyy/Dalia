@@ -25,6 +25,9 @@ import {
   HiOutlineBuildingOffice,
   HiOutlineCurrencyDollar,
   HiOutlineMagnifyingGlass,
+  HiOutlineArchiveBox,
+  HiOutlineUserGroup,
+  HiOutlineChatBubbleLeftRight,
 } from "react-icons/hi2";
 import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
@@ -44,6 +47,12 @@ interface JobPostingsListProps {
   page?: number;
   itemsPerPage?: number;
   search?: string;
+  stats?: {
+    published: number;
+    closed: number;
+    totalApplicants: number;
+    interviewing: number;
+  };
 }
 
 export function JobPostingsList({
@@ -55,6 +64,7 @@ export function JobPostingsList({
   page = 1,
   itemsPerPage = 10,
   search: initialSearch = "",
+  stats,
 }: JobPostingsListProps) {
   const {
     isOpen,
@@ -99,6 +109,55 @@ export function JobPostingsList({
           </Button>
         </div>
       </div>
+
+      {/* Stats Dashboard */}
+      {stats && (
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {/* Published Jobs */}
+          <div className="bg-card border border-border/60 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div className="size-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+              <HiOutlineBriefcase className="size-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Active Listings</p>
+              <h4 className="text-xl font-bold text-foreground mt-0.5">{stats.published}</h4>
+            </div>
+          </div>
+
+          {/* Closed Jobs */}
+          <div className="bg-card border border-border/60 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div className="size-10 rounded-xl bg-slate-500/10 text-slate-600 flex items-center justify-center shrink-0">
+              <HiOutlineArchiveBox className="size-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Closed Jobs</p>
+              <h4 className="text-xl font-bold text-foreground mt-0.5">{stats.closed}</h4>
+            </div>
+          </div>
+
+          {/* Total Applicants */}
+          <div className="bg-card border border-border/60 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div className="size-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+              <HiOutlineUserGroup className="size-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Total Applicants</p>
+              <h4 className="text-xl font-bold text-foreground mt-0.5">{stats.totalApplicants}</h4>
+            </div>
+          </div>
+
+          {/* Active Interviews */}
+          <div className="bg-card border border-border/60 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div className="size-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+              <HiOutlineChatBubbleLeftRight className="size-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Interviewing</p>
+              <h4 className="text-xl font-bold text-foreground mt-0.5">{stats.interviewing}</h4>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search Bar */}
       <form onSubmit={handleSearchSubmit} className="flex gap-2 max-w-md">

@@ -5,6 +5,7 @@ import {
   getJobPostings,
   getCompanyDepartments,
   getCompanyBranches,
+  getJobPostingsStats,
 } from "../utils/queries/job-queries";
 import { JobPostingsList } from "../utils/components/job-postings-list";
 
@@ -24,7 +25,7 @@ export default async function Page(props: {
 
   const { user } = session;
 
-  const [{ jobPostings, totalCount }, departmentsList, branchesList] = await Promise.all([
+  const [{ jobPostings, totalCount }, departmentsList, branchesList, stats] = await Promise.all([
     user.companyId
       ? getJobPostings({
           companyId: user.companyId,
@@ -35,6 +36,9 @@ export default async function Page(props: {
       : { jobPostings: [], totalCount: 0 },
     user.companyId ? getCompanyDepartments(user.companyId) : [],
     user.companyId ? getCompanyBranches(user.companyId) : [],
+    user.companyId
+      ? getJobPostingsStats(user.companyId)
+      : { published: 0, closed: 0, totalApplicants: 0, interviewing: 0 },
   ]);
 
   return (
@@ -47,6 +51,7 @@ export default async function Page(props: {
       page={page}
       itemsPerPage={items}
       search={search}
+      stats={stats}
     />
   );
 }

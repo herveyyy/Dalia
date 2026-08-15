@@ -207,3 +207,40 @@ export async function getJobApplicationsWithDetails(jobPostingId: string) {
   }
 }
 
+export async function getJobPostingsStats(companyId: string) {
+  try {
+    const [stats] = await db
+      .select({
+        published: sql<number>`COALESCE(SUM(CASE WHEN ${jobPosting.status} = 'Published' AND ${jobPosting.isArchived} = false THEN 1 ELSE 0 END), 0)::int`,
+        closed: sql<number>`COALESCE(SUM(CASE WHEN ${jobPosting.status} = 'Closed' AND ${jobPosting.isArchived} = false THEN 1 ELSE 0 END), 0)::int`,
+      })
+      .from(jobPosting)
+      .where(eq(jobPosting.companyId, companyId))
+      .limit(1);
+
+    const [applicantsStats] = await db
+      .select({
+        total: sql<number>`COUNT(*)::int`,
+        interviewing: sql<number>`COALESCE(SUM(CASE WHEN ${jobApplication.status} = 'Interviewing' THEN 1 ELSE 0 END), 0)::int`,
+      })
+      .from(jobApplication)
+      .where(eq(jobApplication.companyId, companyId))
+      .limit(1);
+
+    return {
+      published: stats?.published ?? 0,
+      closed: stats?.closed ?? 0,
+      totalApplicants: applicantsStats?.total ?? 0,
+      interviewing: applicantsStats?.interviewing ?? 0,
+    };
+  } catch (err) {
+    console.error("Failed to fetch job postings stats:", err);
+    return {
+      published: 0,
+      closed: 0,
+      totalApplicants: 0,
+      interviewing: 0,
+    };
+  }
+}
+

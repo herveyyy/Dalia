@@ -57,6 +57,18 @@ export function useJobApplicants(initialApplicants: ApplicantRecord[]) {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected">("ALL");
   const [actionPendingId, setActionPendingId] = useState<string | null>(null);
 
+  // Confirmation & Undo States
+  const [confirmTarget, setConfirmTarget] = useState<{
+    applicationId: string;
+    status: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected";
+  } | null>(null);
+
+  const [lastAction, setLastAction] = useState<{
+    applicationId: string;
+    previousStatus: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected";
+    newStatus: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected";
+  } | null>(null);
+
   // Filtered applicants
   const filteredApplicants = applicants.filter((app) => {
     const matchesSearch =
@@ -93,6 +105,40 @@ export function useJobApplicants(initialApplicants: ApplicantRecord[]) {
     }
   };
 
+  // Trigger manual confirmation modal
+  const triggerConfirmStatus = (
+    applicationId: string,
+    status: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected"
+  ) => {
+    setConfirmTarget({ applicationId, status });
+  };
+
+  // Execute manual status update after confirmation
+  const handleConfirmStatusUpdate = async () => {
+    if (!confirmTarget) return;
+    const { applicationId, status } = confirmTarget;
+
+    const app = applicants.find((a) => a.id === applicationId);
+    if (app) {
+      setLastAction({
+        applicationId,
+        previousStatus: app.status as any,
+        newStatus: status,
+      });
+    }
+
+    setConfirmTarget(null);
+    await handleUpdateStatus(applicationId, status);
+  };
+
+  // Undo last action
+  const handleUndo = async () => {
+    if (!lastAction) return;
+    const { applicationId, previousStatus } = lastAction;
+    setLastAction(null);
+    await handleUpdateStatus(applicationId, previousStatus);
+  };
+
   // Auto-view logic: when a candidate is selected, if they are "Pending", update their status to "Viewed"
   useEffect(() => {
     if (!selectedAppId) return;
@@ -120,5 +166,12 @@ export function useJobApplicants(initialApplicants: ApplicantRecord[]) {
     handleUpdateStatus,
     activeVideo,
     isDefaultVideo,
+    confirmTarget,
+    setConfirmTarget,
+    lastAction,
+    setLastAction,
+    triggerConfirmStatus,
+    handleConfirmStatusUpdate,
+    handleUndo,
   };
 }

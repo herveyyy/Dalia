@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import Link from "next/link";
+import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import {
   useJobApplicants,
   ApplicantRecord,
@@ -26,6 +27,7 @@ import {
   HiOutlineInformationCircle,
   HiOutlineEye,
   HiOutlineChatBubbleLeftRight,
+  HiOutlineArrowUturnLeft,
 } from "react-icons/hi2";
 
 interface JobPostingRecord {
@@ -56,9 +58,14 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
     actionPendingId,
     filteredApplicants,
     selectedApp,
-    handleUpdateStatus,
     activeVideo,
     isDefaultVideo,
+    confirmTarget,
+    setConfirmTarget,
+    lastAction,
+    triggerConfirmStatus,
+    handleConfirmStatusUpdate,
+    handleUndo,
   } = useJobApplicants(initialApplicants);
 
   return (
@@ -202,6 +209,25 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
         <div className="lg:col-span-2 space-y-6">
           {selectedApp ? (
             <div className="space-y-6">
+              {/* Undo Toast Notification */}
+              {lastAction && lastAction.applicationId === selectedApp.id && (
+                <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center justify-between shadow-xs transition-all animate-fadeIn">
+                  <div className="flex items-center gap-2.5 text-xs text-foreground font-medium">
+                    <HiOutlineInformationCircle className="size-5 text-primary shrink-0" />
+                    <span>
+                      Changed status to <span className="font-bold">{lastAction.newStatus}</span>.
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleUndo}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline outline-none cursor-pointer"
+                  >
+                    <HiOutlineArrowUturnLeft className="size-3.5" />
+                    <span>Undo</span>
+                  </button>
+                </div>
+              )}
+
               {/* Profile Card & Action Banner */}
               <div className="bg-card border border-border/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -238,7 +264,7 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
                       size="sm"
                       variant="outline"
                       disabled={actionPendingId !== null}
-                      onClick={() => handleUpdateStatus(selectedApp.id, "Viewed")}
+                      onClick={() => triggerConfirmStatus(selectedApp.id, "Viewed")}
                       className={`gap-1 text-[11px] h-8 border-blue-200 hover:border-blue-500 hover:bg-blue-50/50 text-blue-600 font-bold px-3 rounded-lg transition-all ${
                         selectedApp.status === "Viewed" ? "bg-blue-50/50 ring-1 ring-blue-500/30" : ""
                       }`}
@@ -258,7 +284,7 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
                       size="sm"
                       variant="outline"
                       disabled={actionPendingId !== null}
-                      onClick={() => handleUpdateStatus(selectedApp.id, "Interviewing")}
+                      onClick={() => triggerConfirmStatus(selectedApp.id, "Interviewing")}
                       className={`gap-1 text-[11px] h-8 border-purple-200 hover:border-purple-500 hover:bg-purple-50/50 text-purple-600 font-bold px-3 rounded-lg transition-all ${
                         selectedApp.status === "Interviewing" ? "bg-purple-50/50 ring-1 ring-purple-500/30" : ""
                       }`}
@@ -277,7 +303,7 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
                     <Button
                       size="sm"
                       disabled={actionPendingId !== null}
-                      onClick={() => handleUpdateStatus(selectedApp.id, "Accepted")}
+                      onClick={() => triggerConfirmStatus(selectedApp.id, "Accepted")}
                       className={`gap-1 text-[11px] h-8 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 rounded-lg transition-all shadow-sm ${
                         selectedApp.status === "Accepted" ? "ring-2 ring-emerald-500/30 opacity-75" : ""
                       }`}
@@ -297,7 +323,7 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
                       size="sm"
                       variant="outline"
                       disabled={actionPendingId !== null}
-                      onClick={() => handleUpdateStatus(selectedApp.id, "Rejected")}
+                      onClick={() => triggerConfirmStatus(selectedApp.id, "Rejected")}
                       className={`gap-1 text-[11px] h-8 border-destructive/20 hover:border-destructive hover:bg-destructive/5 text-destructive font-bold px-3 rounded-lg transition-all ${
                         selectedApp.status === "Rejected" ? "bg-destructive/5 opacity-75" : ""
                       }`}
@@ -531,6 +557,20 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
           )}
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      {confirmTarget && selectedApp && (
+        <ConfirmDialog
+          open={Boolean(confirmTarget)}
+          onOpenChange={(open) => !open && setConfirmTarget(null)}
+          title="Change Application Status"
+          description={`Are you sure you want to change the status of ${selectedApp.candidate.name} to "${confirmTarget.status}"?`}
+          confirmLabel={confirmTarget.status}
+          variant={confirmTarget.status === "Rejected" ? "destructive" : "default"}
+          isLoading={actionPendingId !== null}
+          onConfirm={handleConfirmStatusUpdate}
+        />
+      )}
     </div>
   );
 }
