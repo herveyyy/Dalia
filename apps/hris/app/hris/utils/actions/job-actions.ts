@@ -1,6 +1,6 @@
 "use server";
 
-import { db, eq, jobPosting, logActivity } from "@repo/db";
+import { db, eq, jobPosting, logActivity, jobApplication, user, getFilesWithFreshUrlsByParent, desc } from "@repo/db";
 import { getSafeSession } from "@repo/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -118,5 +118,124 @@ export async function deleteJobPosting(id: string) {
   } catch (error) {
     console.error("Failed to delete job posting:", error);
     throw new Error("Failed to delete job posting");
+  }
+}
+
+export async function getJobApplicationsAction(jobPostingId: string) {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return { success: false, error: "Unauthorized access. Please log in." };
+    }
+
+    const list = await db
+      .select({
+        id: jobApplication.id,
+        jobPostingId: jobApplication.jobPostingId,
+        status: jobApplication.status,
+        coverLetter: jobApplication.coverLetter,
+        resumeUrl: jobApplication.resumeUrl,
+        createdAt: jobApplication.createdAt,
+        updatedAt: jobApplication.updatedAt,
+        candidate: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        },
+      })
+      .from(jobApplication)
+      .innerJoin(user, eq(jobApplication.userId, user.id))
+      .where(eq(jobApplication.jobPostingId, jobPostingId))
+      .orderBy(desc(jobApplication.createdAt));
+
+    // Resolve S3 files for each application
+    const applications = await Promise.all(
+      list.map(async (app) => {
+        const files = await getFilesWithFreshUrlsByParent(db, app.id, "job_application");
+        return {
+          ...app,
+          files,
+          videoFile: files.find((f) => f.fileCategory === "video") || null,
+          resumeFile: files.find((f) => f.fileCategory === "resume") || null,
+          coverLetterFile: files.find((f) => f.fileCategory === "cover_letter") || null,
+        };
+      })
+    );
+
+    return { success: true, applications };
+  } catch (error: any) {
+    console.error("Failed to fetch applications:", error);
+    return { success: false, error: error?.message || "Failed to load applications." };
+  }
+}
+
+export async function updateApplicationStatusAction(applicationId: string, status: "Accepted" | "Rejected") {
+  try {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
+      return { success: false, error: "Unauthorized access. Please log in." };
+    }
+
+    // 1. Get old record and details for audit logs
+    const [oldApp] = await db
+      .select()
+      .from(jobApplication)
+      .where(eq(jobApplication.id, applicationId))
+      .limit(1);
+
+    if (!oldApp) {
+      return { success: false, error: "Application not found." };
+    }
+
+    // 2. Update status
+    const [newApp] = await db
+      .update(jobApplication)
+      .set({
+        status,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(jobApplication.id, applicationId))
+      .returning();
+
+    if (!newApp) {
+      return { success: false, error: "Failed to update application status." };
+    }
+
+    // 3. Fetch candidate user name
+    const [candidate] = await db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, oldApp.userId))
+      .limit(1);
+
+    const [job] = await db
+      .select({ title: jobPosting.title })
+      .from(jobPosting)
+      .where(eq(jobPosting.id, oldApp.jobPostingId))
+      .limit(1);
+
+    // 4. Log activity
+    await logActivity(db, {
+      companyId: oldApp.companyId,
+      actorId: sessionUser.id,
+      actorName: sessionUser.name,
+      actorEmail: sessionUser.email,
+      entityType: "job_application",
+      entityId: applicationId,
+      action: "UPDATE",
+      summary: `${status === "Accepted" ? "Accepted" : "Rejected"} job application of candidate "${
+        candidate?.name || "Anonymous"
+      }" for job posting "${job?.title || "Unknown"}"`,
+      oldData: oldApp,
+      newData: newApp,
+    });
+
+    revalidatePath("/hris/jobs");
+    revalidatePath("/hris/activity-logs");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to update application status:", error);
+    return { success: false, error: error?.message || "Failed to update status." };
   }
 }
