@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
-import { updateApplicationStatusAction } from "../actions/job-actions";
+import Link from "next/link";
+import {
+  useJobApplicants,
+  ApplicantRecord,
+} from "./job-applicants-client.hooks";
 import {
   HiOutlineUser,
   HiOutlineEnvelope,
@@ -22,43 +24,9 @@ import {
   HiOutlineExclamationCircle,
   HiOutlineMagnifyingGlass,
   HiOutlineInformationCircle,
+  HiOutlineEye,
+  HiOutlineChatBubbleLeftRight,
 } from "react-icons/hi2";
-
-interface FileRecordWithActiveUrl {
-  id: string;
-  parentId: string;
-  parentType: string;
-  fileCategory: string;
-  fileName: string;
-  fileKey: string;
-  mimeType: string | null;
-  fileSize: number | null;
-  activeUrl: string;
-}
-
-interface ApplicantRecord {
-  id: string;
-  jobPostingId: string;
-  status: string;
-  coverLetter: string | null;
-  resumeUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-  candidate: {
-    id: string;
-    name: string;
-    email: string;
-    image: string | null;
-  };
-  appFiles: FileRecordWithActiveUrl[];
-  videoFile: FileRecordWithActiveUrl | null;
-  resumeFile: FileRecordWithActiveUrl | null;
-  coverLetterFile: FileRecordWithActiveUrl | null;
-  userFiles: FileRecordWithActiveUrl[];
-  defaultVideoFile: FileRecordWithActiveUrl | null;
-  defaultResumeFile: FileRecordWithActiveUrl | null;
-  defaultCoverLetterFile: FileRecordWithActiveUrl | null;
-}
 
 interface JobPostingRecord {
   id: string;
@@ -77,50 +45,21 @@ interface JobApplicantsClientProps {
 
 export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsClientProps) {
   const router = useRouter();
-  const [applicants, setApplicants] = useState<ApplicantRecord[]>(initialApplicants);
-  const [selectedAppId, setSelectedAppId] = useState<string | null>(
-    initialApplicants.length > 0 ? initialApplicants[0]?.id || null : null
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "Pending" | "Accepted" | "Rejected">("ALL");
-  const [actionPendingId, setActionPendingId] = useState<string | null>(null);
-
-  // Filtered applicants
-  const filteredApplicants = applicants.filter((app) => {
-    const matchesSearch =
-      app.candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.candidate.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "ALL" || app.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // Currently selected application
-  const selectedApp = applicants.find((app) => app.id === selectedAppId) || null;
-
-  // Handle status update
-  const handleUpdateStatus = async (applicationId: string, status: "Accepted" | "Rejected") => {
-    setActionPendingId(applicationId);
-    try {
-      const res = await updateApplicationStatusAction(applicationId, status);
-      if (res.success) {
-        setApplicants((prev) =>
-          prev.map((app) => (app.id === applicationId ? { ...app, status } : app))
-        );
-      } else {
-        alert(res.error || "Failed to update status.");
-      }
-    } catch (err: any) {
-      alert(err?.message || "An error occurred.");
-    } finally {
-      setActionPendingId(null);
-    }
-  };
-
-  // Video resolution (prioritize application specific, fall back to default)
-  const activeVideo = selectedApp?.videoFile || selectedApp?.defaultVideoFile || null;
-  const isDefaultVideo = selectedApp?.videoFile ? false : !!selectedApp?.defaultVideoFile;
+  
+  const {
+    selectedAppId,
+    setSelectedAppId,
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    actionPendingId,
+    filteredApplicants,
+    selectedApp,
+    handleUpdateStatus,
+    activeVideo,
+    isDefaultVideo,
+  } = useJobApplicants(initialApplicants);
 
   return (
     <div className="space-y-6">
@@ -186,7 +125,7 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
             </div>
 
             <div className="flex gap-1 overflow-x-auto pb-1">
-              {(["ALL", "Pending", "Accepted", "Rejected"] as const).map((filter) => (
+              {(["ALL", "Pending", "Viewed", "Interviewing", "Accepted", "Rejected"] as const).map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setStatusFilter(filter)}
@@ -238,7 +177,11 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
                             ? "bg-emerald-500/10 text-emerald-500"
                             : app.status === "Rejected"
                               ? "bg-destructive/10 text-destructive"
-                              : "bg-amber-500/10 text-amber-500"
+                              : app.status === "Interviewing"
+                                ? "bg-purple-500/10 text-purple-500"
+                                : app.status === "Viewed"
+                                  ? "bg-blue-500/10 text-blue-500"
+                                  : "bg-amber-500/10 text-amber-500"
                         }`}
                       >
                         {app.status}
@@ -289,38 +232,81 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 self-stretch sm:self-center border-t border-border/40 sm:border-0 pt-3 sm:pt-0">
+                  <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-center border-t border-border/40 sm:border-0 pt-3 sm:pt-0">
+                    {/* Mark Viewed */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={actionPendingId !== null}
+                      onClick={() => handleUpdateStatus(selectedApp.id, "Viewed")}
+                      className={`gap-1 text-[11px] h-8 border-blue-200 hover:border-blue-500 hover:bg-blue-50/50 text-blue-600 font-bold px-3 rounded-lg transition-all ${
+                        selectedApp.status === "Viewed" ? "bg-blue-50/50 ring-1 ring-blue-500/30" : ""
+                      }`}
+                    >
+                      {actionPendingId === selectedApp.id ? (
+                        <HiOutlineArrowPath className="size-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <HiOutlineEye className="size-3.5" />
+                          <span>Viewed</span>
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Interviewing */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={actionPendingId !== null}
+                      onClick={() => handleUpdateStatus(selectedApp.id, "Interviewing")}
+                      className={`gap-1 text-[11px] h-8 border-purple-200 hover:border-purple-500 hover:bg-purple-50/50 text-purple-600 font-bold px-3 rounded-lg transition-all ${
+                        selectedApp.status === "Interviewing" ? "bg-purple-50/50 ring-1 ring-purple-500/30" : ""
+                      }`}
+                    >
+                      {actionPendingId === selectedApp.id ? (
+                        <HiOutlineArrowPath className="size-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <HiOutlineChatBubbleLeftRight className="size-3.5" />
+                          <span>Interview</span>
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Accept */}
                     <Button
                       size="sm"
                       disabled={actionPendingId !== null}
                       onClick={() => handleUpdateStatus(selectedApp.id, "Accepted")}
-                      className={`flex-1 sm:flex-initial gap-1.5 text-xs h-9 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 rounded-xl transition-all shadow-sm ${
+                      className={`gap-1 text-[11px] h-8 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 rounded-lg transition-all shadow-sm ${
                         selectedApp.status === "Accepted" ? "ring-2 ring-emerald-500/30 opacity-75" : ""
                       }`}
                     >
                       {actionPendingId === selectedApp.id ? (
-                        <HiOutlineArrowPath className="size-4 animate-spin" />
+                        <HiOutlineArrowPath className="size-3.5 animate-spin" />
                       ) : (
                         <>
-                          <HiOutlineCheck className="size-4" />
+                          <HiOutlineCheck className="size-3.5" />
                           <span>Accept</span>
                         </>
                       )}
                     </Button>
+
+                    {/* Reject */}
                     <Button
                       size="sm"
                       variant="outline"
                       disabled={actionPendingId !== null}
                       onClick={() => handleUpdateStatus(selectedApp.id, "Rejected")}
-                      className={`flex-1 sm:flex-initial gap-1.5 text-xs h-9 border-destructive/20 hover:border-destructive hover:bg-destructive/5 text-destructive font-bold px-4 rounded-xl transition-all ${
+                      className={`gap-1 text-[11px] h-8 border-destructive/20 hover:border-destructive hover:bg-destructive/5 text-destructive font-bold px-3 rounded-lg transition-all ${
                         selectedApp.status === "Rejected" ? "bg-destructive/5 opacity-75" : ""
                       }`}
                     >
                       {actionPendingId === selectedApp.id ? (
-                        <HiOutlineArrowPath className="size-4 animate-spin" />
+                        <HiOutlineArrowPath className="size-3.5 animate-spin" />
                       ) : (
                         <>
-                          <HiOutlineXMark className="size-4" />
+                          <HiOutlineXMark className="size-3.5" />
                           <span>Reject</span>
                         </>
                       )}

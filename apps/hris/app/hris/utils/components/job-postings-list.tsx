@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
@@ -16,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@repo/ui/components/atoms/Dialog";
-import { saveJobPosting, deleteJobPosting, getJobApplicationsAction, updateApplicationStatusAction } from "../actions/job-actions";
+import { deleteJobPosting } from "../actions/job-actions";
 import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
 import {
   HiOutlinePlus,
@@ -27,46 +25,15 @@ import {
   HiOutlineBuildingOffice,
   HiOutlineCurrencyDollar,
   HiOutlineMagnifyingGlass,
-  HiOutlineEnvelope,
-  HiOutlineVideoCamera,
-  HiOutlineDocumentText,
-  HiOutlineCheck,
-  HiOutlineXMark,
-  HiOutlineArrowTopRightOnSquare,
-  HiOutlineArrowPath,
-  HiOutlineCheckCircle,
-  HiOutlineExclamationTriangle,
-  HiOutlineUser,
-  HiOutlineExclamationCircle,
 } from "react-icons/hi2";
 import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
-
-interface JobPostingRecord {
-  id: string;
-  title: string;
-  department: string | null;
-  location: string | null;
-  employmentType: string;
-  description: string;
-  requirements: string | null;
-  salaryRange: string | null;
-  status: string;
-  createdAt: string;
-  applicantCount?: number;
-}
-
-interface DepartmentRecord {
-  id: string;
-  name: string;
-}
-
-interface BranchRecord {
-  id: string;
-  name: string;
-  code?: string | null;
-  address?: string | null;
-}
+import {
+  useJobPostingsList,
+  JobPostingRecord,
+  DepartmentRecord,
+  BranchRecord,
+} from "./job-postings-list.hooks";
 
 interface JobPostingsListProps {
   jobPostings: JobPostingRecord[];
@@ -77,10 +44,7 @@ interface JobPostingsListProps {
   page?: number;
   itemsPerPage?: number;
   search?: string;
-  viewMode?: "grid" | "rows";
 }
-
-const VIEW_STORAGE_KEY = "hris_job_postings_table";
 
 export function JobPostingsList({
   jobPostings,
@@ -92,126 +56,27 @@ export function JobPostingsList({
   itemsPerPage = 10,
   search: initialSearch = "",
 }: JobPostingsListProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<JobPostingRecord | null>(null);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  const [searchValue, setSearchValue] = useState(initialSearch);
-  const [viewMode, setViewMode] = useState<"grid" | "rows">("rows");
-
-  // Applicants modal states
-  const [applicantsJob, setApplicantsJob] = useState<JobPostingRecord | null>(null);
-  const [isApplicantsOpen, setIsApplicantsOpen] = useState(false);
-  const [applicants, setApplicants] = useState<any[]>([]);
-  const [loadingApplicants, setLoadingApplicants] = useState(false);
-  const [applicantsError, setApplicantsError] = useState<string | null>(null);
-  const [actionPendingId, setActionPendingId] = useState<string | null>(null);
-
-
-
-  const handleUpdateApplicationStatus = async (applicationId: string, status: "Accepted" | "Rejected") => {
-    setActionPendingId(applicationId);
-    try {
-      const res = await updateApplicationStatusAction(applicationId, status);
-      if (res.success) {
-        setApplicants((prev) =>
-          prev.map((app) => (app.id === applicationId ? { ...app, status } : app))
-        );
-      } else {
-        alert(res.error || "Failed to update application status.");
-      }
-    } catch (err: any) {
-      alert(err?.message || "Failed to update status.");
-    } finally {
-      setActionPendingId(null);
-    }
-  };
-
-  React.useEffect(() => {
-    try {
-      const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-      if (saved === "row") setViewMode("rows");
-      else if (saved === "column") setViewMode("grid");
-      else setViewMode("rows");
-    } catch {
-      setViewMode("rows");
-    }
-  }, []);
-
-  const updateQueryParams = (newParams: Record<string, string | number | undefined>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(newParams).forEach(([key, val]) => {
-      if (val !== undefined && val !== null && val !== "") {
-        params.set(key, String(val));
-      } else {
-        params.delete(key);
-      }
-    });
-    router.push(`/hris/jobs?${params.toString()}`);
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateQueryParams({ q: searchValue, page: 1 });
-  };
-
-  // Format department options for SearchableSelect
-  const departmentOptions = departments.map((d) => ({
-    value: d.name,
-    label: d.name,
-  }));
-
-  // Format branch/location options for SearchableSelect
-  const locationOptions = [
-    ...branches.map((b) => ({
-      value: b.name,
-      label: b.name,
-      sublabel: b.address || b.code || undefined,
-    })),
-    { value: "Remote", label: "Remote", sublabel: "Work from anywhere" },
-  ];
-
-  const handleOpenDialog = (job: JobPostingRecord | null = null) => {
-    setSelectedJob(job);
-    setIsOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setSelectedJob(null);
-    setIsOpen(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-
-    const payload = {
-      id: selectedJob?.id || null,
-      companyId,
-      title: formData.get("title") as string,
-      department: formData.get("department") as string,
-      location: formData.get("location") as string,
-      employmentType: formData.get("employmentType") as string,
-      description: formData.get("description") as string,
-      requirements: formData.get("requirements") as string,
-      salaryRange: formData.get("salaryRange") as string,
-      status: formData.get("status") as string,
-    };
-
-    startTransition(async () => {
-      const res = await saveJobPosting(payload);
-      if (res.success) {
-        handleCloseDialog();
-      }
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    setDeleteTargetId(id);
-  };
+  const {
+    isOpen,
+    selectedJob,
+    deleteTargetId,
+    setDeleteTargetId,
+    isPending,
+    startTransition,
+    searchValue,
+    setSearchValue,
+    viewMode,
+    setViewMode,
+    handleSearchSubmit,
+    handleOpenDialog,
+    handleCloseDialog,
+    handleSubmit,
+    handleDelete,
+    departmentOptions,
+    locationOptions,
+    router,
+    VIEW_STORAGE_KEY,
+  } = useJobPostingsList(initialSearch, companyId, departments, branches);
 
   return (
     <div className="space-y-6">
@@ -235,35 +100,39 @@ export function JobPostingsList({
         </div>
       </div>
 
-      {/* Filter / Search Bar UI */}
-      <div className="flex items-center justify-between gap-4 bg-card p-3 rounded-xl border border-border/60">
-        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
-          <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      {/* Search Bar */}
+      <form onSubmit={handleSearchSubmit} className="flex gap-2 max-w-md">
+        <div className="relative flex-1">
+          <HiOutlineMagnifyingGlass className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
           <Input
-            type="search"
-            placeholder="Search job postings..."
+            placeholder="Search jobs by title..."
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            className="pl-9 text-xs"
+            className="pl-9 h-9 text-xs"
           />
-        </form>
-        <div className="text-xs text-muted-foreground">
-          Showing <span className="font-semibold text-foreground">{jobPostings.length}</span> of{" "}
-          <span className="font-semibold text-foreground">{totalCount}</span> listings
         </div>
-      </div>
+        <Button type="submit" size="sm" className="h-9">
+          Search
+        </Button>
+      </form>
 
-      {/* Jobs Content */}
+      {/* Jobs Grid / Row List */}
       {jobPostings.length === 0 ? (
-        <div className="border border-border/60 rounded-xl bg-card p-12 text-center text-muted-foreground">
-          <div className="flex flex-col items-center gap-2 max-w-sm mx-auto">
-            <HiOutlineBriefcase className="size-10 text-muted-foreground/60" />
-            <p className="font-semibold text-foreground mt-2">No active job postings</p>
-            <p className="text-xs">Create job listings to display on your career pages or publish them internally.</p>
-            <Button onClick={() => handleOpenDialog(null)} size="sm" className="mt-4">
-              Add First Job Posting
-            </Button>
+        <div className="rounded-2xl border border-dashed border-border p-12 text-center bg-card shadow-xs">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <HiOutlineBriefcase className="size-6" />
           </div>
+          <h3 className="mt-4 text-sm font-bold text-foreground">No job postings found</h3>
+          <p className="mt-1 text-xs text-muted-foreground max-w-xs mx-auto">
+            {searchValue ? "No active jobs match your search query." : "Post a new opening to start accepting candidate applications."}
+          </p>
+          {!searchValue && (
+            <div className="mt-6">
+              <Button onClick={() => handleOpenDialog(null)} size="sm">
+                Add First Job Posting
+              </Button>
+            </div>
+          )}
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -377,7 +246,6 @@ export function JobPostingsList({
                 </div>
               </div>
 
-
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -415,14 +283,16 @@ export function JobPostingsList({
             <DialogOverlay />
             <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
               <div className="p-6 pb-4 border-b border-border shrink-0 bg-card">
-                <DialogTitle>{selectedJob ? "Edit Job Posting" : "Post a New Job"}</DialogTitle>
-                <DialogDescription>
-                  Configure the job details, requirements, department, and employment type.
+                <DialogTitle className="text-lg font-bold text-foreground">
+                  {selectedJob ? "Edit Job Posting" : "Create Job Posting"}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Provide details about the opening to post it on your career listing pages.
                 </DialogDescription>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col justify-between">
+                <div className="p-6 space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <Label htmlFor="title">Job Title *</Label>
@@ -561,196 +431,6 @@ export function JobPostingsList({
           });
         }}
       />
-
-      {isApplicantsOpen && (
-        <Dialog open={isApplicantsOpen} onOpenChange={(open) => !open && setIsApplicantsOpen(false)}>
-          <DialogPortal>
-            <DialogOverlay />
-            <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
-              <div className="p-6 pb-4 border-b border-border bg-card shrink-0">
-                <DialogTitle className="flex items-center gap-2">
-                  <span>Applications for</span>
-                  <span className="text-primary font-bold">{applicantsJob?.title}</span>
-                </DialogTitle>
-                <DialogDescription>
-                  Review candidate cover letters, credentials, and update their recruitment status.
-                </DialogDescription>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-muted/10">
-                {loadingApplicants ? (
-                  <div className="flex flex-col items-center justify-center py-12 space-y-3">
-                    <HiOutlineArrowPath className="size-8 text-primary animate-spin" />
-                    <span className="text-sm text-muted-foreground">Loading applicants...</span>
-                  </div>
-                ) : applicantsError ? (
-                  <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-center text-sm text-destructive flex flex-col items-center justify-center gap-2">
-                    <HiOutlineExclamationTriangle className="size-6" />
-                    <p>{applicantsError}</p>
-                  </div>
-                ) : applicants.length === 0 ? (
-                  <div className="text-center py-16 space-y-3 bg-card rounded-2xl border border-dashed border-border p-8">
-                    <HiOutlineUser className="size-12 text-muted-foreground mx-auto" />
-                    <h3 className="font-bold text-foreground">No applications yet</h3>
-                    <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-                      Once candidates apply to this job posting, their details and attached documents will show up here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {applicants.map((app) => (
-                      <div key={app.id} className="bg-card rounded-2xl border border-border/80 shadow-sm overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x">
-                        {/* Candidate Basic Info */}
-                        <div className="p-5 md:w-1/3 flex flex-col justify-between space-y-4 bg-muted/5 shrink-0">
-                          <div className="flex items-center gap-3">
-                            <div className="size-12 rounded-full overflow-hidden border border-border/80 flex items-center justify-center bg-primary/10 shrink-0">
-                              {app.candidate.image ? (
-                                <img src={app.candidate.image} alt={app.candidate.name} className="size-full object-cover" />
-                              ) : (
-                                <span className="text-primary font-bold text-lg">{app.candidate.name?.[0]?.toUpperCase() ?? "C"}</span>
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className="font-bold text-sm text-foreground truncate">{app.candidate.name}</h4>
-                              <p className="text-[10px] text-muted-foreground truncate">{app.candidate.email}</p>
-                              <span className="text-[9px] text-muted-foreground mt-1 block">
-                                Applied {new Date(app.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Status and Action Buttons */}
-                          <div className="space-y-2.5 pt-2 border-t border-border/40">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-muted-foreground">Current Status</span>
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                                app.status === "Accepted"
-                                  ? "bg-emerald-500/10 text-emerald-500"
-                                  : app.status === "Rejected"
-                                    ? "bg-destructive/10 text-destructive"
-                                    : "bg-amber-500/10 text-amber-500"
-                              }`}>
-                                {app.status === "Accepted" && <HiOutlineCheckCircle className="size-3" />}
-                                {app.status === "Rejected" && <HiOutlineExclamationCircle className="size-3" />}
-                                {app.status === "Pending" && <HiOutlineArrowPath className="size-3 animate-spin" />}
-                                {app.status}
-                              </span>
-                            </div>
-
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                type="button"
-                                disabled={actionPendingId !== null}
-                                onClick={() => handleUpdateApplicationStatus(app.id, "Accepted")}
-                                className={`flex-1 gap-1 text-[11px] h-8 bg-emerald-600 hover:bg-emerald-500 text-white ${
-                                  app.status === "Accepted" ? "ring-2 ring-emerald-500/30 opacity-70" : ""
-                                }`}
-                              >
-                                {actionPendingId === app.id ? (
-                                  <HiOutlineArrowPath className="size-3.5 animate-spin" />
-                                ) : (
-                                  <>
-                                    <HiOutlineCheck className="size-3.5" />
-                                    <span>Accept</span>
-                                  </>
-                                )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                type="button"
-                                variant="outline"
-                                disabled={actionPendingId !== null}
-                                onClick={() => handleUpdateApplicationStatus(app.id, "Rejected")}
-                                className={`flex-1 gap-1 text-[11px] h-8 border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5 text-destructive ${
-                                  app.status === "Rejected" ? "bg-destructive/5 opacity-70" : ""
-                                }`}
-                              >
-                                {actionPendingId === app.id ? (
-                                  <HiOutlineArrowPath className="size-3.5 animate-spin" />
-                                ) : (
-                                  <>
-                                    <HiOutlineXMark className="size-3.5" />
-                                    <span>Reject</span>
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Cover Letter and Uploaded Materials */}
-                        <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                          <div>
-                            <h5 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1.5">Cover Note</h5>
-                            <p className="text-xs text-muted-foreground bg-muted/20 border border-border/30 rounded-xl p-3 leading-relaxed whitespace-pre-wrap min-h-16">
-                              {app.coverLetter || "No cover note provided by applicant."}
-                            </p>
-                          </div>
-
-                          <div className="pt-2 border-t border-border/40">
-                            <h5 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-2">Attached Documents</h5>
-                            <div className="flex flex-wrap gap-2">
-                              {app.resumeFile ? (
-                                <a
-                                  href={app.resumeFile.presignedUrl || app.resumeFile.activeUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 bg-card hover:bg-primary/5 border border-border/80 hover:border-primary/30 text-xs text-foreground hover:text-primary font-medium px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                                >
-                                  <HiOutlineDocumentText className="size-4 text-blue-500" />
-                                  <span className="truncate max-w-[120px]">{app.resumeFile.fileName}</span>
-                                  <HiOutlineArrowTopRightOnSquare className="size-3 text-muted-foreground shrink-0 ml-0.5" />
-                                </a>
-                              ) : null}
-
-                              {app.coverLetterFile ? (
-                                <a
-                                  href={app.coverLetterFile.presignedUrl || app.coverLetterFile.activeUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 bg-card hover:bg-primary/5 border border-border/80 hover:border-primary/30 text-xs text-foreground hover:text-primary font-medium px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                                >
-                                  <HiOutlineDocumentText className="size-4 text-emerald-500" />
-                                  <span className="truncate max-w-[120px]">{app.coverLetterFile.fileName}</span>
-                                  <HiOutlineArrowTopRightOnSquare className="size-3 text-muted-foreground shrink-0 ml-0.5" />
-                                </a>
-                              ) : null}
-
-                              {app.videoFile ? (
-                                <a
-                                  href={app.videoFile.presignedUrl || app.videoFile.activeUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 bg-card hover:bg-primary/5 border border-border/80 hover:border-primary/30 text-xs text-foreground hover:text-primary font-medium px-3 py-1.5 rounded-lg transition-all shadow-sm"
-                                >
-                                  <HiOutlineVideoCamera className="size-4 text-rose-500" />
-                                  <span className="truncate max-w-[120px]">{app.videoFile.fileName}</span>
-                                  <HiOutlineArrowTopRightOnSquare className="size-3 text-muted-foreground shrink-0 ml-0.5" />
-                                </a>
-                              ) : null}
-
-                              {!app.resumeFile && !app.coverLetterFile && !app.videoFile && (
-                                <span className="text-xs text-muted-foreground italic">No attached documents.</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end px-6 py-4 border-t border-border bg-card shrink-0">
-                <Button type="button" variant="outline" onClick={() => setIsApplicantsOpen(false)}>
-                  Close
-                </Button>
-              </div>
-            </DialogContent>
-          </DialogPortal>
-        </Dialog>
-      )}
     </div>
   );
 }

@@ -170,7 +170,10 @@ export async function getJobApplicationsAction(jobPostingId: string) {
   }
 }
 
-export async function updateApplicationStatusAction(applicationId: string, status: "Accepted" | "Rejected") {
+export async function updateApplicationStatusAction(
+  applicationId: string,
+  status: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected"
+) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
