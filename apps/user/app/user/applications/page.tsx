@@ -11,6 +11,7 @@ import {
   HiOutlineClock,
   HiOutlineArrowUpRight,
   HiOutlineDocumentText,
+  HiOutlineVideoCamera,
 } from "react-icons/hi2";
 
 export default async function ApplicationsPage(props: {
@@ -39,7 +40,7 @@ export default async function ApplicationsPage(props: {
       </div>
 
       {justApplied ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-3">
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-600 flex items-center gap-3">
           <HiOutlineCheckCircle className="size-5 shrink-0" />
           <p className="font-semibold">
             Your job application has been submitted successfully! The hiring team will review your profile.
@@ -104,14 +105,14 @@ export default async function ApplicationsPage(props: {
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
                       app.status === "Hired"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        ? "bg-emerald-500/10 dark:text-emerald-400 border border-emerald-500/20"
                         : app.status === "Rejected"
-                          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                          ? "bg-rose-500/10 dark:text-rose-400 border border-rose-500/20"
                           : app.status === "Interviewing"
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                            ? "bg-blue-500/10 dark:text-blue-400 border border-blue-500/20"
                             : app.status === "Shortlisted"
-                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                              ? "bg-purple-500/10 dark:text-purple-400 border border-purple-500/20"
+                              : "bg-amber-500/10 dark:text-amber-400 border border-amber-500/20"
                     }`}
                   >
                     <HiOutlineClock className="size-3.5" />
@@ -120,7 +121,7 @@ export default async function ApplicationsPage(props: {
                 </div>
               </div>
 
-              {/* Application details */}
+              {/* Application details & Attached Files */}
               <div className="grid gap-4 sm:grid-cols-2 text-xs">
                 <div>
                   <span className="text-muted-foreground font-semibold">Applied Date</span>
@@ -134,18 +135,58 @@ export default async function ApplicationsPage(props: {
                   </p>
                 </div>
 
-                {app.resumeUrl ? (
+                {/* Resume / Portfolio File Link */}
+                {app.resumeFile?.activeUrl || app.resumeUrl ? (
                   <div>
-                    <span className="text-muted-foreground font-semibold">Resume / Portfolio</span>
-                    <p className="mt-0.5">
+                    <span className="text-muted-foreground font-semibold">Resume / CV</span>
+                    <p className="mt-1">
                       <a
-                        href={app.resumeUrl}
+                        href={app.resumeFile?.activeUrl || app.resumeUrl || "#"}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 font-bold text-primary hover:underline"
+                        className="inline-flex items-center gap-1.5 font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg border border-primary/20 transition-colors"
                       >
-                        <span>View Attachment</span>
-                        <HiOutlineArrowUpRight className="size-3" />
+                        <HiOutlineDocumentText className="size-4" />
+                        <span>{app.resumeFile?.fileName || "View Resume Document"}</span>
+                        <HiOutlineArrowUpRight className="size-3.5" />
+                      </a>
+                    </p>
+                  </div>
+                ) : null}
+
+                {/* Video Pitch / Introduction */}
+                {app.videoFile?.activeUrl ? (
+                  <div className="sm:col-span-2 space-y-2 bg-muted/40 p-4 rounded-xl border border-border/70">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <HiOutlineVideoCamera className="size-4 text-primary" />
+                      <span>Self-Introduction Video Pitch ({app.videoFile.fileName})</span>
+                    </span>
+                    <div className="overflow-hidden rounded-lg border border-border/80 bg-black/60 max-w-lg">
+                      <video
+                        src={app.videoFile.activeUrl}
+                        controls
+                        className="w-full max-h-64 rounded-lg object-contain bg-black"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Cover Letter Document or Note */}
+                {app.coverLetterFile?.activeUrl ? (
+                  <div className="sm:col-span-2 space-y-1 bg-muted/30 p-3 rounded-xl border border-border/50">
+                    <span className="text-muted-foreground font-semibold flex items-center gap-1.5">
+                      <HiOutlineDocumentText className="size-4 text-primary" />
+                      Attached Cover Letter Document
+                    </span>
+                    <p className="mt-1">
+                      <a
+                        href={app.coverLetterFile.activeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 font-bold text-primary hover:underline"
+                      >
+                        <span>{app.coverLetterFile.fileName}</span>
+                        <HiOutlineArrowUpRight className="size-3.5" />
                       </a>
                     </p>
                   </div>

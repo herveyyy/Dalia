@@ -7,7 +7,15 @@
     "BETTER_AUTH_SECRET",
     "DOCS_URL",
     "HRIS_URL",
-    "USER_URL"
+    "USER_URL",
+    "S3_URI",
+    "ARN",
+    "APA",
+    "AWS_SECRET_KEY",
+    "AWS_ACCESS_KEY",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_REGION"
   ],
   "tasks": {
     "build": {

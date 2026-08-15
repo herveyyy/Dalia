@@ -9,4 +9,5 @@ export * from "./rbac/relations";
 export * from "./rbac/catalog";
 export * from "./activity/tables";
 export * from "./activity/relations";
+export * from "./files/tables";
 

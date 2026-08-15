@@ -31,7 +31,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@repo/ui/components/atoms/Dialog";
-import { applyForJobAction, fetchPublishedJobsPaginatedAction } from "../utils/actions";
+import { applyForJobAction, fetchPublishedJobsPaginatedAction, UploadedFilePayload } from "../utils/actions";
+import { FileUploader } from "../../../components/file-uploader";
 
 interface JobPostingItem {
   id: string;
@@ -99,6 +100,7 @@ export function JobSearchClient({
   // Application Form State
   const [coverLetter, setCoverLetter] = React.useState("");
   const [resumeUrl, setResumeUrl] = React.useState("");
+  const [uploadedFiles, setUploadedFiles] = React.useState<UploadedFilePayload[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [applyError, setApplyError] = React.useState<string | null>(null);
   const [applySuccess, setApplySuccess] = React.useState<string | null>(null);
@@ -203,6 +205,7 @@ export function JobSearchClient({
     setModalJob(job);
     setCoverLetter("");
     setResumeUrl("");
+    setUploadedFiles([]);
     setApplyError(null);
     setApplySuccess(null);
   };
@@ -219,6 +222,7 @@ export function JobSearchClient({
       jobPostingId: modalJob.id,
       coverLetter,
       resumeUrl,
+      files: uploadedFiles,
     });
 
     setIsSubmitting(false);
@@ -547,8 +551,14 @@ export function JobSearchClient({
                         </p>
                       ) : null}
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="coverLetter" className="text-xs font-medium">Cover Letter / Note (Optional)</Label>
+                      {/* Video, Resume & Document File Uploaders */}
+                      <FileUploader
+                        onFilesChange={setUploadedFiles}
+                        disabled={isSubmitting}
+                      />
+
+                      <div className="space-y-1.5 pt-1">
+                        <Label htmlFor="coverLetter" className="text-xs font-medium">Additional Cover Note (Optional)</Label>
                         <textarea
                           id="coverLetter"
                           rows={3}
@@ -560,13 +570,13 @@ export function JobSearchClient({
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label htmlFor="resumeUrl" className="text-xs font-medium">Resume / LinkedIn / Portfolio URL (Optional)</Label>
+                        <Label htmlFor="resumeUrl" className="text-xs font-medium">Online Portfolio / LinkedIn URL (Optional)</Label>
                         <Input
                           id="resumeUrl"
                           type="url"
                           value={resumeUrl}
                           onChange={(e) => setResumeUrl(e.target.value)}
-                          placeholder="https://linkedin.com/in/yourprofile or https://drive.google.com/..."
+                          placeholder="https://linkedin.com/in/yourprofile or portfolio link..."
                           className="h-9 text-xs rounded-lg border-input"
                         />
                       </div>

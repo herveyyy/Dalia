@@ -1,19 +1,10 @@
 import { getJobPostingById } from "../utils/queries";
-import { registerAndApplyAction } from "../utils/actions";
 import {
-  HiOutlineUser,
-  HiOutlineEnvelope,
-  HiOutlineLockClosed,
   HiOutlineBriefcase,
   HiOutlineBuildingOffice2,
-  HiOutlineArrowRight,
-  HiOutlineExclamationTriangle,
   HiOutlineSparkles,
-  HiOutlineDocumentText,
 } from "react-icons/hi2";
-import { Button } from "@repo/ui/components/atoms/Button";
-import { Input } from "@repo/ui/components/atoms/Input";
-import { Label } from "@repo/ui/components/atoms/Label";
+import { RegisterForm } from "./register-form";
 
 export default async function RegisterPage(props: {
   searchParams?: Promise<{ jobId?: string; error?: string }>;
@@ -82,89 +73,7 @@ export default async function RegisterPage(props: {
           </div>
         </div>
 
-        {error ? (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-xs text-destructive flex items-center gap-2.5">
-            <HiOutlineExclamationTriangle className="size-4 shrink-0" />
-            <p>{error}</p>
-          </div>
-        ) : null}
-
-        <form action={registerAndApplyAction} className="space-y-4">
-          <input type="hidden" name="jobId" value={targetJob.id} />
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Full Name</Label>
-            <div className="relative">
-              <HiOutlineUser className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Alex Morgan"
-                required
-                className="pl-11 h-10 text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email Address</Label>
-            <div className="relative">
-              <HiOutlineEnvelope className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="alex@example.com"
-                required
-                className="pl-11 h-10 text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Create Password</Label>
-            <div className="relative">
-              <HiOutlineLockClosed className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="At least 8 characters"
-                minLength={8}
-                required
-                className="pl-11 h-10 text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="coverLetter">Cover Letter / Note (Optional)</Label>
-            <textarea
-              id="coverLetter"
-              name="coverLetter"
-              rows={3}
-              placeholder="Introduce yourself to the hiring team..."
-              className="w-full rounded-xl border border-input bg-background p-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="resumeUrl">Resume / LinkedIn URL (Optional)</Label>
-            <Input
-              id="resumeUrl"
-              name="resumeUrl"
-              type="url"
-              placeholder="https://linkedin.com/in/yourprofile"
-              className="h-10 text-xs"
-            />
-          </div>
-
-          <Button type="submit" variant="default" size="lg" className="w-full font-bold gap-2 text-xs mt-2">
-            <span>Register & Submit Application</span>
-            <HiOutlineArrowRight className="size-4" />
-          </Button>
-        </form>
+        <RegisterForm jobId={targetJob.id} error={error} />
 
         <div className="pt-2 text-center text-xs text-muted-foreground">
           Already have an account?{" "}

@@ -1,21 +1,43 @@
 "use server";
 
 import { auth, getSafeSession } from "@repo/auth";
-import { db, eq, and, or, ilike, desc, jobApplication, jobPosting, company, department, logActivity } from "@repo/db";
+import {
+  db,
+  eq,
+  and,
+  or,
+  ilike,
+  desc,
+  jobApplication,
+  jobPosting,
+  company,
+  department,
+  logActivity,
+  saveFileRecord,
+} from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
 
 async function getSessionUser() {
   const session = await getSafeSession(await headers());
   return session?.user ?? null;
 }
 
+export interface UploadedFilePayload {
+  fileCategory: "video" | "resume" | "cover_letter" | string;
+  fileName: string;
+  fileKey: string;
+  mimeType?: string;
+  fileSize?: number;
+  metadata?: Record<string, any>;
+}
+
 export async function applyForJobAction(data: {
   jobPostingId: string;
   coverLetter?: string;
   resumeUrl?: string;
+  files?: UploadedFilePayload[];
 }) {
   try {
     const user = await getSessionUser();
@@ -57,7 +79,32 @@ export async function applyForJobAction(data: {
       })
       .returning();
 
+    // Attach and save uploaded files to `files` table
+    const savedFiles = [];
+    if (newApp && data.files && data.files.length > 0) {
+      for (const file of data.files) {
+        if (file.fileKey && file.fileName) {
+          const saved = await saveFileRecord(db, {
+            parentId: newApp.id,
+            parentType: "job_application",
+            fileCategory: file.fileCategory,
+            fileName: file.fileName,
+            fileKey: file.fileKey,
+            mimeType: file.mimeType,
+            fileSize: file.fileSize,
+            metadata: file.metadata || {},
+            companyId: posting.companyId,
+            actorId: user.id,
+            actorName: user.name,
+            actorEmail: user.email,
+          });
+          savedFiles.push(saved);
+        }
+      }
+    }
+
     if (newApp) {
+      const fileTypesSummary = data.files?.map((f) => f.fileCategory).join(", ");
       await logActivity(db, {
         companyId: posting.companyId,
         actorId: user.id,
@@ -66,8 +113,20 @@ export async function applyForJobAction(data: {
         entityType: "job_application",
         entityId: newApp.id,
         action: "CREATE",
-        summary: `Submitted job application for "${posting.title}"`,
+        summary: `Submitted job application for "${posting.title}"${
+          fileTypesSummary ? ` with attached files (${fileTypesSummary})` : ""
+        }`,
         newData: newApp,
+        metadata: {
+          jobPostingId: posting.id,
+          jobTitle: posting.title,
+          filesCount: savedFiles.length,
+          files: savedFiles.map((f) => ({
+            id: f.id,
+            category: f.fileCategory,
+            fileName: f.fileName,
+          })),
+        },
       });
     }
 
@@ -87,9 +146,23 @@ export async function registerAndApplyAction(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "").trim();
   const coverLetter = String(formData.get("coverLetter") ?? "").trim();
   const resumeUrl = String(formData.get("resumeUrl") ?? "").trim();
+  const filesJson = String(formData.get("files") ?? "").trim();
+
+  let uploadedFiles: UploadedFilePayload[] = [];
+  if (filesJson) {
+    try {
+      uploadedFiles = JSON.parse(filesJson);
+    } catch (e) {
+      console.warn("Failed to parse files payload:", e);
+    }
+  }
 
   if (!name || !email || !password) {
-    redirect(`/user/register?jobId=${encodeURIComponent(jobId)}&error=${encodeURIComponent("All required fields must be filled.")}`);
+    redirect(
+      `/user/register?jobId=${encodeURIComponent(jobId)}&error=${encodeURIComponent(
+        "All required fields must be filled."
+      )}`
+    );
   }
 
   try {
@@ -125,7 +198,32 @@ export async function registerAndApplyAction(formData: FormData) {
           })
           .returning();
 
+        // Save uploaded files
+        const savedFiles = [];
+        if (newApp && uploadedFiles.length > 0) {
+          for (const file of uploadedFiles) {
+            if (file.fileKey && file.fileName) {
+              const saved = await saveFileRecord(db, {
+                parentId: newApp.id,
+                parentType: "job_application",
+                fileCategory: file.fileCategory,
+                fileName: file.fileName,
+                fileKey: file.fileKey,
+                mimeType: file.mimeType,
+                fileSize: file.fileSize,
+                metadata: file.metadata || {},
+                companyId: posting.companyId,
+                actorId: registeredUser.id,
+                actorName: registeredUser.name,
+                actorEmail: registeredUser.email,
+              });
+              savedFiles.push(saved);
+            }
+          }
+        }
+
         if (newApp) {
+          const fileTypesSummary = uploadedFiles.map((f) => f.fileCategory).join(", ");
           await logActivity(db, {
             companyId: posting.companyId,
             actorId: registeredUser.id,
@@ -134,15 +232,29 @@ export async function registerAndApplyAction(formData: FormData) {
             entityType: "job_application",
             entityId: newApp.id,
             action: "CREATE",
-            summary: `Submitted candidate application for "${posting.title}" upon registration`,
+            summary: `Submitted candidate application for "${posting.title}" upon registration${
+              fileTypesSummary ? ` with attached files (${fileTypesSummary})` : ""
+            }`,
             newData: newApp,
+            metadata: {
+              jobPostingId: posting.id,
+              jobTitle: posting.title,
+              filesCount: savedFiles.length,
+              files: savedFiles.map((f) => ({
+                id: f.id,
+                category: f.fileCategory,
+                fileName: f.fileName,
+              })),
+            },
           });
         }
       }
     }
   } catch (err: any) {
     const msg = err?.message || "Registration failed. Please check your credentials.";
-    redirect(`/user/register?jobId=${encodeURIComponent(jobId)}&error=${encodeURIComponent(msg)}`);
+    redirect(
+      `/user/register?jobId=${encodeURIComponent(jobId)}&error=${encodeURIComponent(msg)}`
+    );
   }
 
   redirect("/user/applications?applied=true");

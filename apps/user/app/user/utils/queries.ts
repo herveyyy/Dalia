@@ -14,6 +14,7 @@ import {
   jobPosting,
   jobApplication,
   sql,
+  getFilesWithFreshUrlsByParent,
 } from "@repo/db";
 
 export const getUserProfileAndEmployment = cache(async (userId: string) => {
@@ -110,7 +111,21 @@ export const getUserApplications = cache(async (userId: string) => {
     .where(eq(jobApplication.userId, userId))
     .orderBy(desc(jobApplication.createdAt));
 
-  return rows;
+  // Attach fresh files for each application
+  const rowsWithFiles = await Promise.all(
+    rows.map(async (row) => {
+      const files = await getFilesWithFreshUrlsByParent(db, row.id, "job_application");
+      return {
+        ...row,
+        files,
+        videoFile: files.find((f) => f.fileCategory === "video") || null,
+        resumeFile: files.find((f) => f.fileCategory === "resume") || null,
+        coverLetterFile: files.find((f) => f.fileCategory === "cover_letter") || null,
+      };
+    })
+  );
+
+  return rowsWithFiles;
 });
 
 export const getPublishedJobs = cache(
