@@ -37,7 +37,7 @@ export default async function UserDashboardPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-8 border border-primary/20 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-2xl bg-linear-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-8 border border-primary/20 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-primary">Self-Service Portal</span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
@@ -70,14 +70,14 @@ export default async function UserDashboardPage() {
         {/* Card 1: Employment Status */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600">
               <HiOutlineBuildingOffice2 className="size-6" />
             </div>
             <span
               className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                 emp
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  ? "bg-emerald-500/10 dark:text-emerald-400"
+                  : "bg-amber-500/10 dark:text-amber-400"
               }`}
             >
               {emp ? emp.employmentStatus : "Not Employed"}
@@ -106,7 +106,7 @@ export default async function UserDashboardPage() {
         {/* Card 2: Applications Submitted */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600">
               <HiOutlineClipboardDocumentList className="size-6" />
             </div>
             <span className="text-2xl font-black text-foreground">{applications.length}</span>
@@ -134,7 +134,7 @@ export default async function UserDashboardPage() {
         {/* Card 3: Open Positions */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between sm:col-span-2 lg:col-span-1">
           <div className="flex items-start justify-between">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
               <HiOutlineBriefcase className="size-6" />
             </div>
             <span className="text-2xl font-black text-foreground">{openJobs.length}</span>
@@ -215,14 +215,14 @@ export default async function UserDashboardPage() {
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
                       app.status === "Hired"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        ? "bg-emerald-500/10  text-emerald-600"
                         : app.status === "Rejected"
-                          ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                          ? "bg-rose-500/10 text-rose-600"
                           : app.status === "Interviewing"
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                            ? "bg-blue-500/10 text-blue-600"
                             : app.status === "Shortlisted"
-                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              ? "bg-purple-500/10 text-purple-600"
+                              : "bg-amber-500/10 text-amber-600"
                     }`}
                   >
                     <HiOutlineClock className="size-3" />
