@@ -33,6 +33,7 @@ import {
 } from "@repo/ui/components/atoms/Dialog";
 import { applyForJobAction, fetchPublishedJobsPaginatedAction, UploadedFilePayload } from "../utils/actions";
 import { FileUploader } from "../../../components/file-uploader";
+import { FileRecord } from "@repo/db";
 
 interface JobPostingItem {
   id: string;
@@ -70,6 +71,7 @@ interface JobSearchClientProps {
   } | null;
   userAppliedJobIds: string[];
   initialJobId?: string;
+  defaultFiles?: FileRecord[];
 }
 
 const BATCH_SIZE = 6;
@@ -81,7 +83,19 @@ export function JobSearchClient({
   userSession,
   userAppliedJobIds,
   initialJobId,
+  defaultFiles = [],
 }: JobSearchClientProps) {
+  const formattedInitialFiles = React.useMemo(() => {
+    if (!defaultFiles || defaultFiles.length === 0) return [];
+    return defaultFiles.map((f) => ({
+      fileCategory: (f.fileCategory as "video" | "resume" | "cover_letter") || "resume",
+      fileName: f.fileName,
+      fileKey: f.fileKey,
+      mimeType: f.mimeType || undefined,
+      fileSize: f.fileSize || undefined,
+      previewUrl: f.presignedUrl || undefined,
+    }));
+  }, [defaultFiles]);
   // Search & Filter State
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedType, setSelectedType] = React.useState("ALL");
@@ -555,6 +569,8 @@ export function JobSearchClient({
                       <FileUploader
                         onFilesChange={setUploadedFiles}
                         disabled={isSubmitting}
+                        initialFiles={formattedInitialFiles}
+                        userId={userSession?.id}
                       />
 
                       <div className="space-y-1.5 pt-1">

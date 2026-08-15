@@ -4,6 +4,7 @@ import {
   getPublishedJobs,
   getDepartmentsList,
   getUserApplications,
+  getUserDefaultMaterials,
 } from "../utils/queries";
 import { JobSearchClient } from "./job-search-client";
 
@@ -16,16 +17,20 @@ export default async function JobsPage(props: {
   const session = await getSafeSession(await headers());
   const user = session?.user ?? null;
 
-  const [allJobs, departments, userApplications] = await Promise.all([
-    getPublishedJobs(),
-    getDepartmentsList(),
+  const [userApplications, departments, defaultMaterials] = await Promise.all([
     user ? getUserApplications(user.id) : Promise.resolve([]),
+    getDepartmentsList(),
+    user ? getUserDefaultMaterials(user.id) : Promise.resolve({ files: [] }),
   ]);
+
+  const userAppliedJobIds = userApplications.map((app) => app.jobPosting.id);
+  const allJobs = await getPublishedJobs({
+    excludeJobIds: userAppliedJobIds,
+  });
 
   const initialBatchSize = 6;
   const initialJobs = allJobs.slice(0, initialBatchSize);
   const initialHasMore = allJobs.length > initialBatchSize;
-  const userAppliedJobIds = userApplications.map((app) => app.jobPosting.id);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -54,6 +59,7 @@ export default async function JobsPage(props: {
         }
         userAppliedJobIds={userAppliedJobIds}
         initialJobId={initialJobId}
+        defaultFiles={defaultMaterials.files}
       />
     </div>
   );

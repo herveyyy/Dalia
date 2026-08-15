@@ -1,8 +1,9 @@
 import { getSafeSession } from "@repo/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getUserProfileAndEmployment } from "../utils/queries";
+import { getUserProfileAndEmployment, getUserDefaultMaterials } from "../utils/queries";
 import { changePasswordAction } from "../utils/actions";
+import { ProfileMaterialsForm } from "./profile-materials-form";
 import {
   HiOutlineUser,
   HiOutlineBuildingOffice2,
@@ -31,7 +32,10 @@ export default async function ProfilePage(props: {
   }
 
   const { user } = session;
-  const profileData = await getUserProfileAndEmployment(user.id);
+  const [profileData, defaultMaterials] = await Promise.all([
+    getUserProfileAndEmployment(user.id),
+    getUserDefaultMaterials(user.id),
+  ]);
   const emp = profileData?.employee;
 
   const params = (await props.searchParams) || {};
@@ -45,7 +49,7 @@ export default async function ProfilePage(props: {
           My Profile & Employment Details
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage your personal account settings, security, and view employment records.
+          Manage your default application materials, personal account settings, security, and view employment records.
         </p>
       </div>
 
@@ -58,13 +62,16 @@ export default async function ProfilePage(props: {
       ) : null}
 
       {successMessage ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-3">
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-600 flex items-center gap-3">
           <HiOutlineCheckCircle className="size-5 shrink-0" />
           <p>{successMessage}</p>
         </div>
       ) : null}
 
-      {/* Grid: Profile info & Employment info */}
+      {/* Section 1: Default Application Materials (Video, Resume, Cover Letter) */}
+      <ProfileMaterialsForm initialFiles={defaultMaterials.files} />
+
+      {/* Section 2: Grid: Profile info & Employment info */}
       <div className="grid gap-8 md:grid-cols-3">
         {/* User Account Info Card */}
         <div className="md:col-span-1 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
@@ -97,7 +104,7 @@ export default async function ProfilePage(props: {
         <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-6">
           <div className="flex items-center justify-between border-b border-border pb-4">
             <div className="flex items-center gap-2.5">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600">
                 <HiOutlineBuildingOffice2 className="size-5" />
               </div>
               <div>
@@ -106,7 +113,7 @@ export default async function ProfilePage(props: {
               </div>
             </div>
             {emp ? (
-              <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold dark:text-emerald-400">
                 {emp.employmentStatus}
               </span>
             ) : null}
@@ -180,10 +187,10 @@ export default async function ProfilePage(props: {
         </div>
       </div>
 
-      {/* Change Password Section */}
+      {/* Section 3: Change Password Section */}
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-6">
         <div className="flex items-center gap-3 border-b border-border pb-4">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 dark:text-amber-400">
             <HiOutlineKey className="size-5" />
           </div>
           <div>

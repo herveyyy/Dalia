@@ -44,9 +44,9 @@ export function UserShell({ user, children }: UserShellProps) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50/60 dark:bg-slate-950">
+    <div className="flex min-h-screen flex-col dark:bg-slate-950">
       {/* Accessible & Umami-styled Top Navbar */}
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-md supports-backdrop-filter:bg-background/80">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
           {/* Brand Logo & Desktop Nav Links */}
           <div className="flex items-center gap-6 lg:gap-8">

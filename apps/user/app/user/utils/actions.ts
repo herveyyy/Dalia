@@ -2,35 +2,52 @@
 
 import { auth, getSafeSession } from "@repo/auth";
 import {
-  db,
-  eq,
-  and,
-  or,
-  ilike,
-  desc,
-  jobApplication,
-  jobPosting,
-  company,
-  department,
-  logActivity,
-  saveFileRecord,
+  createPresignedUploadUrl,
+  PresignedUploadResult,
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  UploadedFilePayload,
+  createCandidateJobApplication,
+  saveUserDefaultMaterialsDb,
+  deleteUserFileDb,
+  getPublishedJobsPaginated,
+  getUserAppliedJobIds,
+} from "./queries";
+
+export type { UploadedFilePayload };
 
 async function getSessionUser() {
   const session = await getSafeSession(await headers());
   return session?.user ?? null;
 }
 
-export interface UploadedFilePayload {
-  fileCategory: "video" | "resume" | "cover_letter" | string;
+export type PresignedUploadResponse =
+  | ({ success: true } & PresignedUploadResult)
+  | { success: false; error: string };
+
+export async function getPresignedUploadUrlAction(params: {
+  parentType: string;
+  fileCategory: string;
   fileName: string;
-  fileKey: string;
-  mimeType?: string;
+  mimeType: string;
   fileSize?: number;
-  metadata?: Record<string, any>;
+  userId?: string;
+}): Promise<PresignedUploadResponse> {
+  try {
+    const sessionUser = await getSessionUser();
+    const effectiveUserId = params.userId || sessionUser?.id || "candidates";
+    const result = await createPresignedUploadUrl({
+      ...params,
+      userId: effectiveUserId,
+    });
+    return { success: true, ...result };
+  } catch (error: any) {
+    console.error("Failed to generate presigned upload URL:", error);
+    return { success: false, error: error?.message || "Failed to generate presigned upload URL" };
+  }
 }
 
 export async function applyForJobAction(data: {
@@ -45,89 +62,18 @@ export async function applyForJobAction(data: {
       return { success: false, error: "Please log in to submit a job application." };
     }
 
-    const [posting] = await db
-      .select({ id: jobPosting.id, companyId: jobPosting.companyId, title: jobPosting.title })
-      .from(jobPosting)
-      .where(and(eq(jobPosting.id, data.jobPostingId), eq(jobPosting.isArchived, false)))
-      .limit(1);
+    const res = await createCandidateJobApplication({
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+      jobPostingId: data.jobPostingId,
+      coverLetter: data.coverLetter,
+      resumeUrl: data.resumeUrl,
+      files: data.files,
+    });
 
-    if (!posting) {
-      return { success: false, error: "Job posting not found or no longer active." };
-    }
-
-    const [existing] = await db
-      .select({ id: jobApplication.id })
-      .from(jobApplication)
-      .where(and(eq(jobApplication.jobPostingId, data.jobPostingId), eq(jobApplication.userId, user.id)))
-      .limit(1);
-
-    if (existing) {
-      return { success: false, error: "You have already applied for this job posting." };
-    }
-
-    const [newApp] = await db
-      .insert(jobApplication)
-      .values({
-        jobPostingId: posting.id,
-        userId: user.id,
-        companyId: posting.companyId,
-        coverLetter: data.coverLetter || null,
-        resumeUrl: data.resumeUrl || null,
-        status: "Pending",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-      .returning();
-
-    // Attach and save uploaded files to `files` table
-    const savedFiles = [];
-    if (newApp && data.files && data.files.length > 0) {
-      for (const file of data.files) {
-        if (file.fileKey && file.fileName) {
-          const saved = await saveFileRecord(db, {
-            parentId: newApp.id,
-            parentType: "job_application",
-            fileCategory: file.fileCategory,
-            fileName: file.fileName,
-            fileKey: file.fileKey,
-            mimeType: file.mimeType,
-            fileSize: file.fileSize,
-            metadata: file.metadata || {},
-            companyId: posting.companyId,
-            actorId: user.id,
-            actorName: user.name,
-            actorEmail: user.email,
-          });
-          savedFiles.push(saved);
-        }
-      }
-    }
-
-    if (newApp) {
-      const fileTypesSummary = data.files?.map((f) => f.fileCategory).join(", ");
-      await logActivity(db, {
-        companyId: posting.companyId,
-        actorId: user.id,
-        actorName: user.name,
-        actorEmail: user.email,
-        entityType: "job_application",
-        entityId: newApp.id,
-        action: "CREATE",
-        summary: `Submitted job application for "${posting.title}"${
-          fileTypesSummary ? ` with attached files (${fileTypesSummary})` : ""
-        }`,
-        newData: newApp,
-        metadata: {
-          jobPostingId: posting.id,
-          jobTitle: posting.title,
-          filesCount: savedFiles.length,
-          files: savedFiles.map((f) => ({
-            id: f.id,
-            category: f.fileCategory,
-            fileName: f.fileName,
-          })),
-        },
-      });
+    if (!res.success) {
+      return { success: false, error: res.error || "Failed to submit application." };
     }
 
     revalidatePath("/user/applications");
@@ -177,78 +123,15 @@ export async function registerAndApplyAction(formData: FormData) {
     const registeredUser = result?.user;
 
     if (registeredUser && jobId) {
-      const [posting] = await db
-        .select({ id: jobPosting.id, companyId: jobPosting.companyId, title: jobPosting.title })
-        .from(jobPosting)
-        .where(and(eq(jobPosting.id, jobId), eq(jobPosting.isArchived, false)))
-        .limit(1);
-
-      if (posting) {
-        const [newApp] = await db
-          .insert(jobApplication)
-          .values({
-            jobPostingId: posting.id,
-            userId: registeredUser.id,
-            companyId: posting.companyId,
-            coverLetter: coverLetter || null,
-            resumeUrl: resumeUrl || null,
-            status: "Pending",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })
-          .returning();
-
-        // Save uploaded files
-        const savedFiles = [];
-        if (newApp && uploadedFiles.length > 0) {
-          for (const file of uploadedFiles) {
-            if (file.fileKey && file.fileName) {
-              const saved = await saveFileRecord(db, {
-                parentId: newApp.id,
-                parentType: "job_application",
-                fileCategory: file.fileCategory,
-                fileName: file.fileName,
-                fileKey: file.fileKey,
-                mimeType: file.mimeType,
-                fileSize: file.fileSize,
-                metadata: file.metadata || {},
-                companyId: posting.companyId,
-                actorId: registeredUser.id,
-                actorName: registeredUser.name,
-                actorEmail: registeredUser.email,
-              });
-              savedFiles.push(saved);
-            }
-          }
-        }
-
-        if (newApp) {
-          const fileTypesSummary = uploadedFiles.map((f) => f.fileCategory).join(", ");
-          await logActivity(db, {
-            companyId: posting.companyId,
-            actorId: registeredUser.id,
-            actorName: registeredUser.name,
-            actorEmail: registeredUser.email,
-            entityType: "job_application",
-            entityId: newApp.id,
-            action: "CREATE",
-            summary: `Submitted candidate application for "${posting.title}" upon registration${
-              fileTypesSummary ? ` with attached files (${fileTypesSummary})` : ""
-            }`,
-            newData: newApp,
-            metadata: {
-              jobPostingId: posting.id,
-              jobTitle: posting.title,
-              filesCount: savedFiles.length,
-              files: savedFiles.map((f) => ({
-                id: f.id,
-                category: f.fileCategory,
-                fileName: f.fileName,
-              })),
-            },
-          });
-        }
-      }
+      await createCandidateJobApplication({
+        userId: registeredUser.id,
+        userName: registeredUser.name,
+        userEmail: registeredUser.email,
+        jobPostingId: jobId,
+        coverLetter: coverLetter || undefined,
+        resumeUrl: resumeUrl || undefined,
+        files: uploadedFiles,
+      });
     }
   } catch (err: any) {
     const msg = err?.message || "Registration failed. Please check your credentials.";
@@ -322,74 +205,18 @@ export async function fetchPublishedJobsPaginatedAction(params: {
   departmentId?: string;
 }) {
   try {
-    const limit = params.limit ?? 6;
-    const page = params.page ?? 1;
-    const offset = (page - 1) * limit;
+    const user = await getSessionUser();
+    const appliedJobIds = user ? await getUserAppliedJobIds(user.id) : [];
 
-    const conditions: any[] = [
-      eq(jobPosting.isArchived, false),
-      eq(jobPosting.status, "Published"),
-    ];
-
-    if (params.search?.trim()) {
-      const q = `%${params.search.trim()}%`;
-      conditions.push(
-        or(
-          ilike(jobPosting.title, q),
-          ilike(jobPosting.description, q),
-          ilike(jobPosting.location, q),
-          ilike(company.name, q)
-        )!
-      );
-    }
-
-    if (params.employmentType && params.employmentType !== "ALL") {
-      conditions.push(eq(jobPosting.employmentType, params.employmentType));
-    }
-
-    if (params.departmentId && params.departmentId !== "ALL") {
-      conditions.push(eq(jobPosting.departmentId, params.departmentId));
-    }
-
-    const rows = await db
-      .select({
-        id: jobPosting.id,
-        companyId: jobPosting.companyId,
-        title: jobPosting.title,
-        departmentId: jobPosting.departmentId,
-        location: jobPosting.location,
-        employmentType: jobPosting.employmentType,
-        description: jobPosting.description,
-        requirements: jobPosting.requirements,
-        salaryRange: jobPosting.salaryRange,
-        status: jobPosting.status,
-        createdAt: jobPosting.createdAt,
-        company: {
-          id: company.id,
-          name: company.name,
-          logoUrl: company.logoUrl,
-          headquarters: company.headquarters,
-          description: company.description,
-        },
-        department: {
-          id: department.id,
-          name: department.name,
-        },
-      })
-      .from(jobPosting)
-      .innerJoin(company, eq(jobPosting.companyId, company.id))
-      .leftJoin(department, eq(jobPosting.departmentId, department.id))
-      .where(and(...conditions))
-      .orderBy(desc(jobPosting.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    const hasMore = rows.length === limit;
+    const result = await getPublishedJobsPaginated({
+      ...params,
+      excludeJobIds: appliedJobIds,
+    });
 
     return {
       success: true,
-      jobs: rows,
-      hasMore,
+      jobs: result.jobs,
+      hasMore: result.hasMore,
     };
   } catch (error) {
     console.error("Failed to fetch paginated jobs:", error);
@@ -397,3 +224,61 @@ export async function fetchPublishedJobsPaginatedAction(params: {
   }
 }
 
+export async function saveUserDefaultMaterialsAction(data: {
+  files?: UploadedFilePayload[];
+  deletedFileIds?: string[];
+}) {
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return { success: false, error: "Please log in to update default materials." };
+    }
+
+    const res = await saveUserDefaultMaterialsDb({
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+      files: data.files,
+      deletedFileIds: data.deletedFileIds,
+    });
+
+    if (!res.success) {
+      return { success: false, error: "Failed to update default materials." };
+    }
+
+    revalidatePath("/user/profile");
+    revalidatePath("/user/jobs");
+    revalidatePath("/user/register");
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to save default materials:", error);
+    return { success: false, error: error?.message || "Failed to update default materials." };
+  }
+}
+
+export async function deleteUserFileAction(fileId: string) {
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return { success: false, error: "Please log in to manage materials." };
+    }
+
+    const res = await deleteUserFileDb({
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+      fileId,
+    });
+
+    if (!res.success) {
+      return { success: false, error: "Failed to delete file." };
+    }
+
+    revalidatePath("/user/profile");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete user file:", error);
+    return { success: false, error: error?.message || "Failed to delete file." };
+  }
+}

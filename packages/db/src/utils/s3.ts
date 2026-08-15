@@ -4,29 +4,39 @@ import { fileRecord, FileRecord, NewFileRecord } from "../schema/files/tables";
 import { eq, and, desc } from "drizzle-orm";
 import { logActivity } from "./audit";
 
-// Region and Bucket / AccessPoint Resolution
-const AWS_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-southeast-1";
-const S3_TARGET =
-  process.env.APA ||
-  process.env.ARN ||
-  process.env.S3_BUCKET ||
-  process.env.AWS_S3_BUCKET ||
-  "dalia-pkd9ahza7gjhctycwkamt7dkctzoaaps1a-s3alias";
+export function getAwsConfig() {
+  const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-southeast-1";
+  const bucket =
+    process.env.AWS_S3_BUCKET ||
+    process.env.S3_BUCKET ||
+    process.env.AWS_BUCKET_NAME ||
+    "dalia.docs.erp";
 
-const accessKeyId = process.env.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY;
-const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_KEY;
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_KEY;
 
-const hasCredentials = Boolean(accessKeyId && secretAccessKey);
+  return {
+    region,
+    bucket,
+    accessKeyId,
+    secretAccessKey,
+    hasCredentials: Boolean(accessKeyId && secretAccessKey),
+  };
+}
 
-export const s3Client = new S3Client({
-  region: AWS_REGION,
-  credentials: hasCredentials
-    ? {
-        accessKeyId: accessKeyId!,
-        secretAccessKey: secretAccessKey!,
-      }
-    : undefined,
-});
+export function getS3Client(): S3Client | null {
+  const config = getAwsConfig();
+  if (!config.hasCredentials) {
+    return null;
+  }
+  return new S3Client({
+    region: config.region,
+    credentials: {
+      accessKeyId: config.accessKeyId!,
+      secretAccessKey: config.secretAccessKey!,
+    },
+  });
+}
 
 /**
  * Sanitize file name for S3 keys
@@ -48,7 +58,7 @@ export interface PresignedUploadResult {
 }
 
 /**
- * Generate a presigned PUT URL for direct browser uploads to S3
+ * Generate a presigned PUT URL for direct browser uploads to S3 with user-specific folder paths
  */
 export async function createPresignedUploadUrl(params: {
   parentType: string;
@@ -56,39 +66,59 @@ export async function createPresignedUploadUrl(params: {
   fileName: string;
   mimeType: string;
   fileSize?: number;
+  userId?: string;
 }): Promise<PresignedUploadResult> {
   const cleanName = sanitizeFileName(params.fileName);
-  const randomSuffix = Math.random().toString(36).substring(2, 9);
-  const fileKey = `uploads/${params.parentType}/${Date.now()}-${randomSuffix}-${cleanName}`;
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  const timestamp = Date.now();
+  const userFolder = params.userId && params.userId.trim() !== "" ? params.userId : "general";
 
-  try {
-    const command = new PutObjectCommand({
-      Bucket: S3_TARGET,
-      Key: fileKey,
-      ContentType: params.mimeType,
-    });
-
-    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 }); // 15 minutes
-
-    return {
-      uploadUrl,
-      fileKey,
-      fileName: params.fileName,
-      mimeType: params.mimeType,
-      fileCategory: params.fileCategory,
-      fileSize: params.fileSize,
-    };
-  } catch (error) {
-    console.warn("Failed to generate AWS S3 presigned upload URL, using fallback URL:", error);
-    return {
-      uploadUrl: `/api/upload/mock?key=${encodeURIComponent(fileKey)}`,
-      fileKey,
-      fileName: params.fileName,
-      mimeType: params.mimeType,
-      fileCategory: params.fileCategory,
-      fileSize: params.fileSize,
-    };
+  let fileKey = "";
+  if (params.parentType === "job_application") {
+    // Structure: job_application/{userId}/{fileCategory}/{timestamp}-{randomSuffix}-{cleanName}
+    fileKey = `job_application/${userFolder}/${params.fileCategory}/${timestamp}-${randomSuffix}-${cleanName}`;
+  } else if (params.parentType === "user") {
+    // Structure: users/{userId}/{fileCategory}/{timestamp}-{randomSuffix}-{cleanName}
+    fileKey = `users/${userFolder}/${params.fileCategory}/${timestamp}-${randomSuffix}-${cleanName}`;
+  } else {
+    fileKey = `uploads/${params.parentType}/${userFolder}/${params.fileCategory}/${timestamp}-${randomSuffix}-${cleanName}`;
   }
+
+  const config = getAwsConfig();
+  const client = getS3Client();
+
+  if (client) {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: config.bucket,
+        Key: fileKey,
+        ContentType: params.mimeType,
+      });
+
+      const uploadUrl = await getSignedUrl(client, command, { expiresIn: 900 }); // 15 minutes
+
+      return {
+        uploadUrl,
+        fileKey,
+        fileName: params.fileName,
+        mimeType: params.mimeType,
+        fileCategory: params.fileCategory,
+        fileSize: params.fileSize,
+      };
+    } catch (error) {
+      console.warn("Failed to generate AWS S3 presigned upload URL, using fallback URL:", error);
+    }
+  }
+
+  // Fallback if AWS credentials not configured or offline
+  return {
+    uploadUrl: `/api/upload/mock?key=${encodeURIComponent(fileKey)}`,
+    fileKey,
+    fileName: params.fileName,
+    mimeType: params.mimeType,
+    fileCategory: params.fileCategory,
+    fileSize: params.fileSize,
+  };
 }
 
 /**
@@ -110,18 +140,26 @@ export async function getOrRefreshPresignedUrl(
 
   // URL is expired or not set, generate fresh S3 presigned GET URL
   let freshUrl = file.presignedUrl || "";
-  try {
-    const command = new GetObjectCommand({
-      Bucket: S3_TARGET,
-      Key: file.fileKey,
-    });
+  const client = getS3Client();
+  const config = getAwsConfig();
 
-    freshUrl = await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
-  } catch (err) {
-    console.warn(`Could not generate presigned download URL for key: ${file.fileKey}`, err);
-    if (!freshUrl) {
-      freshUrl = file.fileKey.startsWith("http") ? file.fileKey : `/api/files/download?key=${encodeURIComponent(file.fileKey)}`;
+  if (client) {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: config.bucket,
+        Key: file.fileKey,
+      });
+
+      freshUrl = await getSignedUrl(client, command, { expiresIn: expiresInSeconds });
+    } catch (err) {
+      console.warn(`Could not generate presigned download URL for key: ${file.fileKey}`, err);
     }
+  }
+
+  if (!freshUrl) {
+    freshUrl = file.fileKey.startsWith("http")
+      ? file.fileKey
+      : `/api/files/download?key=${encodeURIComponent(file.fileKey)}`;
   }
 
   const newExpiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
@@ -196,15 +234,19 @@ export async function saveFileRecord(
 ): Promise<FileRecord> {
   const expiresInSeconds = 86400; // 24 hours initial
   let initialPresignedUrl: string | null = null;
+  const client = getS3Client();
+  const config = getAwsConfig();
 
-  try {
-    const command = new GetObjectCommand({
-      Bucket: S3_TARGET,
-      Key: data.fileKey,
-    });
-    initialPresignedUrl = await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
-  } catch (err) {
-    console.warn("Initial presigned download URL generation skipped/fallback:", err);
+  if (client) {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: config.bucket,
+        Key: data.fileKey,
+      });
+      initialPresignedUrl = await getSignedUrl(client, command, { expiresIn: expiresInSeconds });
+    } catch (err) {
+      console.warn("Initial presigned download URL generation skipped/fallback:", err);
+    }
   }
 
   const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();

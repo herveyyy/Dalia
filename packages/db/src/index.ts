@@ -33,6 +33,6 @@ export * from "./schema";
 export * from "./queries/get-user-permissions";
 export * from "./utils/audit";
 export * from "./utils/s3";
-export { eq, and, or, ilike, asc, desc, inArray, sql } from "drizzle-orm";
+export { eq, and, or, ilike, asc, desc, inArray, notInArray, sql } from "drizzle-orm";
 
 
