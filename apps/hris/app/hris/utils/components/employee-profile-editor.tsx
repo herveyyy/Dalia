@@ -22,6 +22,8 @@ interface EmployeeProfileEditorProps {
   employee: any;
   companyId: string;
   allowanceTypes: any[];
+  branches: any[];
+  departments: any[];
   taxTypes: any[];
   isEditMode: boolean;
 }
@@ -30,6 +32,8 @@ export default function EmployeeProfileEditor({
   employee,
   companyId,
   allowanceTypes,
+  branches,
+  departments,
   taxTypes,
   isEditMode,
 }: EmployeeProfileEditorProps) {

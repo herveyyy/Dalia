@@ -6,7 +6,7 @@ import {
   getAllowanceTypes,
 } from "../../../utils/queries/employee-queries";
 import { getCompanyBranches, getCompanyDepartments } from "../../../utils/queries/job-queries";
-import { EmployeeProfileEditor } from "../../../utils/components/employee-profile-editor";
+import EmployeeProfileEditor from "../../../utils/components/employee-profile-editor";
 import { db, taxType, eq } from "@repo/db";
 
 export default async function EmployeeProfilePage(props: {
