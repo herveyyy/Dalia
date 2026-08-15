@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
@@ -25,6 +26,7 @@ interface OrgBranchesPanelProps {
   companyId: string;
   companyName: string;
   branches: BranchWithEmployees[];
+  isHris?: boolean;
 }
 
 const VIEW_STORAGE_KEY = "workspace_branches_table";
@@ -33,6 +35,7 @@ export function OrgBranchesPanel({
   companyId,
   companyName,
   branches,
+  isHris = false,
 }: OrgBranchesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<BranchWithEmployees | null>(null);
@@ -113,7 +116,14 @@ export function OrgBranchesPanel({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <h2 className="text-base font-bold text-foreground truncate">{b.name}</h2>
+                    <h2 className="text-base font-bold text-foreground truncate">
+                      <Link
+                        href={isHris ? `/hris/branches/${b.id}/profile` : `/workspace/branches/${b.id}/profile`}
+                        className="hover:text-primary transition-colors cursor-pointer"
+                      >
+                        {b.name}
+                      </Link>
+                    </h2>
                     {b.code ? (
                       <span className="shrink-0 rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                         {b.code}
@@ -165,7 +175,14 @@ export function OrgBranchesPanel({
               <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-foreground">{b.name}</h2>
+                    <h2 className="text-base font-bold text-foreground">
+                      <Link
+                        href={isHris ? `/hris/branches/${b.id}/profile` : `/workspace/branches/${b.id}/profile`}
+                        className="hover:text-primary transition-colors cursor-pointer"
+                      >
+                        {b.name}
+                      </Link>
+                    </h2>
                     {b.code && (
                       <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                         {b.code}

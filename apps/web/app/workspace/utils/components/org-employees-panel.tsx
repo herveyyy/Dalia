@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
@@ -48,6 +49,7 @@ interface OrgEmployeesPanelProps {
   departments: WorkspaceDepartment[];
   branches: WorkspaceBranch[];
   roles: WorkspaceRole[];
+  isHris?: boolean;
 }
 
 type LoginMode = "create" | "reset" | null;
@@ -61,6 +63,7 @@ export function OrgEmployeesPanel({
   departments,
   branches,
   roles,
+  isHris = false,
 }: OrgEmployeesPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<WorkspaceEmployee | null>(null);
@@ -204,7 +207,12 @@ export function OrgEmployeesPanel({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-bold text-foreground truncate">
-                    {emp.firstName} {emp.lastName}
+                    <Link
+                      href={isHris ? `/hris/employee/${emp.id}/profile` : `/workspace/employees/${emp.id}/profile`}
+                      className="hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {emp.firstName} {emp.lastName}
+                    </Link>
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5 truncate">
                     {emp.workEmail || "No email"}
@@ -332,7 +340,12 @@ export function OrgEmployeesPanel({
                 {paginatedEmployees.map((emp) => (
                   <tr key={emp.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4 font-semibold text-foreground">
-                      {emp.firstName} {emp.lastName}
+                      <Link
+                        href={isHris ? `/hris/employee/${emp.id}/profile` : `/workspace/employees/${emp.id}/profile`}
+                        className="hover:text-primary transition-colors cursor-pointer"
+                      >
+                        {emp.firstName} {emp.lastName}
+                      </Link>
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">{emp.workEmail || "—"}</td>
                     <td className="px-6 py-4">

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
@@ -25,6 +26,7 @@ interface OrgDepartmentsPanelProps {
   companyId: string;
   companyName: string;
   departments: DepartmentWithEmployees[];
+  isHris?: boolean;
 }
 
 const VIEW_STORAGE_KEY = "workspace_departments_table";
@@ -33,6 +35,7 @@ export function OrgDepartmentsPanel({
   companyId,
   companyName,
   departments,
+  isHris = false,
 }: OrgDepartmentsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<DepartmentWithEmployees | null>(null);
@@ -110,7 +113,14 @@ export function OrgDepartmentsPanel({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-base font-bold text-foreground truncate">{dept.name}</h2>
+                  <h2 className="text-base font-bold text-foreground truncate">
+                    <Link
+                      href={isHris ? `/hris/departments/${dept.id}/profile` : `/workspace/departments/${dept.id}/profile`}
+                      className="hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {dept.name}
+                    </Link>
+                  </h2>
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                     {dept.description || "No description"}
                   </p>
@@ -157,7 +167,14 @@ export function OrgDepartmentsPanel({
             >
               <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-4">
                 <div>
-                  <h2 className="text-base font-bold text-foreground">{dept.name}</h2>
+                  <h2 className="text-base font-bold text-foreground">
+                    <Link
+                      href={isHris ? `/hris/departments/${dept.id}/profile` : `/workspace/departments/${dept.id}/profile`}
+                      className="hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {dept.name}
+                    </Link>
+                  </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {dept.description || "No description"} · {dept.employees.length} employee
                     {dept.employees.length === 1 ? "" : "s"}

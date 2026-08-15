@@ -13,6 +13,7 @@ import {
   taxType,
   inArray,
   department,
+  branch,
 } from "@repo/db";
 
 export async function getCompanyRecord(companyId: string) {
@@ -284,6 +285,54 @@ export async function getEmployeeById(employeeId: string) {
     };
   } catch (error) {
     console.error("Failed to fetch employee details by id:", error);
+    return null;
+  }
+}
+
+export async function getDepartmentDetailsById(departmentId: string) {
+  try {
+    const [dept] = await db
+      .select()
+      .from(department)
+      .where(eq(department.id, departmentId));
+
+    if (!dept) return null;
+
+    const employees = await db
+      .select()
+      .from(employee)
+      .where(eq(employee.departmentId, departmentId));
+
+    return {
+      ...dept,
+      employees,
+    };
+  } catch (error) {
+    console.error("Failed to fetch department details:", error);
+    return null;
+  }
+}
+
+export async function getBranchDetailsById(branchId: string) {
+  try {
+    const [br] = await db
+      .select()
+      .from(branch)
+      .where(eq(branch.id, branchId));
+
+    if (!br) return null;
+
+    const employees = await db
+      .select()
+      .from(employee)
+      .where(eq(employee.branchId, branchId));
+
+    return {
+      ...br,
+      employees,
+    };
+  } catch (error) {
+    console.error("Failed to fetch branch details:", error);
     return null;
   }
 }

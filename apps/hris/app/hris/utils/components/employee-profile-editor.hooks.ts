@@ -69,7 +69,7 @@ export function useEmployeeProfileEditor(
         return;
       }
     }
-    setCurrentStep((prev) => Math.min(prev + 1, 4));
+    setCurrentStep((prev) => Math.min(prev + 1, 5));
   };
 
   const handlePrevStep = () => {

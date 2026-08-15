@@ -27,6 +27,7 @@ export default async function HrisBranchesPage() {
       companyId={companyId}
       companyName={companyRecord?.name || "Company"}
       branches={branches}
+      isHris={true}
     />
   );
 }

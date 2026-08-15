@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
@@ -306,9 +307,12 @@ export function EmployeeDirectory({
                         <tr key={emp.id} className="hover:bg-muted/10 transition-colors">
                           <td className="px-6 py-4">
                             <div>
-                              <span className="font-semibold text-foreground block">
+                              <Link
+                                href={`/hris/employee/${emp.id}/profile`}
+                                className="font-semibold text-foreground hover:text-primary transition-colors block cursor-pointer"
+                              >
                                 {emp.firstName} {emp.lastName}
-                              </span>
+                              </Link>
                               <span className="text-xs text-muted-foreground mt-0.5 block">
                                 {emp.employeeNo || "No Employee ID"} · {emp.personalEmail || emp.workEmail || "No Email"}
                               </span>
@@ -323,10 +327,11 @@ export function EmployeeDirectory({
                           <td className="px-6 py-4">
                             <div className="flex flex-col gap-1">
                               <span
-                                className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${emp.employmentStatus === "Active"
-                                    ? "bg-emerald-500/10 text-emerald-600"
-                                    : "bg-muted text-muted-foreground"
-                                  }`}
+                                className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                  emp.employmentStatus === "Resigned"
+                                    ? "bg-red-500/10 text-red-600"
+                                    : "bg-emerald-500/10 text-emerald-600"
+                                }`}
                               >
                                 {emp.employmentStatus}
                               </span>
@@ -564,13 +569,13 @@ export function EmployeeDirectory({
                         <select
                           id="employmentStatus"
                           name="employmentStatus"
-                          defaultValue={selectedEmployee?.employmentStatus || "Active"}
-                          className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none"
+                          defaultValue={selectedEmployee?.employmentStatus || "Regular"}
+                          className="h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none cursor-pointer"
                         >
-                          <option value="Active">Active</option>
-                          <option value="Suspended">Suspended</option>
+                          <option value="Probation">Probation</option>
+                          <option value="Regular">Regular</option>
+                          <option value="Part-time">Part-time</option>
                           <option value="Resigned">Resigned</option>
-                          <option value="Terminated">Terminated</option>
                         </select>
                       </div>
                       <div>
