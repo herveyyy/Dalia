@@ -10,6 +10,8 @@ import {
   branch,
   desc,
   asc,
+  user,
+  getFilesWithFreshUrlsByParent,
 } from "@repo/db";
 
 export interface GetJobPostingsParams {
@@ -116,3 +118,92 @@ export async function getCompanyBranches(companyId: string) {
     return [];
   }
 }
+
+export async function getJobPostingById(jobId: string) {
+  try {
+    const [job] = await db
+      .select({
+        id: jobPosting.id,
+        companyId: jobPosting.companyId,
+        title: jobPosting.title,
+        description: jobPosting.description,
+        requirements: jobPosting.requirements,
+        departmentId: jobPosting.departmentId,
+        employmentType: jobPosting.employmentType,
+        salaryRange: jobPosting.salaryRange,
+        location: jobPosting.location,
+        status: jobPosting.status,
+        isArchived: jobPosting.isArchived,
+        createdAt: jobPosting.createdAt,
+        updatedAt: jobPosting.updatedAt,
+        department: {
+          name: department.name,
+        },
+      })
+      .from(jobPosting)
+      .leftJoin(department, eq(jobPosting.departmentId, department.id))
+      .where(and(eq(jobPosting.id, jobId), eq(jobPosting.isArchived, false)))
+      .limit(1);
+
+    return job ? {
+      ...job,
+      department: job.department?.name || null,
+    } : null;
+  } catch (error) {
+    console.error("Failed to fetch job posting by ID:", error);
+    return null;
+  }
+}
+
+export async function getJobApplicationsWithDetails(jobPostingId: string) {
+  try {
+    const list = await db
+      .select({
+        id: jobApplication.id,
+        jobPostingId: jobApplication.jobPostingId,
+        status: jobApplication.status,
+        coverLetter: jobApplication.coverLetter,
+        resumeUrl: jobApplication.resumeUrl,
+        createdAt: jobApplication.createdAt,
+        updatedAt: jobApplication.updatedAt,
+        candidate: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        },
+      })
+      .from(jobApplication)
+      .innerJoin(user, eq(jobApplication.userId, user.id))
+      .where(eq(jobApplication.jobPostingId, jobPostingId))
+      .orderBy(desc(jobApplication.createdAt));
+
+    // Resolve S3 files for each application and also default materials for each candidate
+    const applications = await Promise.all(
+      list.map(async (app) => {
+        // Files attached to the application itself
+        const appFiles = await getFilesWithFreshUrlsByParent(db, app.id, "job_application");
+        // Default files attached to the user profile
+        const userFiles = await getFilesWithFreshUrlsByParent(db, app.candidate.id, "user");
+
+        return {
+          ...app,
+          appFiles,
+          videoFile: appFiles.find((f) => f.fileCategory === "video") || null,
+          resumeFile: appFiles.find((f) => f.fileCategory === "resume") || null,
+          coverLetterFile: appFiles.find((f) => f.fileCategory === "cover_letter") || null,
+          userFiles,
+          defaultVideoFile: userFiles.find((f) => f.fileCategory === "video") || null,
+          defaultResumeFile: userFiles.find((f) => f.fileCategory === "resume") || null,
+          defaultCoverLetterFile: userFiles.find((f) => f.fileCategory === "cover_letter") || null,
+        };
+      })
+    );
+
+    return applications;
+  } catch (error) {
+    console.error("Failed to fetch applications with details:", error);
+    return [];
+  }
+}
+

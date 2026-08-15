@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import { Label } from "@repo/ui/components/atoms/Label";
@@ -109,26 +110,7 @@ export function JobPostingsList({
   const [applicantsError, setApplicantsError] = useState<string | null>(null);
   const [actionPendingId, setActionPendingId] = useState<string | null>(null);
 
-  const handleViewApplicants = async (job: JobPostingRecord) => {
-    setApplicantsJob(job);
-    setIsApplicantsOpen(true);
-    setLoadingApplicants(true);
-    setApplicantsError(null);
-    setApplicants([]);
 
-    try {
-      const res = await getJobApplicationsAction(job.id);
-      if (res.success && res.applications) {
-        setApplicants(res.applications);
-      } else {
-        setApplicantsError(res.error || "Failed to load applicants.");
-      }
-    } catch (err: any) {
-      setApplicantsError(err?.message || "Failed to load applicants.");
-    } finally {
-      setLoadingApplicants(false);
-    }
-  };
 
   const handleUpdateApplicationStatus = async (applicationId: string, status: "Accepted" | "Rejected") => {
     setActionPendingId(applicationId);
@@ -353,13 +335,12 @@ export function JobPostingsList({
 
               <div className="border-t border-border/40 mt-4 pt-3 text-[10px] text-muted-foreground flex items-center justify-between">
                 <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
-                <button
-                  type="button"
-                  onClick={() => handleViewApplicants(job)}
+                <Link
+                  href={`/hris/jobs/${job.id}/applicants`}
                   className="font-bold text-primary bg-primary/10 hover:bg-primary/20 px-2.5 py-1 rounded-md transition-colors duration-150 outline-none focus:ring-1 focus:ring-primary/30"
                 >
                   {job.applicantCount ?? 0} Applicant{(job.applicantCount ?? 0) !== 1 ? "s" : ""}
-                </button>
+                </Link>
               </div>
             </div>
           ))}
@@ -383,13 +364,12 @@ export function JobPostingsList({
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="font-display text-sm font-bold text-foreground">{job.title}</h4>
-                    <button
-                      type="button"
-                      onClick={() => handleViewApplicants(job)}
+                    <Link
+                      href={`/hris/jobs/${job.id}/applicants`}
                       className="text-[10px] font-bold text-primary bg-primary/10 hover:bg-primary/20 px-2.5 py-0.5 rounded-md transition-colors duration-150 outline-none focus:ring-1 focus:ring-primary/30"
                     >
                       {job.applicantCount ?? 0} applicant{(job.applicantCount ?? 0) !== 1 ? "s" : ""}
-                    </button>
+                    </Link>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {job.department || "General"} · {job.employmentType} · {job.location || "Remote"}
