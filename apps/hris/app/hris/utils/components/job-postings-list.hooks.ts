@@ -5,6 +5,7 @@ import { saveJobPosting, deleteJobPosting } from "../actions/job-actions";
 export interface JobPostingRecord {
   id: string;
   title: string;
+  departmentId?: string | null;
   department: string | null;
   location: string | null;
   employmentType: string;
@@ -92,7 +93,7 @@ export function useJobPostingsList(
       id: selectedJob?.id || null,
       companyId,
       title: formData.get("title") as string,
-      department: formData.get("department") as string,
+      departmentId: formData.get("department") as string,
       location: formData.get("location") as string,
       employmentType: formData.get("employmentType") as string,
       description: formData.get("description") as string,
@@ -115,7 +116,7 @@ export function useJobPostingsList(
 
   // Format department options for SearchableSelect
   const departmentOptions = departments.map((d) => ({
-    value: d.name,
+    value: d.id,
     label: d.name,
   }));
 

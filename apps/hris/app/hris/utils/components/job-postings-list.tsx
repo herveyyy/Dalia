@@ -370,7 +370,7 @@ export function JobPostingsList({
                       <SearchableSelect
                         id="department"
                         name="department"
-                        defaultValue={selectedJob?.department || ""}
+                        defaultValue={selectedJob?.departmentId || ""}
                         options={departmentOptions}
                         placeholder="Select or search department..."
                         searchPlaceholder="Search departments..."

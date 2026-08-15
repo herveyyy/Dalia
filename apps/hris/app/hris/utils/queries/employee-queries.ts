@@ -12,6 +12,7 @@ import {
   allowanceType,
   taxType,
   inArray,
+  department,
 } from "@repo/db";
 
 export async function getCompanyRecord(companyId: string) {
@@ -32,8 +33,52 @@ export async function getCompanyRecord(companyId: string) {
 export async function getEmployees(companyId: string) {
   try {
     const employees = await db
-      .select()
+      .select({
+        id: employee.id,
+        employeeNo: employee.employeeNo,
+        firstName: employee.firstName,
+        middleName: employee.middleName,
+        lastName: employee.lastName,
+        suffix: employee.suffix,
+        dateOfBirth: employee.dateOfBirth,
+        gender: employee.gender,
+        personalEmail: employee.personalEmail,
+        workEmail: employee.workEmail,
+        phoneNumber: employee.phoneNumber,
+        residentialAddress: employee.residentialAddress,
+        tin: employee.tin,
+        philhealth: employee.philhealth,
+        pagIbig: employee.pagIbig,
+        sssNo: employee.sssNo,
+        philIdNo: employee.philIdNo,
+        companyId: employee.companyId,
+        userId: employee.userId,
+        departmentId: employee.departmentId,
+        branchId: employee.branchId,
+        roleId: employee.roleId,
+        jobTitle: employee.jobTitle,
+        responsibilityCenter: employee.responsibilityCenter,
+        employmentStatus: employee.employmentStatus,
+        employmentSchedule: employee.employmentSchedule,
+        supervisorId: employee.supervisorId,
+        dateOfHire: employee.dateOfHire,
+        payType: employee.payType,
+        basePayRate: employee.basePayRate,
+        payFrequency: employee.payFrequency,
+        bankName: employee.bankName,
+        bankAccountNumber: employee.bankAccountNumber,
+        brstnBankCode: employee.brstnBankCode,
+        totalRegularHours: employee.totalRegularHours,
+        overtimeHours: employee.overtimeHours,
+        leaveBalanceDays: employee.leaveBalanceDays,
+        taxBracketCode: employee.taxBracketCode,
+        taxTypeId: employee.taxTypeId,
+        createdAt: employee.createdAt,
+        updatedAt: employee.updatedAt,
+        department: department.name,
+      })
       .from(employee)
+      .leftJoin(department, eq(employee.departmentId, department.id))
       .where(eq(employee.companyId, companyId));
 
     if (employees.length === 0) {
