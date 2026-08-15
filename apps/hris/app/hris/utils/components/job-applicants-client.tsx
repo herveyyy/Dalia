@@ -6,6 +6,15 @@ import { Button } from "@repo/ui/components/atoms/Button";
 import { Input } from "@repo/ui/components/atoms/Input";
 import Link from "next/link";
 import { ConfirmDialog } from "@repo/ui/components/molecules/ConfirmDialog";
+import { Label } from "@repo/ui/components/atoms/Label";
+import {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@repo/ui/components/atoms/Dialog";
 import {
   useJobApplicants,
   ApplicantRecord,
@@ -43,6 +52,21 @@ interface JobPostingRecord {
 interface JobApplicantsClientProps {
   job: JobPostingRecord;
   initialApplicants: ApplicantRecord[];
+}
+
+function parseClientSalary(salaryRange: string | null | undefined): string {
+  if (!salaryRange) return "";
+  const clean = salaryRange.toLowerCase().trim();
+  const firstPart = (clean.split(/[-–—]|to/)[0] || "").trim();
+  const numberPart = firstPart.replace(/[^0-9.k]/g, "");
+  if (numberPart.includes("k")) {
+    const value = parseFloat(numberPart.replace("k", ""));
+    if (!isNaN(value)) return String(value * 1000);
+  } else {
+    const value = parseFloat(numberPart.replace(/,/g, ""));
+    if (!isNaN(value)) return String(value);
+  }
+  return "";
 }
 
 export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsClientProps) {
@@ -558,8 +582,8 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
         </div>
       </div>
 
-      {/* Confirmation Dialog */}
-      {confirmTarget && selectedApp && (
+      {/* Confirmation Dialog for standard transitions */}
+      {confirmTarget && confirmTarget.status !== "Accepted" && selectedApp && (
         <ConfirmDialog
           open={Boolean(confirmTarget)}
           onOpenChange={(open) => !open && setConfirmTarget(null)}
@@ -568,8 +592,65 @@ export function JobApplicantsClient({ job, initialApplicants }: JobApplicantsCli
           confirmLabel={confirmTarget.status}
           variant={confirmTarget.status === "Rejected" ? "destructive" : "default"}
           isLoading={actionPendingId !== null}
-          onConfirm={handleConfirmStatusUpdate}
+          onConfirm={() => handleConfirmStatusUpdate()}
         />
+      )}
+
+      {/* Custom Dialog for setting Salary upon Acceptance */}
+      {confirmTarget && confirmTarget.status === "Accepted" && selectedApp && (
+        <Dialog open={Boolean(confirmTarget)} onOpenChange={(open) => !open && setConfirmTarget(null)}>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent className="max-w-md p-0 overflow-hidden flex flex-col bg-card border border-border rounded-2xl shadow-xl">
+              <div className="p-6 pb-4 border-b border-border bg-card">
+                <DialogTitle className="text-lg font-bold text-foreground">
+                  Accept Candidate & Set Salary
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-1">
+                  Please enter the agreed monthly base salary for {selectedApp.candidate.name}. This will be stored in their employee payroll settings.
+                </DialogDescription>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const salary = formData.get("salary") as string;
+                  handleConfirmStatusUpdate(salary);
+                }}
+                className="p-6 space-y-4 bg-muted/5 animate-fadeIn"
+              >
+                <div>
+                  <Label htmlFor="salary" className="text-xs font-bold text-foreground block mb-1.5">
+                    Agreed Salary Rate (Monthly Base) *
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-semibold">₱</span>
+                    <Input
+                      id="salary"
+                      name="salary"
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g. 60000"
+                      defaultValue={parseClientSalary(job.salaryRange)}
+                      className="pl-7 h-9 text-xs"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setConfirmTarget(null)} disabled={actionPendingId !== null}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={actionPendingId !== null}>
+                    {actionPendingId !== null ? "Accepting..." : "Accept & Hire"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </DialogPortal>
+        </Dialog>
       )}
     </div>
   );

@@ -206,7 +206,8 @@ function parseSalaryNumber(salaryRange: string | null | undefined): string {
 
 export async function updateApplicationStatusAction(
   applicationId: string,
-  status: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected"
+  status: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected",
+  agreedSalary?: string
 ) {
   try {
     const sessionUser = await getSessionUser();
@@ -280,7 +281,7 @@ export async function updateApplicationStatusAction(
           departmentId: job?.departmentId || null,
           employmentStatus: "Active",
           payFrequency: "Semi-monthly",
-          basePayRate: parseSalaryNumber(job?.salaryRange),
+          basePayRate: agreedSalary || parseSalaryNumber(job?.salaryRange),
           totalRegularHours: "0.00",
           overtimeHours: "0.00",
           leaveBalanceDays: "0.00",

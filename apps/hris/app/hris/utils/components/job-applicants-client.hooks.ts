@@ -86,11 +86,12 @@ export function useJobApplicants(initialApplicants: ApplicantRecord[]) {
   // Handle status update
   const handleUpdateStatus = async (
     applicationId: string,
-    status: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected"
+    status: "Pending" | "Viewed" | "Interviewing" | "Accepted" | "Rejected",
+    agreedSalary?: string
   ) => {
     setActionPendingId(applicationId);
     try {
-      const res = await updateApplicationStatusAction(applicationId, status);
+      const res = await updateApplicationStatusAction(applicationId, status, agreedSalary);
       if (res.success) {
         setApplicants((prev) =>
           prev.map((app) => (app.id === applicationId ? { ...app, status } : app))
@@ -114,7 +115,7 @@ export function useJobApplicants(initialApplicants: ApplicantRecord[]) {
   };
 
   // Execute manual status update after confirmation
-  const handleConfirmStatusUpdate = async () => {
+  const handleConfirmStatusUpdate = async (agreedSalary?: string) => {
     if (!confirmTarget) return;
     const { applicationId, status } = confirmTarget;
 
@@ -128,7 +129,7 @@ export function useJobApplicants(initialApplicants: ApplicantRecord[]) {
     }
 
     setConfirmTarget(null);
-    await handleUpdateStatus(applicationId, status);
+    await handleUpdateStatus(applicationId, status, agreedSalary);
   };
 
   // Undo last action
