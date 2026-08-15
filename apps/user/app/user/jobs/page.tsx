@@ -7,7 +7,12 @@ import {
 } from "../utils/queries";
 import { JobSearchClient } from "./job-search-client";
 
-export default async function JobsPage() {
+export default async function JobsPage(props: {
+  searchParams?: Promise<{ jobId?: string }>;
+}) {
+  const searchParams = (await props.searchParams) || {};
+  const initialJobId = searchParams.jobId;
+
   const session = await getSafeSession(await headers());
   const user = session?.user ?? null;
 
@@ -48,6 +53,7 @@ export default async function JobsPage() {
             : null
         }
         userAppliedJobIds={userAppliedJobIds}
+        initialJobId={initialJobId}
       />
     </div>
   );

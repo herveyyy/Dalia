@@ -68,6 +68,7 @@ interface JobSearchClientProps {
     email: string;
   } | null;
   userAppliedJobIds: string[];
+  initialJobId?: string;
 }
 
 const BATCH_SIZE = 6;
@@ -78,6 +79,7 @@ export function JobSearchClient({
   departments,
   userSession,
   userAppliedJobIds,
+  initialJobId,
 }: JobSearchClientProps) {
   // Search & Filter State
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -104,6 +106,16 @@ export function JobSearchClient({
 
   const sentinelRef = React.useRef<HTMLDivElement | null>(null);
   const employmentTypes = ["ALL", "Full-time", "Part-time", "Contract", "Internship"];
+
+  // Automatically open modal if initialJobId is provided in URL
+  React.useEffect(() => {
+    if (initialJobId && jobs.length > 0) {
+      const match = jobs.find((j) => j.id === initialJobId);
+      if (match) {
+        setModalJob(match);
+      }
+    }
+  }, [initialJobId, jobs]);
 
   // Debounced Filter Handler — Resets page & fetches fresh results
   React.useEffect(() => {
@@ -345,7 +357,7 @@ export function JobSearchClient({
                 key={job.id}
                 className="rounded-xl border border-border bg-card p-5 shadow-xs flex flex-col justify-between space-y-4 transition-all duration-200 hover:border-primary/50 hover:shadow-md group"
               >
-                <div className="space-y-3">
+                <div className="space-y-3 cursor-pointer" onClick={() => handleOpenModal(job)}>
                   {/* Header: Avatar, Company, Title & Type */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -401,22 +413,23 @@ export function JobSearchClient({
                     {new Date(job.createdAt).toLocaleDateString()}
                   </span>
 
-                  {hasApplied ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
-                      <HiOutlineCheckCircle className="size-3.5" />
-                      Applied
-                    </span>
-                  ) : (
+                  <div className="flex items-center gap-2">
+                    {hasApplied ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
+                        <HiOutlineCheckCircle className="size-3.5" />
+                        Applied
+                      </span>
+                    ) : null}
                     <Button
-                      variant="default"
+                      variant={hasApplied ? "outline" : "default"}
                       size="sm"
                       onClick={() => handleOpenModal(job)}
                       className="font-semibold gap-1.5 text-xs rounded-lg h-8 px-3"
                     >
-                      <span>Apply Now</span>
+                      <span>View Details</span>
                       <HiOutlineArrowRight className="size-3.5" />
                     </Button>
-                  )}
+                  </div>
                 </div>
               </div>
             );
