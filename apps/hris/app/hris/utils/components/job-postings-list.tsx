@@ -35,8 +35,8 @@ import {
   HiOutlineArrowPath,
   HiOutlineCheckCircle,
   HiOutlineExclamationTriangle,
-  HiOutlineExclamationCircle,
   HiOutlineUser,
+  HiOutlineExclamationCircle,
 } from "react-icons/hi2";
 import { DataPagination } from "@repo/ui/components/molecules/DataPagination";
 import { ViewToggle } from "@repo/ui/components/molecules/ViewToggle";
@@ -619,7 +619,7 @@ export function JobPostingsList({
                 ) : (
                   <div className="space-y-4">
                     {applicants.map((app) => (
-                      <div key={app.id} className="bg-card rounded-2xl border border-border/80 shadow-sm overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border/60">
+                      <div key={app.id} className="bg-card rounded-2xl border border-border/80 shadow-sm overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x">
                         {/* Candidate Basic Info */}
                         <div className="p-5 md:w-1/3 flex flex-col justify-between space-y-4 bg-muted/5 shrink-0">
                           <div className="flex items-center gap-3">
