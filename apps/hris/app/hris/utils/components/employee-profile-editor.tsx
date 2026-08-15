@@ -243,19 +243,19 @@ export default function EmployeeProfileEditor({
       </div>
 
       {/* Progress Indicators */}
-      <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-xs overflow-x-auto">
-        <div className="flex items-center gap-6 min-w-max px-2">
+      <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-xs">
+        <div className="flex items-center justify-between w-full gap-2 px-1">
           {[
-            { step: 1, label: "Personal Profile" },
-            { step: 2, label: "Statutory IDs" },
+            { step: 1, label: "Personal" },
+            { step: 2, label: "Statutory" },
             { step: 3, label: "Job & Payroll" },
-            { step: 4, label: "Contacts & Compensation" },
+            { step: 4, label: "Compensation" },
             { step: 5, label: "Review & Save" },
           ].map((s, idx, arr) => (
             <React.Fragment key={s.step}>
               <div className="flex items-center gap-2">
                 <span
-                  className={`flex size-6 items-center justify-center rounded-full text-xs font-bold font-display transition-all ${
+                  className={`flex size-6 items-center justify-center rounded-full text-xs font-bold font-display transition-all shrink-0 ${
                     currentStep === s.step
                       ? "bg-primary text-primary-foreground scale-105"
                       : currentStep > s.step
@@ -266,7 +266,7 @@ export default function EmployeeProfileEditor({
                   {s.step}
                 </span>
                 <span
-                  className={`text-xs font-semibold font-display ${
+                  className={`text-xs font-semibold font-display hidden sm:inline truncate max-w-[80px] md:max-w-none ${
                     currentStep === s.step
                       ? "text-foreground"
                       : "text-muted-foreground font-medium"
@@ -277,7 +277,7 @@ export default function EmployeeProfileEditor({
               </div>
               {idx < arr.length - 1 && (
                 <div
-                  className={`h-0.5 w-8 rounded-full ${
+                  className={`h-0.5 flex-1 rounded-full min-w-[12px] ${
                     currentStep > s.step ? "bg-primary/30" : "bg-muted"
                   }`}
                 />
